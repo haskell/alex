@@ -39,6 +39,235 @@
 <!-- Introduction
 --------------------------------------------------------- -->
 
+  <chapter id="about">
+    <title>About Alex</title>
+
+    <para>Alex can always be obtained from its <ulink
+    url="http://www.haskell.org/alex">home page</ulink>.  The latest
+    source code lives in the <literal>fptools</literal> CVS
+    repository; instructions on accessing that repository are <ulink
+    url="http://www.haskell.org/ghc/docs/latest/html/building/sec-cvs.html">here</ulink>.</para>
+
+    <section id="relnotes">
+      <title>Release Notes for version 2.0</title>
+      
+      <para>Alex has changed a <emphasis>lot</emphasis> between
+      versions 1.x and 2.0.  The following is supposed to be an
+      exhaustive list of the changes:</para>
+
+      <section id="changes-syntax">
+	<title>Syntax changes</title>
+
+	<itemizedlist>
+	  <listitem>
+	    <para>Code blocks are now surrounded by
+	    <literal>{...}</literal> rather than
+	    <literal>%{...%}</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Character-set macros ow begin with
+            &lsquo;<literal>$</literal>&rsquo; instead of
+            &lsquo;<literal>^</literal>&rsquo; and have
+            multi-character names.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Regular expression macros now begin with
+            &lsquo;<literal>@</literal>&rsquo; instead of
+            &lsquo;<literal>%</literal>&rsquo; and have
+            multi-character names.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Macro definitions are no longer surrounded by
+	    <literal>{ ... }</literal>.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Rules are now of the form
+<programlisting>
+    &lt;c1,c2,...>  regex   { code }
+</programlisting>
+           where <literal>c1</literal>, <literal>c2</literal> are
+           startcodes, and <literal>code</literal> is an arbitrary
+           Haskell expression.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Regular expression syntax changes:</para>
+
+	    <itemizedlist>
+	      <listitem>
+		<para><literal>()</literal> is the empty regular
+		expression (used to be
+		&lsquo;<literal>$</literal>&rsquo;)</para>
+	      </listitem>
+
+	      <listitem>
+		<para>set complement can now be expressed as
+		<literal>[^sets]</literal> (for similarity with lex
+		regular expressions).</para>
+	      </listitem>
+
+	      <listitem>
+		<para>The <literal>'abc'</literal> form is no longer
+		available, use <literal>[abc]</literal>
+		instead.</para>
+	      </listitem>
+
+	      <listitem>
+		<para>&lsquo;<literal>^</literal>&rsquo; and
+                &lsquo;<literal>$</literal>&rsquo; have the usual
+                meanings: &lsquo;<literal>^</literal>&rsquo; matches
+                just after a &lsquo;<literal>\n</literal>&rsquo;, and
+                &lsquo;<literal>$</literal>&rsquo; matches just before
+                a &lsquo;<literal>\n</literal>&rsquo;.</para>
+	      </listitem>
+
+	      <listitem>
+		<para>&lsquo;<literal>\n</literal>&rsquo; is now the
+		escape character, not
+		&lsquo;<literal>^</literal>&rsquo;.</para>
+	      </listitem>
+
+	      <listitem>
+		<para>The form <literal>"..."</literal> means the same
+                as the sequence of characters inside the quotes, the
+                difference being that special characters do not need
+                to be escaped inside <literal>"..."</literal>.</para>
+	      </listitem>
+	    </itemizedlist>
+	  </listitem>
+
+	  <listitem>
+	    <para>Rules can have arbitrary predicates attached to
+            them.  This subsumes the previous left-context and
+            right-context facilities (although these are still allowed
+            as syntactic sugar).</para>
+	  </listitem>
+	</itemizedlist>
+      </section>
+
+      <section id="changes-files">
+	<title>Changes in the form of an Alex file</title>
+
+	<itemizedlist>
+	  <listitem>
+	    <para>Each file can now only define a single grammar.
+            This change was made to simplify code generation.
+            Multiple grammars can be simulated using startcodes, or
+            split into separate modules.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>The programmer experience has been simplified, and
+            at the same time made more flexible.  See the <xref
+            linkend="api"> for details.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>You no longer need to import the
+	    <literal>Alex</literal> module.</para>
+	  </listitem>
+	</itemizedlist>
+      </section>
+
+      <section id="changes-usage">
+	<title>Usage changes</title>
+	
+	<para>The command-line syntax is quite different.  See <xref
+	linkend="invoking">.</para>
+      </section>
+
+      <section id="changes-implementation">
+	<title>Implementation changes</title>
+	
+	<itemizedlist>
+	  <listitem>
+	    <para>A more efficient table representation, coupled with
+            standard table-compression techniques, are used to keep
+            the size of the generated code down.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>When compiling a grammar with GHC, the -g switch
+            causes an even faster and smaller grammer to be
+            generated.</para>
+	  </listitem>
+
+	  <listitem>
+	    <para>Startcodes are implemented in a different way: each
+            state corresponds to a different initial state in the DFA,
+            so the scanner doesn't have to check the startcode when it
+            gets to an accept state.  This results in a larger, but
+            quicker, scanner.</para>
+	  </listitem>
+	</itemizedlist>
+      </section>
+    </section>
+
+    <section id="bug-reports">
+      <title>Reporting bugs in Alex</title>
+
+      <para>Please report bugs in Alex to
+      <email>simonmar@microsoft.com</email>.  There are no specific
+      mailing lists for the discussion of Alex-related matters, but
+      such topics should be fine on the <ulink
+      url="http://www.haskell.org/mailman/listinfo/haskell">Haskell</ulink>
+      and <ulink
+      url="http://www.haskell.org/mailman/listinfo/haskell-cafe">Haskell
+      Cafe</ulink> mailing lists.</para>
+    </section>
+
+    <section id="license">
+      <title>License</title>
+
+      <para>Copyright (c) 1995-2003, Chris Dornan and Simon Marlow.
+      All rights reserved.</para>
+
+      <para>Redistribution and use in source and binary forms, with or
+      without modification, are permitted provided that the following
+      conditions are met:</para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>Redistributions of source code must retain the above
+          copyright notice, this list of conditions and the following
+          disclaimer.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Redistributions in binary form must reproduce the
+          above copyright notice, this list of conditions and the
+          following disclaimer in the documentation and/or other
+          materials provided with the distribution.</para>
+	</listitem>
+
+	<listitem>
+	  <para>Neither the name of the copyright holders, nor the
+          names of the contributors may be used to endorse or promote
+          products derived from this software without specific prior
+          written permission.</para>
+	</listitem>
+      </itemizedlist>
+
+      <para>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+      CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+      INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+      MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+      DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+      CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+      SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+      LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+      USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+      AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+      LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+      IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+      THE POSSIBILITY OF SUCH DAMAGE.</para>
+    </section>
+  </chapter>
+
   <chapter id="introduction">
     <title>Introduction</title>
 
@@ -47,153 +276,140 @@
     regular expressions.  It is similar to the tools
     lex and flex for C/C++.</para>
 
-    <para> The <application>Alex</application> package,
-           like <application>Lex</application>, takes a description of
-           tokens based on regular expressions and generates a program
-           module for scanning text efficiently.  The difference is
-           that <application>Alex</application> generates Haskell
-           modules rather than C/Ratfor source files.  Although
-           <application>Alex</application> takes after
-           <application>lex</application>, it is intended for Haskell
-           programmers and so departs quite radically from Lex in some
-           respects.</para>
+    <para>Alex takes a description of tokens based on regular
+    expressions and generates a Haskell module containing code for
+    scanning text efficiently.  Alex is designed to be familiar to
+    exisiting lex users, although it does depart from lex in a number
+    of ways.</para>
 
     <figure ID="fig-tokens" FLOAT="1"><TITLE>A simple Alex
 	  specification.</TITLE>
 <programlisting>
+{
+module Main (main) where
+}
 
-%{
-module Tokens where
+%wrapper "basic"
 
-import Alex
-%}
+$digit = 0-9			-- digits
+$alpha = [a-zA-Z]		-- alphabetic characters
 
+tokens :-
 
-	  { ^d = 0-9      }-- digits
-	  { ^l = [a-zA-Z] }-- alphabetic characters
+  $white+				;
+  "--".*				;
+  let					{ \s -> Let }
+  in					{ \s -> In }
+  $digit+				{ \s -> Int (read s) }
+  [\=\+\-\*\/\(\)]			{ \s -> Sym (head s) }
+  $alpha [$alpha $digit \_ \']*		{ \s -> Var s }
 
-"tokens_lx"/"tokens_acts":-
+{
+-- Each action has type :: String -> Token
 
-	  &lt;>     ::=  ^w+-- white space
-	  &lt;>     ::=  ^-^-.*-- comments
-	  &lt;let'> ::=  let%{ let' p s = Let p          %}
-	  &lt;in'>  ::=  in%{ in'  p s = In  p          %}
-	  &lt;int>  ::=  ^d+%{ int  p s = Int p (read s) %}
-	  &lt;sym>  ::=  `=+-*/()'%{ sym  p s = Sym p (head s) %}
-	  &lt;var>  ::=  ^l[^l^d^_^']*%{ var  p s = Var p s        %}
-
-
-%{
+-- The token type:
 data Token =
-	  Let Posn|
-	  In  Posn|
-	  Sym Posn Char|
-	  Var Posn String|
-	  Int Posn Int|
-	  Err Posn
-	  deriving (Eq,Text)
+	Let 		|
+	In  		|
+	Sym Char	|
+	Var String	|
+	Int Int
+	deriving (Eq,Show)
 
-
-tokens:: String -> [Token]
-tokens inp = scan tokens_scan inp
-
-tokens_scan:: Scan Token
-tokens_scan = load_scan (tokens_acts,stop_act) tokens_lx
-	  where
-	  stop_act p ""  = []
-	  stop_act p inp = [Err p]
-%}
+main = do
+  s <- getContents
+  print (alexScanTokens s)
+}
 </programlisting></figure>
 
-    <para> A sample specification is given in <xref
-	linkend="fig-tokens">.
-           The first few lines between the <literal>%{</literal> and
-           <literal>%}</literal> provide a code scrap (some inlined
-           Haskell code) to be placed in the output.  All such code
-           fragments will be placed in order at the head of the module
-           with the \lx-generated tables appearing at the end.</para>
+    <para>A sample specification is given in <xref
+    linkend="fig-tokens">.  The first few lines between the
+    <literal>{</literal> and <literal>}</literal> provide a code scrap
+    (some inlined Haskell code) to be placed directly in the output,
+    the scrap at the top of the module is normally used to declare the
+    module name for the generated Haskell module, in this case
+    <literal>Main</literal>.</para>
 
-    <para>The next two lines define the <literal>^d</literal> and
-    <literal>^l</literal> macros for use in the token
+    <para>The next line, <literal>%wrapper "basic"</literal> controls
+    what kind of support code Alex should produce along with the basic
+    scanner.  The <literal>basic</literal> wrapper selects a scanner
+    that tokenises a <literal>String</literal> and returns a list of
+    tokens.  Wrappers are described fully in <xref
+    linkend="api">.</para>
+
+    <para>The next two lines define the <literal>$digit</literal> and
+    <literal>$alpha</literal> macros for use in the token
     definitions.</para>
 
-    <para>The <literal>"tokens_lx"/"tokens_acts":-</literal> line
-          starts the definition of a scanner.  It is generated in two
-          parts: the main tables being placed in
-          <literal>token_lx</literal> and the actions for each token
-          being bound to <literal>tokens_acts</literal>.</para>
+    <para>The &lsquo;<literal>tokens :-</literal>&rsquo; line ends the
+    macro definitions and starts the definition of the scanner.</para>
 
-     <para>The scanner is specified as a series of token definitions
-          where each token specification takes the form of</para>
+    <para>The scanner is specified as a series of token definitions
+    where each token specification takes the form of</para>
 
 <programlisting>
-&lt;token-id> ::= rexp
+   <replaceable>regexp</replaceable>   { <replaceable>code</replaceable> }
 </programlisting>
 
-    <para>If <emphasis>token-id</emphasis> is omitted then the token
-      will be
-          discarded (this is done for the first two white-space and
-          comment token definitions), otherwise a corresponding action
-          function for constructing the token must be given somewhere
-          in the script.  In this case the action functions are given
-          in the code scraps to the right of the token definition but
-          they could be specified anywhere.  Here
-          <application>Alex</application> differs from
-          <application>Lex</application>; while each action must be
-          named in a code scrap, the programmer has more flexibility
-          in laying out the script.  Like comments, code scraps may be
-          placed anywhere in the module.</para>
+    <para>The meaming of a this rule is "if the input matches
+    <replaceable>regexp</replaceable>, then return
+    <replaceable>code</replaceable>".  The code part along with the
+    braces can be replaced by simply
+    &lsquo;<literal>;</literal>&rsquo;, meaning that this token should
+    be ignored in the input stream.  As you can see, we've used this
+    to ignore whitespace in our example.</para>
 
-    <para>The action function for each token takes the text matched
-          and its position and generates a token suitable for the
-          parser, of type <literal>Token</literal> in this
-      case.</para>
+    <para>Our scanner is set up so that the actions are all functions
+    with type <literal>String->Token</literal>.  When the token is
+    matched, the portion of the input stream that it matched is passed
+    to the appropriate action function as a
+    <literal>String</literal>.</para>
 
-    <para>The remaining lines define the <literal>Token</literal> data
-          type and the scanner in two parts,
-          <literal>tokens_scan</literal> which uses
-          <literal>load_scan</literal> for amalgamating the token
-          actions, stop action (for stopping the scanner) and token
-          specification tables into a <literal>Scan</literal>
-          structure, and <literal>tokens</literal>, the scanner, which
-          simply passes the <literal>Scan</literal> structure to
-          <literal>scan</literal>.  <literal>load_scan</literal>,
-          <literal>Scan</literal> and <literal>scan</literal> were
-          imported from the <literal>Scan</literal> module that comes
-          with the <application>Alex</application>
-          distribution.</para>
+    <para>At the bottom of the file we have another code fragment,
+    surrounded by braces <literal>{ ... }</literal>.  In this
+    fragment, we declare the type of the tokens, and give a
+    <literal>main</literal> function that we can use for testing it;
+    the <literal>main</literal> function just tokenises the input and
+    prints the results to standard output.</para>
 
-    <para>While delegating the task of assembling the scanner to the
-          programmer may seem a bit bothersome, the effort is rewarded
-          with a flexible and modular scheme for generating
-          scanners.</para>
-
-    <para>With this specification in <literal>Tokens.x</literal>,
-          <application>Alex</application> can be used to generate
-          <literal>Tokens.hs</literal>:</para>
+    <para>Alex has kindly provided the following function which we can
+    use to invoke the scanner:</para>
 
 <programlisting>
-alex Tokens.x
+    alexScanTokens :: String -> [Token]
 </programlisting>
 
+    <para>Alex arranges for the input stream to be tokenised, each of
+    the action functions to be passed the appriate
+    <literal>String</literal>, and a list of <literal>Token</literal>s
+    returned as the result.  If the input stream is lazy, the output
+    stream will also be produced lazilly<footnote><para>that is, unless you
+    have any patterns that require a long lookahead.</para>
+      </footnote>.</para>
+
+    <para>We have demonstrated the simplest form of scanner here,
+    which was selected by the <literal>%wrapper "basic"</literal> line
+    near the top of the file.  In general, actions do not have to have
+    type <literal>String->Token</literal>, and there's no requirement
+    for the scanner to return a list of tokens.</para>
+
+    <para>With this specification in the file
+    <literal>Tokens.x</literal>, Alex can be used to generate
+    <literal>Tokens.hs</literal>:</para>
+
+<screen>
+    alex Tokens.x</screen>
 
     <para>If the module needed to be placed in different file,
-          <literal>tkns.hs</literal> for example, then a second
-          file-name can be specified on the command line:</para>
+    <literal>Main.hs</literal> for example, then the output filename
+    can be specified using the <option>-o</option> option:</para>
 
-<programlisting>alex Tokens.x tkns.hs</programlisting>
+<screen>
+    alex Tokens.x -o Main.hs</screen>
 
-    <para>The resulting module is Haskell~1.2 and Haskell~1.3
-          compatible.  It can also be readily used with a Happy
-          parser, with the catch that the <literal>Err</literal> token
-          must be declared.</para>
-
-    <para>If the script were written with literate conventions then
-          the <literal>.lx</literal> extension would be used instead
-          of <literal>.x</literal>.  (Literate scripts will be
-          described in Section~\ref{sec-lexical-syntax} on lexical
-          syntax.)</para>
-
+    <para>The resulting module is Haskell&nbsp;98 compatible.  It can also
+    be readily used with a <ulink
+    url="http://www.haskell.org/happy/">Happy</ulink> parser.</para>
   </chapter>
 
   <chapter id="syntax">
@@ -210,9 +426,7 @@ alex Tokens.x
       
       <para>Alex's lexical syntax is given below.  It is written as a
       set of macro definitions using Alex's own syntax.  These macros
-      are used in the BNF specification of the syntax later on,
-      although we will omit the leading <literal>$</literal> and
-      <literal>@</literal> from the names.</para>
+      are used in the BNF specification of the syntax later on.</para>
 
 <programlisting>
 $digit      = [0-9]
@@ -220,13 +434,13 @@ $octdig     = [0-7]
 $hexdig     = [0-9A-Fa-f]
 $special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^\/]
 $graphic    = $printable # $white
+
 @string     = \" ($graphic # \")* \"
 @id         = [A-Za-z][A-Za-z'_]*
 @smac       = '$' id
 @rmac       = '@' id
 @char       = ($graphic # $special) | @escape
-@escape     = '\\' ('x' $hexdig+ | 'o' $octdig+ | $digit+)
-            | '\\' .
+@escape     = '\\' ($printable | 'x' $hexdig+ | 'o' $octdig+ | $digit+)
 @code       = -- curly braces surrounding a Haskell code fragment
 </programlisting>
     </section>
@@ -234,12 +448,19 @@ $graphic    = $printable # $white
     <section id="alex-files">
       <title>Syntax of Alex files</title>
 
+      <para>In the following description of the Alex syntax, we use an
+      extended form of BNF, where optional phrases are enclosed in
+      square brackets (<literal>[ ... ]</literal>), and phrases which
+      may be repeated zero or more times are enclosed in braces
+      (<literal>{ ... }</literal>).  Literal text is enclosed in
+      single quotes.</para>
+
       <para>An Alex lexical specification is normally placed in a file
       with a <literal>.x</literal> extension.  The overall layout of
       an Alex file is:</para>
 
 <programlisting>
-    alex :=  [ code ] [ wrapper ] { macrodef } id ':-' { rule } [ code ]
+    alex :=  [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]
 </programlisting>
 
       <para>The file begins and ends with optional code fragments.
@@ -257,7 +478,7 @@ $graphic    = $printable # $white
       <para>Next comes an optional wrapper specification:</para>
 
 <programlisting>
-    wrapper := '%wrapper' string
+    wrapper := '%wrapper' @string
 </programlisting>
 
       <para>wrappers are described in <xref
@@ -277,14 +498,14 @@ $graphic    = $printable # $white
 	valid (see <xref linkend="regexps">).</para>
 
 <programlisting>
-    macrodef  :=  smac '=' set
-               |  rmac '=' regexp
+    macrodef  :=  @smac '=' set
+               |  @rmac '=' regexp
 </programlisting>
       </section>
 
       <section id="rules">
 	<title>Rules</title>
-	
+
 	<para>The rules are heralded by the sequence
 	&lsquo;<literal><replaceable>id</replaceable> :-</literal>&rsquo;
         in the file.  It doesn't matter what you use for the
@@ -300,15 +521,19 @@ $graphic    = $printable # $white
     
     token      := [ left_ctx ] regexp [ right_ctx ]  rhs
 
-    rhs        := code | ';'
+    rhs        := @code | ';'
 </programlisting>
 
 	<para>Each rule defines one token in the lexcial
 	specification.  When the input stream matches the regular
 	expression in a rule, the Alex lexer will return the value of
 	the expression on the right hand side, which we call the
-	<firstterm>action</firstterm>.  More about how exactly this
-	happens is in <xref linkend="api">.</para>
+	<firstterm>action</firstterm>.  The action can be any Haskell
+	expression.  Alex only places one restriction on actions: all
+	the actions must have the same type.  They can be values in a
+	token type, for example, or possibly operations in a monad.
+	More about how this all works is in <xref
+	linkend="api">.</para>
 
 	<para>The action may be missing, indicated by replacing it
 	with &lsquo;<literal>;</literal>&rsquo;, in which case the
@@ -350,7 +575,7 @@ $graphic    = $printable # $white
     
     right_ctx  := '$'
     		| '/' regexp
-    		| '/' code
+    		| '/' @code
 </programlisting>
 
 	  <para>The left context matches the character which
@@ -432,7 +657,7 @@ $graphic    = $printable # $white
 	  applies:</para>
 
 <programlisting>
-    startcode  := id | '0'
+    startcode  := @id | '0'
     startcodes := '<' startcode { ',' startcode } '>'
 </programlisting>
     
@@ -512,8 +737,8 @@ $graphic    = $printable # $white
     rexp1   := rexp0 [ '*' | '+' | '?' | repeat ]
 
     rexp0   := set
-    	     | rmac
-    	     | string
+    	     | @rmac
+    	     | @string
     	     | '(' [ regexp ] ')'
 
     repeat  := '{' $digit '}'
@@ -538,12 +763,13 @@ $graphic    = $printable # $white
 	  <term><literal><replaceable>set</replaceable></literal></term>
 	  <listitem>
 	    <para>Matches any of the characters in
-	    <replaceable>set</replaceable>.</para>
+	    <replaceable>set</replaceable>.  See <xref
+	    linkend="charsets"> for the syntax of sets.</para>
 	  </listitem>
 	</varlistentry>
 
 	<varlistentry>
-	  <term><literal>rmac</literal></term>
+	  <term><literal>@foo</literal></term>
 	  <listitem>
 	    <para>Expands to the definition of the appropriate
 	    regular expression macro.</para>
@@ -551,7 +777,7 @@ $graphic    = $printable # $white
 	</varlistentry>
 
 	<varlistentry>
-	  <term><literal>string</literal></term>
+	  <term><literal>"..."</literal></term>
 	  <listitem>
 	    <para>Matches the sequence of characters in the string, in
 	    that order.</para>
@@ -619,9 +845,9 @@ $graphic    = $printable # $white
 <programlisting>
     set     := set ['#' set0]
     
-    set0    := char [ '-' char ]
+    set0    := @char [ '-' @char ]
     	    | '.'
-    	    |  smac
+    	    |  @smac
     	    | '[' [^] { set } ']'
     	    | '~' set0
 </programlisting>
@@ -955,7 +1181,7 @@ $del      = \127                  -- ASCII DEL
 		      String)	-- current input string
 
     --alexScanTokens :: String -> [token]
-    alexScanTokens str end = go (alexStartPos,'\n',str)
+    alexScanTokens str = go (alexStartPos,'\n',str)
       where go inp@(pos,_,str) =
     	      case alexScan inp 0 of
     		    AlexEOF -> []
@@ -1147,11 +1373,6 @@ token t input len = return (t input len)
 	</listitem>
       </varlistentry>
     </variablelist>
-  </chapter>
-
-  <chapter id="examples">
-    <title>Examples</title>
-    <para></para>
   </chapter>
 
 </book>
