@@ -9,8 +9,6 @@ include $(TOP)/mk/boilerplate.mk
 
 INSTALLING=1
 
-ALEX    = alex
-
 HS_PROG = alex.bin
 
 Parser_HC_OPTS      = -Onot
@@ -40,8 +38,8 @@ ALEXLIB=$(libdir)/alex
 ALEXBIN=$(libexecdir)/$(HS_PROG)
 endif # BIN_DIST
 else
-ALEXLIB=$(FPTOOLS_TOP_ABS)/happy/alex/templates
-ALEXBIN=$(FPTOOLS_TOP_ABS)/happy/alex/src/$(HS_PROG)
+ALEXLIB=$(FPTOOLS_TOP_ABS)/alex/templates
+ALEXBIN=$(FPTOOLS_TOP_ABS)/alex/src/$(HS_PROG)
 endif
 
 INSTALLED_SCRIPT_PROG  = alex-$(ProjectVersion)
