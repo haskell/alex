@@ -9,10 +9,10 @@ Main_HC_OPTS = -DALEX_VERSION=$(ProjectVersion)
 
 ifeq "$(INSTALLING)" "1"
 ifeq "$(BIN_DIST)"   "1"
-ALEXLIB=$$\"\"libdir/alex
+ALEXLIB=$$\"\"libdir
 ALEXBIN=$$\"\"libexecdir/$(HS_PROG)
 else
-ALEXLIB=$(libdir)/alex
+ALEXLIB=$(libdir)
 ALEXBIN=$(libexecdir)/$(HS_PROG)
 endif # BIN_DIST
 else
