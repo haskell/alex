@@ -1,6 +1,3 @@
-# -----------------------------------------------------------------------------
-# $Id: Makefile,v 1.2 2003/08/08 15:43:58 simonmar Exp $
-
 TOP = ..
 include $(TOP)/mk/boilerplate.mk
 
@@ -15,6 +12,7 @@ TEMPLATES = \
 	AlexWrapper-gscan
 
 GENERIC_TEMPLATE = GenericTemplate.hs
+EXCLUDED_SRCS = $(GENERIC_TEMPLATE) wrappers.hs
 
 INSTALL_DATAS = $(TEMPLATES)
 
