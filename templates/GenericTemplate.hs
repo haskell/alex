@@ -93,7 +93,7 @@ alexScanUser user input IBOX(sc)
 #ifdef ALEX_DEBUG
 				   trace ("Error.") $
 #endif
-				   AlexError input
+				   AlexError input'
 
 	(AlexLastSkip input len, _) ->
 #ifdef ALEX_DEBUG
