@@ -138,17 +138,13 @@ rexp2nfa b e (re1 :| re2) = do
   rexp2nfa b e re1
   rexp2nfa b e re2
 rexp2nfa b e (Star re) = do
-  s <- newState
-  epsilonEdge b s
-  rexp2nfa s s re
-  epsilonEdge s e
+  rexp2nfa b b re
+  epsilonEdge b e
 rexp2nfa b e (Plus re) = do
-  s1 <- newState
-  s2 <- newState
-  rexp2nfa s1 s2 re
-  epsilonEdge b s1
-  epsilonEdge s2 s1
-  epsilonEdge s2 e
+  s <- newState
+  rexp2nfa b s re
+  epsilonEdge s e
+  epsilonEdge s b
 rexp2nfa b e (Ques re) = do
   rexp2nfa b e re
   epsilonEdge b e
@@ -195,7 +191,9 @@ charEdge from charset to = N $ \s n -> (s, addEdge n from charset to, ())
 	   addToFM n from (NSt acc eps ((charset,to):trans))
 
 epsilonEdge :: SNum -> SNum -> NFAM ()
-epsilonEdge from to = N $ \s n -> (s, addEdge n from to, ())
+epsilonEdge from to 
+ | from == to = return ()
+ | otherwise  = N $ \s n -> (s, addEdge n from to, ())
  where
    addEdge n from to = 
      case lookupFM n from of
