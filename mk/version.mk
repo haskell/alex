@@ -13,6 +13,6 @@
 #
 ProjectName       = Alex
 ProjectNameShort  = alex
-ProjectVersion    = 2.0
+ProjectVersion    = 2.0.1
 ProjectVersionInt = 200
-ProjectPatchLevel = 0
+ProjectPatchLevel = 1
