@@ -11,8 +11,6 @@ endif
 
 HS_PROG = alex$(HS_PROG_EXT)
 
-Main_HC_OPTS =  -DALEX_VERSION=$(ProjectVersion) 
-
 ifeq "$(Windows)" "YES"
 Main_HC_OPTS += -Dmingw32_HOST_OS=1
 endif
