@@ -68,7 +68,7 @@ alex :-
 
 -- After a <..> startcode sequence, we can have a {...} grouping of rules,
 -- so don't try to interpret the opening { as a code block.
-<afterstartcodes> \{ [^$digit ]  { special `andBegin` 0 }
+<afterstartcodes> \{ (\n | [^$digit ])  { special `andBegin` 0 }
 <afterstartcodes> ()		{ skip `andBegin` 0 }  -- note: empty pattern
 {
 
