@@ -29,7 +29,11 @@ import Data.FiniteMap
 import System.IO hiding ( catch )
 import Control.Monad
 import Data.Maybe
-
+#if defined(mingw32_HOST_OS)
+import Foreign.Marshal.Array
+import Foreign
+import Foreign.C
+#endif
 import Prelude hiding ( catch )
 
 -- hackery to convice cpp to splice ALEX_VERSION into a string
@@ -97,8 +101,8 @@ alex cli file basename script = do
 	| OptGhcTarget `elem` cli = GhcTarget
 	| otherwise               = HaskellTarget
 
-   let template_dir  = templateDir cli
-       template_name = templateFile template_dir target cli
+   template_dir  <- templateDir cli
+   let template_name = templateFile template_dir target cli
 		
    -- open the output file; remove it if we encounter an error
    bracketOnError 
@@ -190,8 +194,12 @@ import_debug = "#if __GLASGOW_HASKELL__ >= 503\n\
 
 templateDir cli
   = case [ d | OptTemplateDir d <- cli ] of
-	[] -> "."
-	ds -> last ds
+      [] -> base_dir
+      ds -> return (last ds)
+    where base_dir = do maybe_exec_dir <- getBaseDir -- Get directory of executable
+			case maybe_exec_dir of
+                                       Nothing  -> return "."
+                                       Just dir -> return dir
 
 templateFile dir target cli
   = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug
@@ -300,3 +308,35 @@ bracketOnError before after thing =
 	   (\e -> do { after a; throw e })
     return r
  )
+
+
+getBaseDir :: IO (Maybe String)
+#if defined(mingw32_HOST_OS)
+getBaseDir = do let len = (2048::Int) -- plenty, PATH_MAX is 512 under Win32.
+		buf <- mallocArray len
+                ret <- getModuleFileName nullPtr buf len
+                if ret == 0 then free buf >> return Nothing
+                            else do s <- peekCString buf
+                                    free buf
+                                    return (Just (rootDir s))
+  where
+    rootDir s = reverse (dropList "/alex.exe" (reverse (normalisePath s)))
+
+foreign import stdcall "GetModuleFileNameA" unsafe
+  getModuleFileName :: Ptr () -> CString -> Int -> IO Int32
+#else
+getBaseDir :: IO (Maybe String) = do return Nothing
+#endif
+normalisePath :: String -> String
+-- Just changes '\' to '/'
+
+#if defined(mingw32_HOST_OS)
+normalisePath xs = subst '\\' '/' xs
+subst a b ls = map (\ x -> if x == a then b else x) ls
+#else
+normalisePath xs   = xs
+#endif
+dropList :: [b] -> [a] -> [a]
+dropList [] xs    = xs
+dropList _  xs@[] = xs
+dropList (_:xs) (_:ys) = dropList xs ys

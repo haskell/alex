@@ -11,7 +11,11 @@ endif
 
 HS_PROG = alex$(HS_PROG_EXT)
 
-Main_HC_OPTS = -DALEX_VERSION=$(ProjectVersion)
+Main_HC_OPTS =  -DALEX_VERSION=$(ProjectVersion) 
+
+ifeq "$(HOSTPLATFORM)" "i386-unknown-mingw32"
+Main_HC_OPTS += -Dmingw32_HOST_OS=1
+endif
 
 ifeq "$(INSTALLING)" "1"
 ifeq "$(BIN_DIST)"   "1"
