@@ -1,0 +1,31 @@
+		       Alex: A Lexical Analyser Generator
+
+			       Version 2.0
+
+			      8 August 2003
+
+
+Alex is a Lex-like tool for generating Haskell scanners.  For complete
+documentation, see the doc directory.
+
+Alex version 2.0 has changed fairly considerably since version 1.x,
+and the syntax is almost completely different.  For a detailed list of
+changes, see the CHANGES file.
+
+Alex is now covered by a BSD-Style licence; see the licence file in
+the `doc' directory for details.
+
+The sources are in the the `src' directory and the documentation in the `doc'
+directory; various  examples are in the 'examples' subdirectory.
+
+The source code in the 'src' and 'examples' directories is intended
+for a Haskell 98 compiler with hierarchical modules.  It has been
+tested with GHC 5.04.x and 6.0.x.
+
+Please report any bugs or comments to the email addresses given below.
+
+Share and enjoy,
+
+Chris Dornan:  cdornan@arm.com
+Isaac Jones:   ijones@syntaxpolice.org
+Simon Marlow:  simonmar@microsoft.com

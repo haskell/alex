@@ -1,0 +1,836 @@
+\documentstyle[10pt]{article}
+\setlength\parskip{2ex}
+\setlength\parindent{0pt}
+\newcommand\shrink[1]{\hbox to 0pt{\parbox[t]{18cm}{#1}\hss}}
+\newcommand\display[1]{\hspace{2em}\shrink{#1}}
+\newcommand\lx{{Alex}}
+\newcommand\lex{Lex}
+\begin{document}
+\title{\lx: A \lex\ for Haskell Programmers}
+\author{Chris Dornan}
+\date{29th September 1997}
+\raggedbottom
+\maketitle
+
+\section{Introduction}
+
+The \lx\ package, like \lex, takes a description of tokens based on regular
+expressions and generates a program module for scanning text efficiently.  The
+difference is that \lx\ generates Haskell modules rather than C/Ratfor source
+files.  Although \lx\ takes after \lex, it is intended for Haskell programmers
+and so departs quite radically from Lex in some respects.
+
+\begin{figure}
+\shrink{
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt module\ Tokens\ where}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt import\ Alex}\\
+\mbox{\tt {\char'45}{\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'173}\ {\char'136}d\ =\ 0-9\ \ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ digits}\\
+\mbox{\tt {\char'173}\ {\char'136}l\ =\ [a-zA-Z]\ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ alphabetic\ characters}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt "tokens{\char'137}lx"/"tokens{\char'137}acts":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <>\ \ \ \ \ ::=\ \ {\char'136}w+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ white\ space}\\
+\mbox{\tt \ \ <>\ \ \ \ \ ::=\ \ {\char'136}-{\char'136}-.*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ comments}\\
+\mbox{\tt \ \ <let'>\ ::=\ \ let\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ let'\ p\ s\ =\ Let\ p\ \ \ \ \ \ \ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <in'>\ \ ::=\ \ in\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ in'\ \ p\ s\ =\ In\ \ p\ \ \ \ \ \ \ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <int>\ \ ::=\ \ {\char'136}d+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ int\ \ p\ s\ =\ Int\ p\ (read\ s)\ {\char'45}{\char'175}\ }\\
+\mbox{\tt \ \ <sym>\ \ ::=\ \ `=+-*/()'\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ sym\ \ p\ s\ =\ Sym\ p\ (head\ s)\ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <var>\ \ ::=\ \ {\char'136}l[{\char'136}l{\char'136}d{\char'136}{\char'137}{\char'136}']*\ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ var\ \ p\ s\ =\ Var\ p\ s\ \ \ \ \ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt data\ Token\ =}\\
+\mbox{\tt \ \ \ \ \ \ \ \ Let\ Posn\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}\\
+\mbox{\tt \ \ \ \ \ \ \ \ In\ \ Posn\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}\\
+\mbox{\tt \ \ \ \ \ \ \ \ Sym\ Posn\ Char\ \ \ \ \ \ \ \ \ \ \ |}\\
+\mbox{\tt \ \ \ \ \ \ \ \ Var\ Posn\ String\ \ \ \ \ \ \ \ \ |}\\
+\mbox{\tt \ \ \ \ \ \ \ \ Int\ Posn\ Int\ \ \ \ \ \ \ \ \ \ \ \ |}\\
+\mbox{\tt \ \ \ \ \ \ \ \ Err\ Posn}\\
+\mbox{\tt \ \ \ \ \ \ \ \ deriving\ (Eq,Text)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt tokens::\ String\ ->\ [Token]}\\
+\mbox{\tt tokens\ inp\ =\ scan\ tokens{\char'137}scan\ inp}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt tokens{\char'137}scan::\ Scan\ Token}\\
+\mbox{\tt tokens{\char'137}scan\ =\ load{\char'137}scan\ (tokens{\char'137}acts,stop{\char'137}act)\ tokens{\char'137}lx}\\
+\mbox{\tt \ \ \ \ \ \ \ \ where}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ p\ ""\ \ =\ []}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ p\ inp\ =\ [Err\ p]}\\
+\mbox{\tt {\char'45}{\char'175}}
+}
+\caption{A simple \lx\ specification.}\label{fig-tokens}
+\end{figure}
+
+A sample specification is given in Figure~\ref{fig-tokens}.  The first few
+lines between the \mbox{\tt {\char'45}{\char'173}} and \mbox{\tt {\char'45}{\char'175}} provide a code scrap (some inlined Haskell
+code) to be placed in the output.  All such code fragments will be placed in
+order at the head of the module with the \lx-generated tables appearing at the
+end.
+
+The next two lines define the \mbox{\tt {\char'136}d} and \mbox{\tt {\char'136}l} macros for use in the token
+definitions.
+
+The \mbox{\tt "tokens{\char'137}lx"/"tokens{\char'137}acts":-} line starts the definition of a scanner.  It
+is generated in two parts: the main tables being placed in \mbox{\tt token{\char'137}lx} and the
+actions for each token being bound to \mbox{\tt tokens{\char'137}acts}.
+
+The scanner is specified as a series of token definitions where each token
+specification takes the form of
+
+\display{
+\mbox{\tt <}{\it token-id}\mbox{\tt >\ ::=\ }{\it rexp}
+}
+
+If {\it token-id} is omitted then the token will be discarded (this is done for
+the first two white-space and comment token definitions), otherwise a
+corresponding action function for constructing the token must be given
+somewhere in the script.  In this case the action functions are given in the
+code scraps to the right of the token definition but they could be specified
+anywhere.  Here \lx\ differs from \lex; while each action must be
+named in a code scrap, the programmer has more flexibility in laying out the
+script.  Like comments, code scraps may be placed anywhere in the module.
+
+The action function for each token takes the text matched and its position and
+generates a token suitable for the parser, of type \mbox{\tt Token} in this case.
+
+The remaining lines define the \mbox{\tt Token} data type and the scanner in two parts,
+\mbox{\tt tokens{\char'137}scan} which uses \mbox{\tt load{\char'137}scan} for amalgamating the token actions, stop
+action (for stopping the scanner) and token specification tables into a \mbox{\tt Scan}
+structure, and \mbox{\tt tokens}, the scanner, which simply passes the \mbox{\tt Scan} structure
+to \mbox{\tt scan}.  \mbox{\tt load{\char'137}scan}, \mbox{\tt Scan} and \mbox{\tt scan} were imported from the \mbox{\tt Scan} module
+that comes with the \lx\ distribution.
+
+While delegating the task of assembling the scanner to the programmer may seem
+a bit bothersome, the effort is rewarded with a flexible and modular scheme for
+generating scanners.
+
+With this specification in \mbox{\tt Tokens.x}, \lx\ can be used to generate
+\mbox{\tt Tokens.hs}:
+
+\display{
+\mbox{\tt alex\ Tokens.x}
+}
+
+If the module needed to be placed in different file, \mbox{\tt tkns.hs} for example,
+then a second file-name can be specified on the command line:
+
+\display{
+\mbox{\tt alex\ Tokens.x\ tkns.hs}
+}
+
+The resulting module is Haskell~1.2 and Haskell~1.3 compatible.  It can also be
+readily used with a Happy parser, with the catch that the \mbox{\tt Err} token must be
+declared.
+
+If the script were written with literate conventions then the \mbox{\tt .lx} extension
+would be used instead of \mbox{\tt .x}.  (Literate scripts will be described in
+Section~\ref{sec-lexical-syntax} on lexical syntax.)
+
+
+\section{Syntax}
+
+The syntax in this section is described with an extended BNF in which optional
+phrases are enclosed in square brackets ($[\dots]$) and repeated phrases in
+braces ($\{\dots\}$).  The terminal symbols {\sf ide}, {\sf tkn}, {\sf ch},
+{\sf ech}, {\sf cch} {\sf smac}, {\sf rmac} and {\sf quot} are are defined in
+Section~\ref{sec-lexical-syntax} on lexical syntax.
+
+
+\subsection{Scripts, Macros and Scanners}
+
+\lx\ scripts contain a list of scanner specifications, optionally preceded by
+some global macro definitions.  Each scanner consists of a header with the
+Haskell identifiers to be bound in the output module, a list of macro
+definitions and a list of token definitions.  Macros may also be specified on
+the right-hand-side of token definitions.
+
+\display{
+\begin{flushleft}\it\begin{tabbing}
+\hspace{0.5in}\=\hspace{3.0in}\=\kill
+$\it alex$\>\makebox[3.5em]{$\rightarrow$}$\it \{\ macdef\ \}\ \{\ scanner\ \}$\\ 
+$\it $\\ 
+$\it macdef$\>\makebox[3.5em]{$\rightarrow$}$\it \makebox{\tt {\char'173}}\ {\sf\ smac}\ \makebox{\tt =}\ set\ |\ {\sf\ rmac}\ \makebox{\tt =}\ rexp\ \makebox{\tt {\char'175}}$\\ 
+$\it $\\ 
+$\it scanner$\>\makebox[3.5em]{$\rightarrow$}$\it {\sf\ ide}\ [\makebox{\tt /}\ {\sf\ ide}]\ \makebox{\tt :-}\ \{\ macdef\ \}\ \{\ def\ \}$\\ 
+$\it def$\>\makebox[3.5em]{$\rightarrow$}$\it {\sf\ tkn}\ \makebox{\tt ::=}\ \{\ macdef\ \}\ ctx$\\ 
+$\it ctx$\>\makebox[3.5em]{$\rightarrow$}$\it \{\ sc\ \makebox{\tt :}\ \}\ [set\ \makebox{\tt {\char'134}}]\ rexp\ [\makebox{\tt /}\ rexp]$\\ 
+$\it sc$\>\makebox[3.5em]{$\rightarrow$}$\it \makebox{\tt "0"}\ |\ {\sf\ ide}$
+\end{tabbing}\end{flushleft}
+}
+
+Macros come in two flavours: regular expression macros and character set
+macros.  A regular expression is more powerful than a character set but it can
+be used in less contexts.  Regular expressions and character sets are described
+below.
+
+Macros obey a static scoping discipline with each macro scoping over the
+construction it precedes.  Thus macros at the head of the script scope over the
+whole script, macros preceding a scanner scope over the scanner and those on
+the right-hand-side of a token definition will only be effective for the token
+definition.  Because they are statically scoped any macros mentioned in the
+body of a macro must be defined in its defining environment and its meaning is
+then fixed at the point of definition.  For example, the definitions
+
+\display{
+\mbox{\tt {\char'173}\ {\char'136}g\ =\ {\char'136}a\ \ \ \ \ \ \ {\char'175}}\\
+\mbox{\tt {\char'173}\ {\char'136}a\ =\ [a-zA-Z]\ {\char'175}}
+}
+
+will bind \mbox{\tt {\char'136}g} to the contents of the \mbox{\tt {\char'136}a} macro (which must be defined) and
+rebind \mbox{\tt {\char'136}a} to match the alphabetic characters.  After both definitions, \mbox{\tt {\char'136}g}
+will be bound to the original value of the \mbox{\tt {\char'136}a} macro.
+
+The header line of a macro will usually give two identifiers: the first one for
+binding the tables containing the token specifications and the second for
+binding the action list.  If the second identifier is omitted then the action
+list will not be generated and the programmer need not specify action functions
+for each named token; however, to get a useful scanner with \mbox{\tt load{\char'137}scan}, a
+hand-built action list will have to be supplied.
+
+Leading context, trailing context and start codes may be specified with the
+\mbox{\tt :}, \mbox{\tt {\char'134}}, \mbox{\tt /} operators.  These features will be described in
+Section~\ref{sec-context-specifications} on context specifications.
+
+A token identifier may be bound to more than one specification with the result
+that all the definitions will be handled by the same action function.
+
+
+\subsection{Regular Expressions}
+
+\display{
+\begin{flushleft}\it\begin{tabbing}
+\hspace{0.5in}\=\hspace{3.0in}\=\kill
+$\it rexp$\>\makebox[3.5em]{$\rightarrow$}$\it rexp_2\ \{\ \makebox{\tt |}\ rexp_2\ \}$\\ 
+$\it rexp_2$\>\makebox[3.5em]{$\rightarrow$}$\it rexp_1\ \{\ rexp_1\ \}$\\ 
+$\it rexp_1$\>\makebox[3.5em]{$\rightarrow$}$\it rexp_0\ [\ \makebox{\tt *}\ |\ \makebox{\tt +}\ |\ \makebox{\tt ?}\ |\ repeat\ ]$\\ 
+$\it repeat$\>\makebox[3.5em]{$\rightarrow$}$\it \makebox{\tt {\char'173}}\ digit\ [\makebox{\tt ,}\ [digit]\ ]\ \makebox{\tt {\char'175}}$\\ 
+$\it rexp_0$\>\makebox[3.5em]{$\rightarrow$}$\it \makebox{\tt {\char'44}}\ |\ {\sf\ rmac}\ |\ set\ |\ \makebox{\tt (}\ rexp\ \makebox{\tt )}$\\ 
+$\it $\\ 
+$\it digit$\>\makebox[3.5em]{$\rightarrow$}$\it \makebox{\tt 0}\ |\ \makebox{\tt 1}\ |\ \makebox{\tt 2}\ |\ \makebox{\tt 3}\ |\ \makebox{\tt 4}$\\ 
+$\it $\>\makebox[3.5em]{$|$}$\it \makebox{\tt 5}\ |\ \makebox{\tt 6}\ |\ \makebox{\tt 7}\ |\ \makebox{\tt 8}\ |\ \makebox{\tt 9}$
+\end{tabbing}\end{flushleft}
+}
+
+The regular expression syntax is similar to that of \lex, with the addition of
+\mbox{\tt {\char'44}} for $\epsilon$, matching the empty string, and the \mbox{\tt {\char'45}}$\langle {\it
+letter}\rangle$ syntax for regular-expression macros.
+
+Here are some of the ways of repeating \mbox{\tt a}s.
+
+\display{
+\mbox{\tt "example{\char'137}rexps":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <a{\char'137}star>\ \ ::=\ {\char'44}\ |\ a+\ \ \ \ \ \ \ \ \ \ --\ =\ a*,\ zero\ or\ more\ as}\\
+\mbox{\tt \ \ <a{\char'137}plus>\ \ ::=\ aa*\ \ \ \ \ \ \ \ \ \ \ \ \ --\ =\ a+,\ one\ or\ more\ as}\\
+\mbox{\tt \ \ <a{\char'137}quest>\ ::=\ {\char'44}\ |\ a\ \ \ \ \ \ \ \ \ \ \ --\ =\ a?,\ zero\ or\ one\ as}\\
+\mbox{\tt \ \ <a{\char'137}3>\ \ \ \ \ ::=\ a{\char'173}3{\char'175}\ \ \ \ \ \ \ \ \ \ \ \ --\ =\ aaa}\\
+\mbox{\tt \ \ <a{\char'137}3{\char'137}5>\ \ \ ::=\ a{\char'173}3,5{\char'175}\ \ \ \ \ \ \ \ \ \ --\ =\ a{\char'173}3{\char'175}a?a?}\\
+\mbox{\tt \ \ <a{\char'137}3{\char'137}>\ \ \ \ ::=\ a{\char'173}3,{\char'175}\ \ \ \ \ \ \ \ \ \ \ --\ =\ a{\char'173}3{\char'175}a*}
+}
+
+
+\subsection{Sets of Characters}
+
+A set is a special form of regular expression that matches strings of length
+one.  Here \lx\ differs markedly from \lex.
+
+\display{
+\begin{flushleft}\it\begin{tabbing}
+\hspace{0.5in}\=\hspace{3.0in}\=\kill
+$\it set$\>\makebox[3.5em]{$\rightarrow$}$\it set_0\ [\ \makebox{\tt {\char'43}}\ set_0\ ]$\\ 
+$\it set_0$\>\makebox[3.5em]{$\rightarrow$}$\it \makebox{\tt {\char'176}}\ set_0$\\ 
+$\it $\>\makebox[3.5em]{$|$}$\it chr\ [\ \makebox{\tt -}\ chr\ ]$\\ 
+$\it $\>\makebox[3.5em]{$|$}$\it {\sf\ smac}$\\ 
+$\it $\>\makebox[3.5em]{$|$}$\it \makebox{\tt [}\ \{set\}\ \makebox{\tt ]}$\\ 
+$\it $\>\makebox[3.5em]{$|$}$\it {\sf\ quot}$\\ 
+$\it chr$\>\makebox[3.5em]{$\rightarrow$}$\it {\sf\ ch}\ |\ {\sf\ ech}\ |\ {\sf\ cch}$
+\end{tabbing}\end{flushleft}
+}
+
+The simplest set, {\it chr}, contains a single character.  The letters and
+digits represent themselves while symbolic characters can be escaped with a
+\mbox{\tt {\char'136}}.  Any character can be generated with a \mbox{\tt {\char'136}} followed by its decimal code,
+though this is not portable.
+
+A range of characters can be expressed by separating the characters with a
+\mbox{\tt -}; all the characters with codes in the given range are included in
+the set.  Character ranges can also be non-portable.
+
+The union of a number of sets may be taken by enumerating them in square
+brackets (\mbox{\tt [}\dots\mbox{\tt ]}), the complement of a set can be taken with \mbox{\tt {\char'176}} and the
+difference of two sets can be taken with the \mbox{\tt {\char'43}} operator.  Finding a good use
+for \mbox{\tt []} is left as an exercise for the devious reader.
+
+A quoted set of characters can be expressed by enclosing it in quotes
+(\mbox{\tt `}\dots\mbox{\tt '}).  Note that the quoted set starts with a back-quote and finishes
+with a single-quote.  A \mbox{\tt '} character may not be included in such sets.
+
+A set macro is expressed by a \mbox{\tt .} or by a \mbox{\tt {\char'136}} followed by a letter.  The
+standard macros are listed in Figure~3.  Most of them consist of bindings for
+the Haskell \mbox{\tt {\char'134}}$\langle letter \rangle$ character escape codes.  The \mbox{\tt {\char'136}w} and
+\mbox{\tt {\char'136}p} correspond to the prelude \mbox{\tt isSpace} and \mbox{\tt isPrint} prelude functions.
+\begin{figure} \mbox{\tt }\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}a\ =\ {\char'136}7\ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ alarm}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}b\ =\ {\char'136}8\ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ back\ space}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}t\ =\ {\char'136}9\ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ form\ feed}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}n\ =\ {\char'136}10\ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ newline}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}v\ =\ {\char'136}11\ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ vertical\ tab}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}f\ =\ {\char'136}12\ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ form\ feed}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}r\ =\ {\char'136}13\ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ --\ carriage\ return}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}w\ =\ [{\char'136}t{\char'136}n{\char'136}v{\char'136}f{\char'136}r{\char'136}\ ]\ {\char'175}\ \ \ --\ white\ space}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ {\char'136}p\ =\ {\char'136}32-{\char'136}126\ \ \ \ \ \ \ {\char'175}\ \ \ --\ printable/graphic\ characters}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'173}\ .\ \ =\ {\char'136}0-{\char'136}255\ {\char'43}\ {\char'136}n\ \ \ {\char'175}\ \ \ --\ non-newline\ characters}
+\caption{The standard macros (for Unix sytems).}\label{fig-standard-macros}
+\end{figure}
+
+\display{
+\mbox{\tt "example{\char'137}sets":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <lls>\ \ \ \ \ \ ::=\ a-z\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ little\ letters}\\
+\mbox{\tt \ \ <not{\char'137}lls>\ \ ::=\ {\char'176}a-z\ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ anything\ but\ little\ letters}\\
+\mbox{\tt \ \ <ls{\char'137}ds>\ \ \ \ ::=\ [a-zA-Z0-9]\ \ \ \ \ \ \ --\ letters\ and\ digits}\\
+\mbox{\tt \ \ <sym>\ \ \ \ \ \ ::=\ `!@{\char'43}{\char'44}'\ \ \ \ \ \ \ \ \ \ \ \ --\ the\ symbols\ !,\ @,\ {\char'43}\ and\ {\char'44}}\\
+\mbox{\tt \ \ <sym{\char'137}q{\char'137}nl>\ ::=\ [`!{\char'43}@{\char'44}'{\char'136}'{\char'136}n]\ \ \ \ \ \ --\ the\ above\ symbols\ with\ '\ and\ newline}\\
+\mbox{\tt \ \ <quotable>\ ::=\ {\char'136}p{\char'43}{\char'136}'\ \ \ \ \ \ \ \ \ \ \ \ \ --\ any\ graphic\ character\ except\ '}\\
+\mbox{\tt \ \ <del>\ \ \ \ \ \ ::=\ {\char'136}127\ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ ASCII\ DEL}
+}
+
+
+\subsection{The Scanner's Alphabet}
+
+The characters accepted by a scanner are precisely those permitted by the
+regular expressions and the macro definitions.  This is usually determined by
+the settings of the \mbox{\tt .} macro.  By default, \mbox{\tt .} includes every character except
+newline but it could be redefined, for example, to exclude all the eight bit
+codes:
+
+\display{
+\mbox{\tt {\char'173}\ .\ =\ {\char'136}0-{\char'136}127\ {\char'43}\ {\char'136}n\ {\char'175}}
+}
+
+This works because set complement, \mbox{\tt {\char'176}}$\langle{\it set}\rangle$ is defined to
+mean \mbox{\tt [.{\char'136}n]{\char'43}}$\langle{\it set}\rangle$ so complemented sets would also exclude
+eight-bit characters.
+
+Note that the above restriction of the \mbox{\tt .} macro is unlikely to reduce the size
+of the tables used by \lx\ or speed up the scanners generated by it, in fact,
+the contrary, as the table formats were designed with the default configuration
+in mind.
+
+
+\subsection{Lexical Syntax}
+\label{sec-lexical-syntax}
+
+\lx\ supports the Haskell literate script convention as described in the
+Haskell report (version 1.2).  See Figure~\ref{fig-lit} for an example literate
+script.  If the name of the file containing the scripts ends in \mbox{\tt .lx} then the
+lines that make up the script start with a \mbox{\tt >}; the script is preprocessed by
+stripping out all the other lines and replacing the initial \mbox{\tt >} at the start of
+each line with a space.  This process is formalised in
+Section~\ref{sec-literate-scripts} where the scanner used to preprocess \lx\
+scripts is given.
+
+All white space appearing in the script is ignored, except where a space is
+quoted with \mbox{\tt {\char'136}} or \mbox{\tt `}\dots\mbox{\tt '}.  Haskell-style line comments are introduced
+with \mbox{\tt --} and code scraps are enclosed in \mbox{\tt {\char'45}{\char'173}} \dots \mbox{\tt {\char'45}{\char'175}} brackets.  Otherwise,
+
+\display{
+\begin{tabular}{ll}
+{\sf ide}       &is a Haskell identifier in quotes (\mbox{\tt "}\dots\mbox{\tt "}). \\
+{\sf tkn}       &is an optional Haskell identifier in angle
+                                                brackets (\mbox{\tt <}\dots\mbox{\tt >}). \\
+{\sf ch}        &is a letter or digit. \\
+{\sf ech}       &is a \mbox{\tt {\char'136}} followed by a symbolic character. \\
+{\sf cch}       &is a \mbox{\tt {\char'136}} followed by a character code. \\
+{\sf smac}      &is either a \mbox{\tt .} or a \mbox{\tt {\char'136}} followed by a letter. \\
+{\sf rmac}      &is a \mbox{\tt {\char'45}} followed by a letter. \\
+{\sf quot}      &is a sequence of non-\mbox{\tt '} characters in quotes
+                                                        (\mbox{\tt `}\dots\mbox{\tt '}). \\
+\end{tabular}
+}
+
+The lexical syntax is formalised by the \lx\ script in Figure~\ref{fig-lx}.
+\begin{figure}
+\shrink{
+\mbox{\tt {\char'173}\ {\char'136}s\ =\ {\char'136}w{\char'43}{\char'136}n\ \ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ spaces\ +\ tabs,\ etc}\\
+\mbox{\tt {\char'173}\ {\char'136}d\ =\ 0-9\ \ \ \ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ digits}\\
+\mbox{\tt {\char'173}\ {\char'136}a\ =\ a-z\ \ \ \ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ lower-case\ alphas}\\
+\mbox{\tt {\char'173}\ {\char'136}A\ =\ A-Z\ \ \ \ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ upper-case\ alphas}\\
+\mbox{\tt {\char'173}\ {\char'136}l\ =\ [{\char'136}a{\char'136}A]\ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ alpha\ characters}\\
+\mbox{\tt {\char'173}\ {\char'136}i\ =\ [{\char'136}l{\char'136}d{\char'136}{\char'137}{\char'136}']\ {\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ identifier\ trailer}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt "alex{\char'137}lx"\ :-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <>\ \ \ \ \ ::=\ \ {\char'136}w+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ white\ space}\\
+\mbox{\tt \ \ <>\ \ \ \ \ ::=\ \ {\char'136}-{\char'136}-.*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ comments}\\
+\mbox{\tt \ \ <code>\ ::=\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ code\ scraps:}\\
+\mbox{\tt \ \ \ \ \ \ \ \ {\char'136}{\char'45}{\char'136}{\char'173}\ (.{\char'43}{\char'136}{\char'45}|{\char'136}{\char'45}.{\char'43}{\char'136}{\char'175})*\ {\char'136}{\char'45}{\char'136}{\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ \ \ single-line\ scraps}\\
+\mbox{\tt \ \ \ \ \ \ \ \ |\ \ {\char'136}{\char'45}{\char'136}{\char'173}{\char'136}s*{\char'136}n\ (((.{\char'43}{\char'136}{\char'45}.*)?|{\char'136}{\char'45}(.{\char'43}{\char'136}{\char'175}.*)?){\char'136}n)*\ {\char'136}{\char'45}{\char'136}{\char'175}\ \ --\ \ \ multi-line\ scraps}\\
+\mbox{\tt \ \ \ \ \ \ \ \ |\ \ {\char'136}{\char'45}{\char'136}{\char'173}{\char'136}s*{\char'136}n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ \ \ multi-line\ scraps}\\
+\mbox{\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ (((.{\char'43}{\char'136}\ .*)?|{\char'136}\ (.{\char'43}{\char'136}{\char'45}.*)?|{\char'136}\ {\char'136}{\char'45}(.{\char'43}{\char'136}{\char'175}.*)?){\char'136}n)*--\ \ \ \ \ \ (literate}\\
+\mbox{\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'136}\ {\char'136}{\char'45}{\char'136}{\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ \ \ \ \ \ \ scripts)}\\
+\mbox{\tt \ \ <zero>\ ::=\ \ {\char'136}"\ 0\ {\char'136}"\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ "0"\ start\ code}\\
+\mbox{\tt \ \ <ide>\ \ ::=\ \ {\char'136}"\ {\char'136}a{\char'136}i*\ {\char'136}"\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ function\ identifier}\\
+\mbox{\tt \ \ <tkn>\ \ ::=\ \ {\char'136}<\ ({\char'136}a{\char'136}i*)?\ {\char'136}>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ token\ identifier}\\
+\mbox{\tt \ \ <bnd>\ \ ::=\ \ {\char'136}:{\char'136}-\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ ":-"}\\
+\mbox{\tt \ \ <prd>\ \ ::=\ \ {\char'136}:{\char'136}:{\char'136}=\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ "::="}\\
+\mbox{\tt \ \ <spe>\ \ ::=\ \ `{\char'173}={\char'175}:{\char'134}/|*+?,{\char'44}(){\char'43}[]-'\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ specials}\\
+\mbox{\tt \ \ <ch>\ \ \ ::=\ \ [{\char'136}l{\char'136}d]\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ letter\ or\ digit}\\
+\mbox{\tt \ \ <ech>\ \ ::=\ \ {\char'136}{\char'136}\ {\char'136}p{\char'43}[{\char'136}l{\char'136}d]\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ escaped\ symbols}\\
+\mbox{\tt \ \ <cch>\ \ ::=\ \ {\char'136}{\char'136}\ {\char'136}d{\char'173}1,3{\char'175}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ character\ codes}\\
+\mbox{\tt \ \ <smac>\ ::=\ \ {\char'136}{\char'136}\ {\char'136}l\ |\ {\char'136}.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ set\ macros}\\
+\mbox{\tt \ \ <rmac>\ ::=\ \ {\char'136}{\char'45}\ {\char'136}l\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ rexp\ macros}\\
+\mbox{\tt \ \ <quot>\ ::=\ \ {\char'136}`\ {\char'136}p{\char'43}{\char'136}'+\ {\char'136}'\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ --\ quoted\ sets}
+}
+\caption{The \lx\ scanner.}\label{fig-lx}
+\end{figure}
+
+As can be seen from the \mbox{\tt <code>} token, code scraps come in two varieties:
+those that start and end with a newline and those that are contained on one
+line.  If the code scrap starts with a newline then it must finish with the
+\mbox{\tt {\char'45}{\char'175}} at the start of the line.  (In fact, it may have a single space between
+the newline and the \mbox{\tt {\char'45}{\char'175}}; this is to accomodate literate scripts where the \mbox{\tt >}
+between the newline and the \mbox{\tt {\char'45}{\char'175}} is converted to a space.)  This means that the
+\mbox{\tt {\char'45}{\char'175}} sequence may be used anywhere in the code scrap except at the start of the
+line and that the text from the first newline to the last newline can be copied
+without alteration into the output module.
+
+The code in multi-line code scraps must follow the same layout conventions used
+for the tables generated by \lx, namely that all top-level defintions start in
+the left-hand column for ordinary scripts, column two for literate scripts.
+
+Line code scraps may not contain the \mbox{\tt {\char'45}{\char'175}} sequence anywhere in them.  They will
+appear in the output in the left hand column for ordinary scripts, at column
+two for literate scripts.
+
+
+\section{General Scanners}
+\label{sec-general-scanners}
+
+\subsection{The Alex Module}
+
+The \mbox{\tt Alex} module contains the run-time interface.  It is self-contained so
+only \mbox{\tt Alex} and the \lx\ generated modules need to be added to programs using a
+\lx\ scanner.
+
+The \mbox{\tt Posn} data type is the first product of the \mbox{\tt Alex} module.  It provides a
+standard means of positioning tokens in the input stream.
+
+\display{
+\mbox{\tt data\ Posn\ =\ Pn\ Int\ Int\ Int\ \ deriving\ (Eq,Text)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt start{\char'137}pos::\ Posn}\\
+\mbox{\tt start{\char'137}pos\ =\ Pn\ 0\ 1\ 1}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt eof{\char'137}pos::\ Posn}\\
+\mbox{\tt eof{\char'137}pos\ =\ Pn\ (-1)\ (-1)\ (-1)}
+}
+
+\mbox{\tt Pn\ addr\ ln\ col} represents the location of a token found \mbox{\tt addr} characters
+into the file on line \mbox{\tt ln} and column \mbox{\tt col}.  In calculating the column
+position, it will be assumed that tab characters use eight-character tab stops.
+The first character of the file is located at \mbox{\tt start{\char'137}pos} and \mbox{\tt eof{\char'137}pos}, by
+convention, will represent the end of file.
+
+The \mbox{\tt Alex} module provides two packages for generating scanners from the tables
+generated by \lx: the basic \mbox{\tt Scan}/\mbox{\tt load{\char'137}scan}/\mbox{\tt scan} package used for the
+\mbox{\tt Token} module of Figure~\ref{fig-tokens}, and a more flexible
+\mbox{\tt GScan}/\mbox{\tt load{\char'137}gscan}/\mbox{\tt gscan} package.
+
+The \mbox{\tt scan} package generates simple scanners that convert input text to streams
+of tokens.  The scanners are stateless as each token generated is a function of
+its textual content and location.
+ 
+The token actions take the form of an association list associating each token
+name with an action function that constructs the token from the text matched
+and its location.  The stop action is invoked when no more input can be
+tokenised; it takes the residual input and its position and generates the
+remaining stream of tokens, usually the empty list or an end-of-file token if
+the empty string is passed, an error token otherwise.
+
+\display{
+\mbox{\tt type\ Actions\ t\ =\ ([(String,TokenAction\ t)],\ StopAction\ t)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt type\ TokenAction\ t\ =\ Posn\ ->\ String\ ->\ t}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt type\ StopAction\ t\ =\ Posn\ ->\ String\ ->\ [t]}
+}
+
+\mbox{\tt load{\char'137}scan} combines the actions with the dump generated by \lx\ to produce a
+\mbox{\tt Scan} structure that can be passed to \mbox{\tt scan}.  \mbox{\tt scan} takes the scanner and
+the input text and generates a stream of tokens.  It assumes that the text is
+at the start of the input with the position set to \mbox{\tt start{\char'137}pos} (see above) and
+sets the last character read to newline (the last character read is used to
+resolve leading context specifications); \mbox{\tt scan'} can be used to override these
+defaults.
+
+\display{
+\mbox{\tt load{\char'137}scan::\ Actions\ t\ ->\ DFADump\ ->\ Scan\ t}\\
+\mbox{\tt scan::\ Scan\ t\ ->\ String\ ->\ [t]}\\
+\mbox{\tt scan'::\ Scan\ t\ ->\ Posn\ ->\ Char\ ->\ String\ ->\ [t]}
+}
+
+The \mbox{\tt gscan} package generates general-purpose scanners for converting input
+text into a return type determined by the application.  Access to the scanner's
+internal state, start codes and some application-specific state is provided.
+ 
+The token actions take the form of an association list associating each token
+name with an action function that constructs the result from the length of the
+token, the scanner's state (including the remaining input from the start of the
+token) and a continuation function that scans the remaining input.
+ 
+More specifically, each token action takes as arguments the position of the
+token, the last character read before the token (used to resolve leading
+context), the whole input from the start of the token, the length of the token,
+the continuation function and the visible state (as distinct from the scanner's
+internal state) including the current start code and the application specific
+state.  The stop action is invoked when no more input can be scanned; it takes
+the same parameters as the token actions without the token length and the
+continuation function.
+
+\display{
+\mbox{\tt type\ GScan\ s\ r\ =\ (DFA\ (GTokenAction\ s\ r),\ GStopAction\ s\ r)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt type\ GActions\ s\ r\ =\ ([(String,\ GTokenAction\ s\ r)],\ GStopAction\ s\ r)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt type\ GTokenAction\ s\ r\ =\ }\\
+\mbox{\tt \ \ \ \ \ \ \ \ Posn\ ->\ Char\ ->\ String\ ->\ Int\ ->}\\
+\mbox{\tt \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ((StartCode,s)->r)\ ->\ (StartCode,s)\ ->\ r}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt type\ GStopAction\ s\ r\ =\ Posn\ ->\ Char\ ->\ String\ ->\ (StartCode,s)\ ->\ r}
+}
+
+
+\mbox{\tt load{\char'137}gscan} combines the actions with the dump generated by \lx\ to produce a
+\mbox{\tt GScan} structure that can be passed to \mbox{\tt gscan}.  \mbox{\tt gscan} takes the scanner,
+the application-specific state and the input text as parameters.  It assumes
+that the text is at the start of the input with the position set to
+\mbox{\tt start{\char'137}pos} (see above) and sets the last character read to newline and the
+start code to 0; \mbox{\tt gscan'} can be used to override these defaults.
+
+\display{
+\mbox{\tt load{\char'137}gscan::\ GActions\ s\ r\ ->\ DFADump\ ->\ GScan\ s\ r}\\
+\mbox{\tt gscan::\ GScan\ s\ r\ ->\ s\ ->\ String\ ->\ r}\\
+\mbox{\tt gscan'::\ GScan\ s\ r\ ->\ Posn\ ->\ Char\ ->\ String\ ->\ (StartCode,s)\ ->\ r}
+}
+
+Note that a token action can ignore its continuation function and call up
+\mbox{\tt gscan'} with a different scanner to tokenise the rest of the input.  This
+offers a more efficient alternative to start codes (see
+Section~\ref{sec-context-specifications} on context specifications) for
+invoking alternate scanners on segments of the input.
+
+
+\subsection{Stateful Scanners}
+\label{sec-stateful-scanners}
+
+Some parsing constructions are best handled by making the scanner stateful,
+allowing the action functions to read and alter some state.  A stateful scanner
+will instantiate the \mbox{\tt s} parameter of \mbox{\tt GScan} with the state type needed by the
+application and will make use of the \mbox{\tt (StartCode,s)} argument of the action
+functions.  (The \mbox{\tt StartCode} component of the scanner's state will be dealt
+with in Section~\ref{sec-context-specifications} on context specifications.)
+
+Consider the problem of collecting the code scraps from a \lx\ script.  The
+code scraps could have been included in the grammar, forcing them to appear at
+certain points in the script and complicating the grammar and parser.  Instead,
+they are ignored by the parser and collected in the scanner's state, being
+passed back to the parser in an explicit end-of-file token.
+
+A simple scanner illustrating this technique is given in
+Figure~\ref{fig-state}.  It returns a stream of identifiers terminated with an
+end-of-file token containing all the accumulated code scraps on the input.
+
+The idea for this technique, and another potential application of it, came from
+the Brisk scanner which constructs the symbol table, returning integer handles
+in the token stream and the symbol table in the end-of-file token.
+
+\begin{figure}
+\shrink{
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt import\ Alex}\\
+\mbox{\tt {\char'45}{\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt "state{\char'137}lx"/"state{\char'137}acts":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <>\ \ \ \ \ ::=\ {\char'136}w+}\\
+\mbox{\tt \ \ <code>\ ::=\ {\char'136}{\char'45}{\char'136}{\char'173}\ ({\char'176}{\char'136}{\char'45}\ |\ {\char'136}{\char'45}{\char'176}{\char'136}{\char'175})*\ {\char'136}{\char'45}{\char'136}{\char'175}}\\
+\mbox{\tt \ \ <ide>\ \ ::=\ [A-Za-z]+}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt code\ {\char'137}\ {\char'137}\ inp\ len\ cont\ (sc,frags)\ =\ cont\ (sc,frag:frags)}\\
+\mbox{\tt \ \ \ \ \ \ \ \ where}\\
+\mbox{\tt \ \ \ \ \ \ \ \ frag\ =\ take\ (len-4)\ (drop\ 2\ inp)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt ide\ {\char'137}\ {\char'137}\ inp\ len\ cont\ st\ =\ Ide\ (take\ len\ inp):cont\ st}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt data\ Token\ =\ Ide\ String\ |\ Eof\ String\ |\ Err}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt tokens::\ String\ ->\ [Token]}\\
+\mbox{\tt tokens\ inp\ =\ gscan\ state{\char'137}scan\ []\ inp}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt state{\char'137}scan::\ GScan\ [String]\ [Token]}\\
+\mbox{\tt state{\char'137}scan\ =\ load{\char'137}gscan\ (state{\char'137}acts,stop{\char'137}act)\ state{\char'137}lx}\\
+\mbox{\tt \ \ \ \ \ \ \ \ where}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ {\char'137}\ {\char'137}\ ""\ ({\char'137},frags)\ =\ [Eof\ (unlines(reverse\ frags))]}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ {\char'137}\ {\char'137}\ {\char'137}\ {\char'137}\ =\ [Err]}\\
+\mbox{\tt {\char'45}{\char'175}}
+}
+\caption{A stateful scanner.}\label{fig-state}
+\end{figure}
+
+
+\subsection{Literate Scripts}
+\label{sec-literate-scripts}
+
+The \mbox{\tt scan} package only provides for actions that return a single token as part
+of a list of such tokens.  Sometimes a more flexible format is required, such
+as a preprocessor that generates another stream of characters.
+
+\lx\ itself uses such a preprocessor to deal with literate scripts.  Recall
+that each line in a (Haskell) literate scripts is either a blank line, a code
+scrap line starting with a \mbox{\tt >} or a comment line, and that comment lines and
+scrap lines must be separated by one or more blank lines.  The script in
+Figure~\ref{fig-lit} defines three macros, \mbox{\tt {\char'45}b}, \mbox{\tt {\char'45}s} and \mbox{\tt {\char'45}c}, for recognising
+blank, scrap and comment lines (where each line {\em starts} with a newline
+character).  Figure~\ref{fig-lit} is itself a literate script, of course.
+
+If two newline characters are added to the front of the input then a valid
+literate script could be considered as a series of scraps and comments in which
+a scrap consists of a blank line followed by one or more scrap lines and a
+comment consists of a blank line followed by zero or more comment lines.  Note
+that the initial lines in a series of blank lines will each be considered
+comments in this scheme.
+
+The action for the \mbox{\tt <scrap>} token replaces each of the \mbox{\tt >} in column one with
+a space, appending the continuation onto the result.  The \mbox{\tt <comment>} action
+strips out everything except the newlines, appending its continuation. (The
+newlines from the comment scraps are retained in order to keep the line numbers
+synchronised with the original input.)
+
+To construct the \mbox{\tt literate} scanner, of type \mbox{\tt String\ ->\ String}, we must
+remember to insert the dummy newlines onto the input, and to remove them again
+afterwards.
+
+\begin{figure}
+\shrink{
+\mbox{\tt >{\char'45}{\char'173}\ import\ Alex\ {\char'45}{\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >\ "lit{\char'137}lx"/"lit{\char'137}acts":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >\ {\char'173}\ {\char'136}s\ =\ {\char'136}w{\char'43}{\char'136}n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}}\\
+\mbox{\tt >\ {\char'173}\ {\char'45}b\ =\ {\char'136}n{\char'136}s*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}}\\
+\mbox{\tt >\ {\char'173}\ {\char'45}s\ =\ {\char'136}n{\char'136}>.*\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}}\\
+\mbox{\tt >\ {\char'173}\ {\char'45}c\ =\ {\char'136}n({\char'176}[{\char'136}>{\char'136}w].*|{\char'136}s+{\char'176}{\char'136}w.*)\ {\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >\ \ \ <scrap>\ \ \ ::=\ {\char'45}b{\char'45}s+}\\
+\mbox{\tt >\ \ \ <comment>\ ::=\ {\char'45}b{\char'45}c*}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >{\char'45}{\char'173}}\\
+\mbox{\tt >\ scrap\ {\char'137}\ {\char'137}\ inp\ len\ cont\ st\ =\ strip\ len\ inp}\\
+\mbox{\tt >\ \ \ \ \ \ \ where}\\
+\mbox{\tt >\ \ \ \ \ \ \ strip\ 0\ {\char'137}\ =\ cont\ st}\\
+\mbox{\tt >\ \ \ \ \ \ \ strip\ (n+1)\ (c:rst)\ =}\\
+\mbox{\tt >\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ if\ c=='{\char'134}n'}\\
+\mbox{\tt >\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ then\ '{\char'134}n':strip{\char'137}nl\ n\ rst}\\
+\mbox{\tt >\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ else\ c:strip\ n\ rst}\\
+\mbox{\tt >}\\
+\mbox{\tt >\ \ \ \ \ \ \ strip{\char'137}nl\ (n+1)\ ('>':rst)\ =\ '\ ':strip\ n\ rst}\\
+\mbox{\tt >\ \ \ \ \ \ \ strip{\char'137}nl\ n\ rst\ =\ strip\ n\ rst}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >\ comment\ {\char'137}\ {\char'137}\ inp\ len\ cont\ st\ =\ strip\ len\ inp}\\
+\mbox{\tt >\ \ \ \ \ \ \ where}\\
+\mbox{\tt >\ \ \ \ \ \ \ strip\ 0\ {\char'137}\ =\ cont\ st}\\
+\mbox{\tt >\ \ \ \ \ \ \ strip\ (n+1)\ (c:rst)\ =\ if\ c=='{\char'134}n'\ then\ c:strip\ n\ rst\ else\ strip\ n\ rst}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >\ literate::\ String\ ->\ String}\\
+\mbox{\tt >\ literate\ inp\ =\ drop\ 2\ (gscan\ lit{\char'137}scan\ ()\ ('{\char'134}n':'{\char'134}n':inp))}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt >\ lit{\char'137}scan::\ GScan\ ()\ String}\\
+\mbox{\tt >\ lit{\char'137}scan\ =\ load{\char'137}gscan\ (lit{\char'137}acts,stop{\char'137}act)\ lit{\char'137}lx}\\
+\mbox{\tt >\ \ \ \ \ \ \ where}\\
+\mbox{\tt >\ \ \ \ \ \ \ stop{\char'137}act\ p\ {\char'137}\ ""\ st\ =\ []}\\
+\mbox{\tt >\ \ \ \ \ \ \ stop{\char'137}act\ p\ {\char'137}\ {\char'137}\ \ {\char'137}\ \ =\ error\ (msg\ ++\ loc\ p\ ++\ "{\char'134}n")}\\
+\mbox{\tt >}\\
+\mbox{\tt >\ \ \ \ \ \ \ msg\ \ =\ "literate\ preprocessing\ error\ at\ "}\\
+\mbox{\tt >}\\
+\mbox{\tt >\ \ \ \ \ \ \ loc\ (Pn\ {\char'137}\ l\ c)\ =\ "line\ "\ ++\ show(l-2)\ ++\ ",\ column\ "\ ++\ show\ c}\\
+\mbox{\tt >{\char'45}{\char'175}}
+}
+\caption{A preprocessor for literate scripts.}\label{fig-lit}
+\end{figure}
+
+
+\subsection{A Simple Preprocessor}
+\label{sec-pp}
+
+A general scanner need not return a list at all.  The scanner of
+Figure~\ref{fig-pp} is a schematic version of the C preprocessor that only
+supports \mbox{\tt {\char'43}include\ "foo"} preprocessor lines.  The return type of the scanner,
+and therefore the continuation passed to the action functions, is \mbox{\tt IO\ ()},
+which it combines with the \mbox{\tt >>} and \mbox{\tt >>=} operators rather than the \mbox{\tt :} and
+\mbox{\tt ++} operators for the list generating scanners.
+
+\begin{figure}
+\shrink{
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt import\ Alex}\\
+\mbox{\tt {\char'45}{\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt "pp{\char'137}lx"/"pp{\char'137}acts":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'173}\ {\char'136}s\ =\ {\char'136}w{\char'43}{\char'136}n\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'175}\ \ \ \ \ \ \ \ \ \ \ --\ spaces\ and\ tabs,\ etc.}\\
+\mbox{\tt {\char'173}\ {\char'136}f\ =\ [A-Za-z0-9`{\char'176}{\char'45}-{\char'137}.,/']\ {\char'175}\ \ \ \ \ \ \ \ \ \ \ --\ file-name\ character}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <inc>\ ::=\ {\char'136}{\char'43}include{\char'136}s+{\char'136}"{\char'136}f+{\char'136}"{\char'136}s*{\char'136}n}\\
+\mbox{\tt \ \ <txt>\ ::=\ .*{\char'136}n}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt inc\ p\ c\ inp\ len\ cont\ st\ =\ pp\ fn\ >>\ cont\ st}\\
+\mbox{\tt \ \ \ \ \ \ \ \ where}\\
+\mbox{\tt \ \ \ \ \ \ \ \ fn\ =\ (takeWhile\ ('"'/=)\ .\ tail\ .\ dropWhile\ isSpace\ .\ drop\ 8)\ inp}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt txt\ p\ c\ inp\ len\ cont\ st\ =\ putStr\ (take\ len\ inp)\ >>\ cont\ st}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt pp::\ String\ ->\ IO\ ()}\\
+\mbox{\tt pp\ fn\ =\ readFile\ fn\ >>=\ {\char'134}cts\ ->\ gscan\ pp{\char'137}scan\ ()\ cts}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt pp{\char'137}scan::\ GScan\ ()\ (IO\ ())}\\
+\mbox{\tt pp{\char'137}scan\ =\ load{\char'137}gscan\ (pp{\char'137}acts,stop{\char'137}act)\ pp{\char'137}lx}\\
+\mbox{\tt \ \ \ \ \ \ \ \ where}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ {\char'137}\ {\char'137}\ {\char'137}\ {\char'137}\ =\ return\ ()}\\
+\mbox{\tt {\char'45}{\char'175}}
+}
+\caption{A scanner capable of I/O.}\label{fig-pp}
+\end{figure}
+
+
+\subsection{Context Specifications}
+\label{sec-context-specifications}
+
+\lx\ retains the facilities of \lex\ for restricting token specifications to
+given contexts, albeit in a modified form.  Leading context is specified with
+the \mbox{\tt {\char'134}} operator, with its left operand being restricted to a {\em set}
+specification.  The character to the left of the token must be matched by the
+specification but it is not included in the token.
+
+Trailing context is specified with a \mbox{\tt /}, where the expression to the right can
+be a fully-fledged regular expression.  Again, the input to the right of the
+token must match the regular expression but it is not included in the token.
+
+Note that unlike \lex, the leading and trailing context do not contribute to
+the length of the token when choosing from a number of matching tokens.  The
+only effect of the context specifications is to eliminate tokens that would
+otherwise match the input.
+
+A token may be restricted to given `start codes' by prefixing the token
+specification (to the right of the \mbox{\tt ::=}) with a \mbox{\tt "foo":} where \mbox{\tt foo} is the
+name of the start code; to restrict a definition to the \mbox{\tt 0} start code, prefix
+it with \mbox{\tt "0":}; if several start codes are given then the scanner may be in any
+one of start codes for the token to be selected.
+\begin{figure}
+\shrink{
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt import\ Alex}\\
+\mbox{\tt {\char'45}{\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'173}\ {\char'136}A\ =\ A-Z\ \ \ \ \ \ \ {\char'175}}\\
+\mbox{\tt {\char'173}\ {\char'45}t\ =\ [{\char'136}\ {\char'136}t]*{\char'136}n\ {\char'175}}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt "ctx{\char'137}lx"/"ctx{\char'137}acts":-}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt \ \ <only{\char'137}ide>\ \ ::=\ \ \ {\char'136}n{\char'134}{\char'136}A+/{\char'45}t\ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ only{\char'137}ide\ \ =\ tkn\ 0\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <start{\char'137}ide>\ ::=\ \ \ {\char'136}n{\char'134}{\char'136}A+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ start{\char'137}ide\ =\ tkn\ 1\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <end{\char'137}ide>\ \ \ ::=\ \ \ \ \ \ {\char'136}A+/{\char'45}t\ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ end{\char'137}ide\ \ \ =\ tkn\ 2\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <ide>\ \ \ \ \ \ \ ::=\ \ \ \ \ \ {\char'136}A+\ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ ide\ \ \ \ \ \ \ =\ tkn\ 3\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <tricky>\ \ \ \ ::=\ \ \ \ \ \ x*/x\ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ tricky\ \ \ \ =\ tkn\ 4\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <dot>\ \ \ \ \ \ \ ::=\ \ "0":{\char'136}.\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ dot\ \ \ \ \ \ \ =\ tkn\ 5\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <open>\ \ \ \ \ \ ::=\ \ \ \ \ \ {\char'136}(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ open\ \ \ \ \ \ =\ start\ op\ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <comma>\ \ \ \ \ ::=\ "op":{\char'136},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ comma\ \ \ \ \ =\ tkn\ 6\ \ \ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <close>\ \ \ \ \ ::=\ \ \ \ \ \ {\char'136})\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ {\char'45}{\char'173}\ close\ \ \ \ \ =\ start\ 0\ \ {\char'45}{\char'175}}\\
+\mbox{\tt \ \ <>\ \ \ \ \ \ \ \ \ \ ::=\ \ \ \ \ \ [.{\char'136}n]}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt {\char'45}{\char'173}}\\
+\mbox{\tt tkn\ n\ {\char'137}\ {\char'137}\ inp\ len\ cont\ st\ =\ Ide\ n\ (take\ len\ inp):cont\ st}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt start\ sc\ {\char'137}\ {\char'137}\ {\char'137}\ {\char'137}\ cont\ ({\char'137},s)\ =\ cont\ (sc,s)}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt }\\[-4pt]
+\mbox{\tt data\ Tkn\ =\ Ide\ Int\ String}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt tokens::\ String\ ->\ [Tkn]}\\
+\mbox{\tt tokens\ inp\ =\ gscan\ ctx{\char'137}scan\ ()\ inp}\\
+\mbox{\tt }\\[-4pt]
+\mbox{\tt ctx{\char'137}scan::\ GScan\ ()\ [Tkn]}\\
+\mbox{\tt ctx{\char'137}scan\ =\ load{\char'137}gscan\ (ctx{\char'137}acts,stop{\char'137}act)\ ctx{\char'137}lx}\\
+\mbox{\tt \ \ \ \ \ \ \ \ where}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ {\char'137}\ {\char'137}\ ""\ {\char'137}\ =\ []}\\
+\mbox{\tt \ \ \ \ \ \ \ \ stop{\char'137}act\ {\char'137}\ {\char'137}\ {\char'137}\ \ {\char'137}\ =\ error\ "tokens"}\\
+\mbox{\tt {\char'45}{\char'175}}
+}
+\caption{Specifying context in \lx.}\label{fig-ctx}
+\end{figure}
+
+Each start code, \mbox{\tt "foo"}, mentioned in the script will result in a definition
+like
+
+\display{
+\mbox{\tt foo\ =\ 1}
+}
+
+being added to the output (where the integer is positive and distinct from
+those assigned to other start codes) so each start code must be a Haskell
+function identifier that is not otherwise bound in the output module.
+
+By default, the scanner starts in start code \mbox{\tt 0}.  To change to a different
+start code, an action function has only to call its continuation function with
+the \mbox{\tt StartCode} component of its state argument set to a different value; this
+will immediately eliminate token definitions annotated with start codes that do
+not include the new start code.
+
+Figure~\ref{fig-ctx} gives a rather contrived scanner that illustrates several
+aspects of context specifications.
+
+The first four tokens specifications match the same text, only differing in
+their context.  \mbox{\tt <only{\char'137}ide>} will be selected if it is the only alphabetic
+string on the line, \mbox{\tt <start{\char'137}ide>} if it is at the start of the line,
+\mbox{\tt <end{\char'137}ide>} if it is at the end of a line, otherwise \mbox{\tt <ide>}.  Note that there
+is no question of the leading or trailing context elongating any of the tokens
+and interfering with their priority.
+
+The \mbox{\tt <tricky>} definition would not work properly in \lex, the final \mbox{\tt x} in the
+specification being included in the token.  \lx\ does not suffer from this
+problem.
+
+The \mbox{\tt <dot>} token is restricted to start code 0 so dot characters will be
+initially recognised, but they will be ignored after a \mbox{\tt (} token has been read,
+as it changes the start code to \mbox{\tt op}.  Once a \mbox{\tt )} has been read, the start code
+will revert to 0 and the dots will resume.  On the other hand commas are
+restricted to the \mbox{\tt op} start code so they will be initially disabled, appearing
+between open and close brackets.
+
+
+\section*{Acknowledgements}
+
+I would like to thank Tom Alardice for providing the original motivation for
+writing \lx, Henk Muller for suggestions and encouragement, Ian Holyer for the
+various discussions that have helped to shape it and Alastair Reid for feedback
+and suggestions.
+\end{document}
