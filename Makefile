@@ -1,6 +1,12 @@
 TOP = .
 include $(TOP)/mk/boilerplate.mk
 
-SUBDIRS = src templates doc
+ifneq "$(SGMLDocWays)" ""
+DOCS_DIR = doc
+else
+DOCS_DIR =
+endif
+
+SUBDIRS = src templates $(DOCS_DIR)
 
 include $(TOP)/mk/target.mk
