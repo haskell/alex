@@ -1,42 +1,34 @@
 {
-module Main (main) where
+module Tokens (Token(..), alexScanTokens) where
 }
 
-%wrapper "posn"  -- adds a useful wrapper (alexScanTokens) around the basic
-		 -- scanner, providing support for token positions and
-		 -- continuations.
+%wrapper "basic"
 
 $digit = 0-9			-- digits
 $alpha = [a-zA-Z]		-- alphabetic characters
 
 tokens :-
 
-  $white+				{ skip }
-  "--".*				{ skip }
-  let					{ tok (\p s -> Let p) }
-  in					{ tok (\p s -> In p) }
-  $digit+				{ tok (\p s -> Int p (read s)) }
-  [\=\+\-\*\/\(\)]			{ tok (\p s -> Sym p (head s)) }
-  $alpha [$alpha $digit \_ \']*		{ tok (\p s -> Var p s) }
+  $white+				{ \s -> White }
+  "--".*				{ \s -> Comment }
+  let					{ \s -> Let }
+  in					{ \s -> In }
+  $digit+				{ \s -> Int (read s) }
+  [\=\+\-\*\/\(\)]			{ \s -> Sym (head s) }
+  $alpha [$alpha $digit \_ \']*		{ \s -> Var s }
 
 {
--- Each right-hand side has type :: AlexPosn -> String -> [Token] -> [Token]
-
--- Some action helpers:
-tok f p s rest = f p s : rest
-skip  p s rest = rest
+-- Each right-hand side has type :: String -> Token
 
 -- The token type:
 data Token =
-	Let AlexPosn		|
-	In  AlexPosn		|
-	Sym AlexPosn Char	|
-	Var AlexPosn String	|
-	Int AlexPosn Int	|
-	Err AlexPosn
+        White		|
+        Comment		|
+	Let 		|
+	In  		|
+	Sym Char	|
+	Var String	|
+	Int Int		|
+	Err 
 	deriving (Eq,Show)
-
-main = do
-  s <- getContents
-  print (alexScanTokens s)
 }

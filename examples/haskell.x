@@ -4,10 +4,13 @@
 -- (c) Simon Marlow 2003, with the caveat that much of this is
 -- translated directly from the syntax in the Haskell 98 report.
 --
+-- This isn't a complete Haskell 98 lexer - it doesn't handle layout
+-- for one thing.  However, it could be adapted with a small
+-- amount of effort.
+--
 
 {
 module Main (main) where
-import Data.Char ( ord )
 }
 
 %wrapper "monad"
@@ -159,8 +162,7 @@ scanner str = runAlex str $ do
 			else do loop $! (i+1)
   loop 0
 
-alexEOF (p,_,"")   = return (L p LEOF "")
-alexEOF (p,_,rest) = lexError "lexical error"
+alexEOF = return (L undefined LEOF "")
 
 showPosn (AlexPn _ line col) = show line ++ ':': show col
 

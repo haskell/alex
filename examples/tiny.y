@@ -1,6 +1,6 @@
+-- An example demonstrating how to connect a Happy parser to an Alex lexer.
 {
-import Alex
-import Tokens
+import Tokens_posn
 }
 
 %name calc
@@ -17,7 +17,6 @@ import Tokens
 	'/'		{ Sym _ '/' }
 	'('		{ Sym _ '(' }
 	')'		{ Sym _ ')' }
-	error		{ Err _     }
 
 %%
 
@@ -57,14 +56,14 @@ main:: IO ()
 main = interact (show.runCalc)
 
 runCalc :: String -> Exp
-runCalc = calc . tokens
+runCalc = calc . alexScanTokens
 
-happyError :: Int -> [Token] -> a
-happyError i tks = error ("Parse error at " ++ lcn ++ "\n")
+happyError :: [Token] -> a
+happyError tks = error ("Parse error at " ++ lcn ++ "\n")
 	where
 	lcn = 	case tks of
 		  [] -> "end of file"
 		  tk:_ -> "line " ++ show l ++ ", column " ++ show c
 			where
-			Pn _ l c = token_pos tk
+			AlexPn _ l c = token_posn tk
 }
