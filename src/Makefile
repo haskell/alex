@@ -23,7 +23,7 @@ EXTRA_SRCS += $(VERSION_HS)
 
 boot :: $(VERSION_HS)
 
-Version.hs : ../mk/version.mk
+Version.hs : $(TOP)/mk/version.mk
 	@$(RM) -f $(VERSION_HS)
 	@echo "Creating $(VERSION_HS) ... "
 	@echo "module Version where" >>$(VERSION_HS)
