@@ -50,15 +50,15 @@ outputDFA target n func_nm dfa
     outputCheck   = do_array hexChars16 check_nm table_size check
     outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
-    do_array hex_chars nm upper_bound ints
-	| GhcTarget <- target
-	= str nm . str " :: AlexAddr\n"
+    do_array hex_chars nm upper_bound ints = case target of
+      GhcTarget ->
+	  str nm . str " :: AlexAddr\n"
 	. str nm . str " = AlexA# \""
 	. str (hex_chars ints)
 	. str "\"#\n"
 
-	| otherwise
-	= str nm . str " :: Array Int Int\n"
+      _ ->
+	  str nm . str " :: Array Int Int\n"
 	. str nm . str " = listArray (0," . shows upper_bound
 	. str ") [" . interleave_shows (char ',') (map shows ints)
 	. str "]\n"
