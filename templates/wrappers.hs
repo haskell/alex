@@ -86,8 +86,8 @@ alexMonadScan = do
   inp <- alexGetInput
   sc <- alexGetStartCode
   case alexScan inp sc of
-    Nothing -> alexEOF inp 
-    Just (inp', len, action) -> do
+    Left inp' -> alexEOF inp
+    Right (inp', len, action) -> do
 	alexSetInput inp'
 	action inp len
 
