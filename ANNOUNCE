@@ -1,0 +1,32 @@
+I am pleased to announce version 2.0 of Alex, the lexical analyser
+generator for Haskell.
+
+Based on Chris Dornan's original version of Alex, this new version
+contains some significant changes:
+
+  - A revised syntax, more closely matching that of lex and Happy.
+
+  - A rewritten back-end, producing smaller, faster, lexers.
+
+  - A more flexible programmer interface, allowing simple
+    tokenisers to be produced with very little code, and allowing
+    monads to be threaded through the lexer.
+
+Read the release notes for the full story:
+
+  http://www.haskell.org/alex/doc/html/about.html#RELNOTES
+
+This version has been tested on GHC: I have a development version of
+GHC using an Alex lexer, which beats the orignal hand-optimised lexer.
+
+Distributions can be obtained from Alex's new home:
+
+  http://www.haskell.org/alex/
+
+Alex is now distributed under a BSD-style license.
+
+Share and enjoy,
+
+Simon Marlow:  simonmar@microsoft.com
+Chris Dornan:  cdornan@arm.com
+Isaac Jones:   ijones@syntaxpolice.org
