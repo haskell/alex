@@ -143,3 +143,6 @@ alex_scan_tkn' lc len input s last_acc =
 data AlexLastAcc a = AlexNone | AlexLastAcc a !AlexInput !Int
 
 data AlexAcc a = AlexAcc Int a (Maybe (Array Char Bool)) (Maybe Int)
+
+-- used by wrappers
+iUnbox IBOX(i) = i

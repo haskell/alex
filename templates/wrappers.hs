@@ -138,10 +138,10 @@ alexScanTokens str = go (alexStartPos,'\n',str)
 #ifdef ALEX_GSCAN
 alexGScan stop state inp = alex_gscan stop alexStartPos '\n' inp (0,state)
 
-alex_gscan stop p c inp (IBOX(sc),state) =
-  case alex_scan_tkn c ILIT(0) (p,c,inp) sc AlexNone of
-	AlexNone -> stop p c inp (IBOX(sc),state)
-	AlexLastAcc k (p',c',inp') len ->
- 	     k p c inp len (\scs -> alex_gscan stop p' c' inp' scs) 
-		(IBOX(sc),state)
+alex_gscan stop p c inp (sc,state) =
+  case alex_scan_tkn c (iUnbox 0) (p,c,inp) (iUnbox sc) AlexNone of
+	Left _ -> stop p c inp (sc,state)
+	Right ((p',c',inp'),len,k) ->
+ 	     k p c inp len (\scs -> alex_gscan stop p' c' inp' scs)
+		(sc,state)
 #endif
