@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# $Id: Makefile,v 1.1 2003/08/08 13:22:55 simonmar Exp $
+# $Id: Makefile,v 1.2 2003/08/08 15:43:58 simonmar Exp $
 
 TOP = ..
 include $(TOP)/mk/boilerplate.mk
@@ -10,6 +10,7 @@ TEMPLATES = \
 	AlexTemplate-ghc-debug \
 	AlexTemplate-debug \
 	AlexWrapper-basic \
+	AlexWrapper-posn \
 	AlexWrapper-monad \
 	AlexWrapper-gscan
 
@@ -48,6 +49,9 @@ AlexTemplate-monad.hspp : $(GENERIC_TEMPLATE)
 
 AlexWrapper-basic.hspp : wrappers.hs
 	$(CPP_IT) $@ -DALEX_BASIC $<
+
+AlexWrapper-posn.hspp : wrappers.hs
+	$(CPP_IT) $@ -DALEX_POSN $<
 
 AlexWrapper-monad.hspp : wrappers.hs
 	$(CPP_IT) $@ -DALEX_MONAD $<

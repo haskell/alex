@@ -113,8 +113,21 @@ begin code input len = do alexSetStartCode code; alexMonadScan
 alexScanTokens str = go (alexStartPos,'\n',str)
   where go inp@(_,_,str) =
 	  case alexScan inp 0 of
-		Nothing -> []
-		Just (inp',len,act) -> act (take len str) : go inp'
+		Left _ -> []
+		Right (inp',len,act) -> act (take len str) : go inp'
+#endif
+
+-- -----------------------------------------------------------------------------
+-- Posn wrapper
+
+-- Adds text positions and continuations to the basic model.
+
+#ifdef ALEX_POSN
+alexScanTokens str = go (alexStartPos,'\n',str)
+  where go inp@(pos,_,str) =
+	  case alexScan inp 0 of
+		Left _ -> []
+		Right (inp',len,act) -> act pos (take len str) (go inp')
 #endif
 
 -- -----------------------------------------------------------------------------
