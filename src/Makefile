@@ -3,7 +3,13 @@ include $(TOP)/mk/boilerplate.mk
 
 INSTALLING=1
 
-HS_PROG = alex.bin
+ifeq "$(TARGETPLATFORM)" "i386-unknown-mingw32"
+HS_PROG_EXT = .exe
+else
+HS_PROG_EXT = .bin
+endif
+
+HS_PROG = alex$(HS_PROG_EXT)
 
 Main_HC_OPTS = -DALEX_VERSION=$(ProjectVersion)
 
@@ -26,7 +32,9 @@ INPLACE_SCRIPT_PROG    = alex-inplace
 ifeq "$(INSTALLING)" "1"
 TOP_PWD 	:= $(prefix)
 SCRIPT_PROG 	=  $(INSTALLED_SCRIPT_PROG)
+ifneq "$(TARGETPLATFORM)" "i386-unknown-mingw32"
 LINK	 	=  alex
+endif
 else
 TOP_PWD 	:= $(FPTOOLS_TOP_ABS)
 SCRIPT_PROG 	=  $(INPLACE_SCRIPT_PROG)
