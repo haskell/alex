@@ -43,6 +43,10 @@ SCRIPT_SUBST_VARS = 	\
 INSTALL_SCRIPTS += $(SCRIPT_PROG)
 INSTALL_LIBEXECS = $(HS_PROG)
 
+# Hack to avoid automatic cleaning machinery from cleaning Scan.hs
+#
+DERIVED_ALEX_SRCS = 
+
 # don't recurse on 'make install'
 #
 ifeq "$(INSTALLING)" "1"
