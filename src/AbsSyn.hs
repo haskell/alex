@@ -15,6 +15,7 @@ module AbsSyn (
   RECtx(..),
   RExp(..),
   DFA(..), State(..), SNum, StartCode, Accept(..),
+  RightContext(..),
   encodeStartCodes, extractActions,
   Target(..)
   ) where
@@ -56,21 +57,30 @@ data Scanner = Scanner { scannerName   :: String,
 data RECtx = RECtx { reCtxStartCodes :: [(String,StartCode)],
 		     reCtxPreCtx     :: Maybe CharSet,
 		     reCtxRE	     :: RExp,
-		     reCtxPostCtx    :: Maybe RExp,
-		     reCtxCode	     :: Code
+		     reCtxPostCtx    :: RightContext RExp,
+		     reCtxCode	     :: Maybe Code
 		   }
+
+data RightContext r
+  = NoRightContext 
+  | RightContextRExp r
+  | RightContextCode Code
 
 instance Show RECtx where
   showsPrec _ (RECtx scs _ r rctx code) = 
-	showStarts scs . shows r . showRCtx rctx . showCode code
+	showStarts scs . shows r . showRCtx rctx . showMaybeCode code
+
+showMaybeCode Nothing = id
+showMaybeCode (Just code) = showCode code
 
 showCode code = showString " { " . showString code . showString " }"
 
 showStarts [] = id
 showStarts scs = shows scs
 
-showRCtx Nothing = id
-showRCtx (Just r) = ('\\':) . shows r
+showRCtx NoRightContext = id
+showRCtx (RightContextRExp r) = ('\\':) . shows r
+showRCtx (RightContextCode code) = showString "\\ " . showCode code
 
 -- -----------------------------------------------------------------------------
 -- DFAs
@@ -86,9 +96,9 @@ type SNum = Int
 
 data Accept a
   = Acc { accPrio       :: Int,
-	  accAction     :: a,
+	  accAction     :: Maybe a,
 	  accLeftCtx    :: Maybe CharSet,
-	  accRightCtx   :: Maybe SNum
+	  accRightCtx   :: RightContext SNum
     }
 
 type StartCode = Int
@@ -230,17 +240,20 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 -- generated file.
 
 extractActions :: Scanner -> (Scanner,ShowS)
-extractActions scanner = (scanner{scannerTokens = new_tokens}, decls)
+extractActions scanner = (scanner{scannerTokens = new_tokens}, decl_str)
  where
-  (new_tokens, codes) = unzip
-	  [ (r{reCtxCode=act_name}, reCtxCode r)
-	  | (r,act_name) <- zip (scannerTokens scanner) act_names
-	  ]
+  (new_tokens, decls) = unzip (zipWith f (scannerTokens scanner) act_names)
+
+  f r@RECtx{ reCtxCode = Just code } name
+	= (r{reCtxCode = Just name}, Just (mkDecl name code))
+  f r@RECtx{ reCtxCode = Nothing } name
+	= (r{reCtxCode = Nothing}, Nothing)
+
+  mkDecl fun code = str fun . str " = " . str code . nl
 
   act_names = map (\n -> "alex_action_" ++ show n) [0..]
 
-  decls = foldr (.) id (zipWith mkDecl act_names codes)
-    where mkDecl fun code = str fun . str " = " . str code . nl
+  decl_str = foldr (.) id [ decl | Just decl <- decls ]
 
 -- -----------------------------------------------------------------------------
 -- Code generation targets

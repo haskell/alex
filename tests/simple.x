@@ -14,10 +14,11 @@ import System.IO
 
 tokens :-
 
-$white+			{ skip }
+$white+			;
 
 <0> {
    "magic"		{ magic } -- should override later patterns
+   ^ @word $		{ both }  -- test both trailing and left context
    @word $		{ eol }  -- test trailing context
    ^ @word		{ bol }  -- test left context
    @word		{ word }
@@ -31,6 +32,8 @@ $white+			{ skip }
 {- we can now have comments in source code? -}
 word (p,_,input) len = return (take len input)
 
+both (p,_,input) len = return ("BOTH:"++ take len input)
+
 eol (p,_,input) len = return ("EOL:"++ take len input)
 
 bol (p,_,input) len = return ("BOL:"++ take len input)
@@ -39,8 +42,7 @@ parenword (p,_,input) len = return (map toUpper (take len input))
 
 magic (p,_,input) len = return "PING!"
 
-alexEOF (p,_,"")   = return "stopped."
-alexEOF (p,_,rest) = alexError "error."
+alexEOF = return "stopped."
 
 scanner str = runAlex str $ do
   let loop = do tok <- alexMonadScan
@@ -63,9 +65,9 @@ main = do
 	   print test2
 	   exitFailure
 
-str1 = "a b c (d e f) magic (magic) eol\nbol"
-out1 = Right ["BOL:a","b","c","D","E","F","PING!","MAGIC","EOL:eol", "BOL:bol", "stopped."]
+str1 = "a b c (d e f) magic (magic) eol\nbol \nboth\n"
+out1 = Right ["BOL:a","b","c","D","E","F","PING!","MAGIC","EOL:eol", "BOL:bol", "BOTH:both", "stopped."]
 
 str2 = "."
-out2 = Left "error."
+out2 = Left "lexical error."
 }

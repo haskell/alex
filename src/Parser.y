@@ -45,6 +45,7 @@ import Data.Char
 	'['		{ T _ (SpecialT '[') }
 	']'		{ T _ (SpecialT ']') }
 	'^'		{ T _ (SpecialT '^') }
+	'/'		{ T _ (SpecialT '/') }
 	ZERO		{ T _ ZeroT }
 	STRING		{ T _ (StringT $$) }
 	BIND		{ T _ (BindT $$) }
@@ -117,11 +118,11 @@ startcode :: { String }
 	: ZERO 				{ "0" }
 	| ID	 			{ $1 }
 
-rhs	:: { Code }
-	: CODE 				{ case $1 of T _ (CodeT code) -> code }
-	| ';'	 			{ "" }
+rhs	:: { Maybe Code }
+	: CODE 				{ case $1 of T _ (CodeT code) -> Just code }
+	| ';'	 			{ Nothing }
 
-context :: { Maybe CharSet, RExp, Maybe RExp }
+context :: { Maybe CharSet, RExp, RightContext RExp }
 	: left_ctx rexp right_ctx	{ (Just $1,$2,$3) }
 	| rexp right_ctx		{ (Nothing,$1,$2) }
 
@@ -129,10 +130,12 @@ left_ctx :: { CharSet }
 	: '^'				{ charSetSingleton '\n' }
 	| set '^' 			{ $1 }
 
-right_ctx :: { Maybe RExp }
-	: '$'				{ Just (Ch (charSetSingleton '\n')) }
-	| '$' rexp			{ Just $2 }
-	| {- empty -}			{ Nothing }
+right_ctx :: { RightContext RExp }
+	: '$'		{ RightContextRExp (Ch (charSetSingleton '\n')) }
+	| '/' rexp	{ RightContextRExp $2 }
+        | '/' CODE	{ RightContextCode (case $2 of 
+						T _ (CodeT code) -> code) }
+	| {- empty -}	{ NoRightContext }
 
 rexp	:: { RExp }
 	: alt '|' rexp 			{ $1 :| $3 }

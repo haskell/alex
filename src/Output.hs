@@ -74,21 +74,39 @@ outputDFA target n func_nm dfa
     outputAccs accs
 	= brack (interleave_shows (char ',') (map (paren.outputAcc) accs))
 
-    outputAcc (Acc prio act lctx rctx)
-	= str "AlexAcc " . shows prio . space
+    outputAcc (Acc prio Nothing Nothing NoRightContext)
+	= str "AlexAccSkip"
+    outputAcc (Acc prio (Just act) Nothing NoRightContext)
+	= str "AlexAcc " . paren (str act)
+    outputAcc (Acc prio Nothing lctx rctx)
+	= str "AlexAccSkipPred " . space
+	. paren (outputPred lctx rctx)
+    outputAcc (Acc prio (Just act) lctx rctx)
+	= str "AlexAccPred " . space
 	. paren (str act) . space
-	. outputLCtx lctx . space
+	. paren (outputPred lctx rctx)
+
+    outputPred (Just set) NoRightContext
+	= outputLCtx set
+    outputPred Nothing rctx
+	= outputRCtx rctx
+    outputPred (Just set) rctx
+	= outputLCtx set
+	. str " `alexAndPred` "
 	. outputRCtx rctx
 
-    outputLCtx Nothing
-	= str "Nothing"
-    outputLCtx (Just set)
-	= paren (str "Just " . paren (outputArr (charSetToArray set)))
+    outputLCtx set 
+	= case charSetElems set of
+	    []     -> error "outputLCtx"
+	    [c]    -> str "alexPrevCharIs " . shows c
+	    _other -> str "alexPrevCharIsOneOf " 
+		    . paren (outputArr (charSetToArray set))
 
-    outputRCtx Nothing
-	= str "Nothing"
-    outputRCtx (Just set)
-	= paren (str "Just " . shows set)
+    outputRCtx NoRightContext = id
+    outputRCtx (RightContextRExp sn)
+	= str "alexRightContext " . shows sn
+    outputRCtx (RightContextCode code)
+	= str code
 
     outputArr arr
 	= str "array " . shows (bounds arr) . space

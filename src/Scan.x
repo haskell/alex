@@ -27,7 +27,7 @@ $alpha    = [$upper $lower]
 $alphanum = [$alpha $digit]
 $idchar   = [$alphanum \_ \']
 
-$special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^]
+$special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^\/]
 $graphic    = $printable # $white
 $nonspecial = $graphic # [$special \%]
 
@@ -43,7 +43,7 @@ alex :-
 @ws				{ skip }	-- white space; ignore
 
 <0> \" [^\"]* \"		{ string }
-<0> @id @ws? \:\-		{ bind }
+<0> (@id @ws?)? \:\-		{ bind }
 <0> \{ [^$digit]		{ code }
 <0> $special			{ special }  -- note: matches {
 <0> \% "wrapper"		{ wrapper }
@@ -194,13 +194,15 @@ lexer cont = lexToken >>= cont
 
 lexToken :: P Token
 lexToken = do
-  inp <- getInput
+  inp@(p,_,_) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
-    Left _ -> case inp of
-		 (p,_,"")   -> return (T p EOFT)
-		 (p,_,rest) -> lexError "lexical error"
-    Right (inp1,len,t) -> do
+    AlexEOF -> return (T p EOFT)
+    AlexError _ -> lexError "lexical error"
+    AlexSkip inp1 len -> do
+	setInput inp1
+	lexToken
+    AlexToken inp1 len t -> do
 	setInput inp1
 	t inp len
 

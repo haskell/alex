@@ -17,7 +17,7 @@ Version_HC_OPTS	    = -DALEX_VERSION=$(ProjectVersion)
 # This is not a good idea for a source distribution
 # SRC_ALEX_OPTS += -g
 
-ALEX_BOOT = /home/simonmar/builds/i386-unknown-linux/happy-SAVE/alex/src/alex-inplace
+ALEX_BOOT = /home/simonmar/builds/i386-unknown-linux/alex/src/alex-inplace
 
 Scan.hs : Scan.x
 	 $(ALEX_BOOT) Scan.x

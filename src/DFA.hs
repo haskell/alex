@@ -122,7 +122,7 @@ nfa2pdfa nfa pdfa (ss:umkd)
 
 	rctx_sss = [ mk_ss nfa [s]
 		   | s <- ss,
-		     Acc _ _ _ (Just s) <- accs ]
+		     Acc _ _ _ (RightContextRExp s) <- accs ]
 
 	outs = [ out | s <- ss, out <- nst_outs (nfa!s) ]
 	accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
@@ -136,8 +136,8 @@ dfa_alphabet = ['\0'..'\255']
 sort_accs:: [Accept a] -> [Accept a]
 sort_accs accs = foldr chk [] (msort le accs)
 	where
-	chk acc@(Acc _ _ Nothing Nothing) rst = [acc]
-	chk acc                           rst = acc:rst
+	chk acc@(Acc _ _ Nothing NoRightContext) rst = [acc]
+	chk acc                                  rst = acc:rst
 
 	le (Acc{accPrio = n}) (Acc{accPrio=n'}) = n<=n'
 
@@ -198,9 +198,11 @@ mk_int_dfa nfa pdfa@(DFA start_states mp)
 
 		accs' = map cnv_acc accs
 		cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'
-		  where rctx' =	case rctx of
-				  Nothing -> Nothing
-				  Just s -> Just (lookup (mk_ss nfa [s]))
+		  where rctx' =	
+			  case rctx of
+				RightContextRExp s -> 
+				  RightContextRExp (lookup (mk_ss nfa [s]))
+				other -> other
 
 {-
 

@@ -1,6 +1,13 @@
 -- -----------------------------------------------------------------------------
+-- Alex wrapper code.
+--
+-- This code is in the PUBLIC DOMAIN; you may copy it freely and use
+-- it for any purpose whatsoever.
+
+-- -----------------------------------------------------------------------------
 -- The input type
 
+#if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_GSCAN)
 type AlexInput = (AlexPosn, 	-- current position,
 		  Char,		-- previous char
 		  String)	-- current input string
@@ -33,10 +40,12 @@ alexMove :: AlexPosn -> Char -> AlexPosn
 alexMove (AlexPn a l c) '\t' = AlexPn (a+1)  l     (((c+7) `div` 8)*8+1)
 alexMove (AlexPn a l c) '\n' = AlexPn (a+1) (l+1)   1
 alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Default monad
 
+#ifdef ALEX_MONAD
 data AlexState = AlexState {
 	alex_pos :: !AlexPosn,	-- position at current input location
 	alex_inp :: String,	-- the current input
@@ -46,7 +55,6 @@ data AlexState = AlexState {
 
 -- Compile with -funbox-strict-fields for best results!
 
-#ifdef ALEX_MONAD
 runAlex :: String -> Alex a -> Either String a
 runAlex input (Alex f) 
    = case f (AlexState {alex_pos = alexStartPos,
@@ -86,48 +94,71 @@ alexMonadScan = do
   inp <- alexGetInput
   sc <- alexGetStartCode
   case alexScan inp sc of
-    Left inp' -> alexEOF inp
-    Right (inp', len, action) -> do
+    AlexEOF -> alexEOF
+    AlexError inp' -> alexError "lexical error"
+    AlexSkip  inp' len -> do
+	alexSetInput inp'
+	alexMonadScan
+    AlexToken inp' len action -> do
 	alexSetInput inp'
 	action inp len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
 
+type AlexAction result = AlexInput -> Int -> result
+
 -- just ignore this token and scan another one
+-- skip :: AlexAction result
 skip input len = alexMonadScan
 
 -- ignore this token, but set the start code to a new value
+-- begin :: Int -> AlexAction result
 begin code input len = do alexSetStartCode code; alexMonadScan
 
 -- perform an action for this token, and set the start code to a new value
-(token `andBegin` code) input len = do alexSetStartCode code; token input len
+-- andBegin :: AlexAction result -> Int -> AlexAction result
+(action `andBegin` code) input len = do alexSetStartCode code; action input len
 
+-- token :: (String -> Int -> token) -> AlexAction token
+token t input len = return (t input len)
 #endif /* ALEX_MONAD */
 
 -- -----------------------------------------------------------------------------
 -- Basic wrapper
 
 #ifdef ALEX_BASIC
--- alexScanTokens :: String -> [action]
-alexScanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(_,_,str) =
+type AlexInput = (Char,String)
+
+alexGetChar (_, [])   = Nothing
+alexGetChar (_, c:cs) = Just (c, (c,cs))
+
+alexInputPrevChar (c,_) = c
+
+-- alexScanTokens :: String -> [token]
+alexScanTokens str = go ('\n',str)
+  where go inp@(_,str) =
 	  case alexScan inp 0 of
-		Left _ -> []
-		Right (inp',len,act) -> act (take len str) : go inp'
+		AlexEOF -> []
+		AlexError _ -> error "lexical error"
+		AlexSkip  inp' len     -> go inp'
+		AlexToken inp' len act -> act (take len str) : go inp'
 #endif
 
 -- -----------------------------------------------------------------------------
 -- Posn wrapper
 
--- Adds text positions and continuations to the basic model.
+-- Adds text positions to the basic model.
 
 #ifdef ALEX_POSN
-alexScanTokens str = go (alexStartPos,'\n',str)
+--alexScanTokens :: String -> [token]
+alexScanTokens str end = go (alexStartPos,'\n',str)
   where go inp@(pos,_,str) =
 	  case alexScan inp 0 of
-		Left _ -> []
-		Right (inp',len,act) -> act pos (take len str) (go inp')
+		AlexEOF -> []
+		AlexError _ -> error "lexical error"
+		AlexSkip  inp' len     -> go inp'
+		AlexToken inp' len act -> act pos (take len str) : go inp'
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -139,9 +170,11 @@ alexScanTokens str = go (alexStartPos,'\n',str)
 alexGScan stop state inp = alex_gscan stop alexStartPos '\n' inp (0,state)
 
 alex_gscan stop p c inp (sc,state) =
-  case alex_scan_tkn c (iUnbox 0) (p,c,inp) (iUnbox sc) AlexNone of
-	Left _ -> stop p c inp (sc,state)
-	Right ((p',c',inp'),len,k) ->
+  case alexScan (p,c,inp) sc of
+	AlexEOF     -> stop p c inp (sc,state)
+	AlexError _ -> stop p c inp (sc,state)
+	AlexSkip (p',c',inp') len -> alex_gscan stop p' c' inp' (sc,state)
+	AlexToken (p',c',inp') len k ->
  	     k p c inp len (\scs -> alex_gscan stop p' c' inp' scs)
 		(sc,state)
 #endif
