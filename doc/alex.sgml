@@ -192,7 +192,7 @@
 
 	  <listitem>
 	    <para>When compiling a grammar with GHC, the -g switch
-            causes an even faster and smaller grammer to be
+            causes an even faster and smaller grammar to be
             generated.</para>
 	  </listitem>
 
