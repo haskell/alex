@@ -27,7 +27,7 @@ expressions.  It is similar to the tool lex or flex for C/C++.
 test -f configure || autoreconf
 ./configure --prefix=%{prefix}
 make
-( cd alex/doc ; make dvi ps html ; gzip -f -9 *.dvi *.ps )
+make html
 
 %install
 make prefix=${RPM_BUILD_ROOT}%{prefix} install
@@ -42,8 +42,6 @@ rm -rf ${RPM_BUILD_ROOT}
 %doc alex/README
 %doc alex/TODO
 %doc alex/doc/alex
-%doc alex/doc/alex.dvi.gz
-%doc alex/doc/alex.ps.gz
 %doc alex/examples
 %{prefix}/bin/alex
 %{prefix}/bin/alex-%{version}
