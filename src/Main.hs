@@ -42,18 +42,22 @@ main:: IO ()
 main =	do
  args <- getArgs
  case getOpt Permute argInfo args of
+    (cli,_,[]) | DumpHelp `elem` cli -> do
+	prog <- getProgramName
+        bye (usageInfo (usageHeader prog) argInfo)
+    (cli,_,[]) | DumpVersion `elem` cli ->
+	bye copyright
     (cli,[file],[]) -> 
 	runAlex cli file
-    (cli,[],[]) | DumpVersion `elem` cli -> do
-	putStrLn copyright
-	exitWith ExitSuccess
     (_,_,errors) -> do
-	prog <- getProgName
+	prog <- getProgramName
         die (concat errors ++ usageInfo (usageHeader prog) argInfo)
 
+copyright :: String
 copyright = "Alex version " ++ version ++ ", (c) 2003 Chris Dornan and Simon Marlow\n"
 
-usageHeader prog = prog ++ " [OPTION...] file"
+usageHeader :: String -> String
+usageHeader prog = "Usage: " ++ prog ++ " [OPTION...] file"
 
 runAlex cli file = do
   basename <- case (reverse file) of
@@ -238,27 +242,39 @@ data CLIFlags
   | OptOutputFile FilePath
   | OptInfoFile (Maybe FilePath)
   | OptTemplateDir FilePath
+  | DumpHelp
   | DumpVersion
   deriving Eq
 
 argInfo :: [OptDescr CLIFlags]
 argInfo  = [
-   Option ['d'] ["debug"] (NoArg OptDebugParser)
-	"Produce a debugging scanner",
-   Option ['g'] ["ghc"]    (NoArg OptGhcTarget)
-	"Use GHC extensions",
    Option ['o'] ["outfile"] (ReqArg OptOutputFile "FILE")
-	"Write the output to FILE (default: file.hs)",
+	"write the output to FILE (default: file.hs)",
    Option ['i'] ["info"] (OptArg OptInfoFile "FILE")
-	"Put detailed state-machine info in FILE",
+	"put detailed state-machine info in FILE (or file.info)",
    Option ['t'] ["template"] (ReqArg OptTemplateDir "DIR")
-	"Look in DIR for template files",
-   Option ['v'] ["version"] (NoArg DumpVersion)
-      "Print out version info"
+	"look in DIR for template files",
+   Option ['g'] ["ghc"]    (NoArg OptGhcTarget)
+	"use GHC extensions",
+   Option ['d'] ["debug"] (NoArg OptDebugParser)
+	"produce a debugging scanner",
+   Option ['?'] ["help"] (NoArg DumpHelp)
+	"display this help and exit",
+   Option ['V','v'] ["version"] (NoArg DumpVersion)  -- ToDo: -v is deprecated!
+	"output version information and exit"
   ]
 
 -- -----------------------------------------------------------------------------
 -- Utils
+
+getProgramName :: IO String
+getProgramName = liftM (`withoutSuffix` ".bin") getProgName
+   where str `withoutSuffix` suff
+            | suff `isSuffixOf` str = take (length str - length suff) str
+            | otherwise             = str
+
+bye :: String -> IO a
+bye s = putStr s >> exitWith ExitSuccess
 
 die :: String -> IO a
 die s = do 
@@ -267,7 +283,7 @@ die s = do
 
 dieAlex :: String -> IO a
 dieAlex s = do
-  prog <- getProgName
+  prog <- getProgramName
   hPutStr stderr (prog ++ ": " ++ s)
   exitWith (ExitFailure 1)
 

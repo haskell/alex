@@ -1318,11 +1318,37 @@ token t input len = return (t input len)
 
     <variablelist>
       <varlistentry>
-	<term><option>-d</option></term>
-	<term><option>--debug</option></term>
+	<term><option>-o</option> <replaceable>file</replaceable></term>
+	<term><option>--outfile</option>=<replaceable>file</replaceable></term>
 	<listitem>
-	  <para>Causes Alex to produce a lexer which will output
-	  debugging messsages as it runs.</para>
+	  <para>Specifies the filename in which the output is to be
+	  placed.  By default, this is the name of the input file with
+	  the <literal>.x</literal> suffix replaced by
+	  <literal>.hs</literal>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-i</option> <optional><replaceable>file</replaceable></optional></term>
+	<term><option>--info</option> <optional><replaceable>=file</replaceable></optional></term>
+	<listitem>
+	  <para>Produces a human-readable rendition of the state
+	  machine (DFA) that Alex derives from the lexer, in
+	  <replaceable>file</replaceable> (default:
+	  <literal><replaceable>file</replaceable>.info</literal>
+	  where the input file is
+	  <literal><replaceable>file</replaceable>.x</literal>).</para>
+
+	  <para>The format of the info file is currently a bit basic,
+	  and not particularly informative.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-t</option> <optional><replaceable>dir</replaceable></optional></term>
+	<term><option>--template</option>=<replaceable>dir</replaceable></term>
+	<listitem>
+	  <para>Look in <replaceable>dir</replaceable> for template files.</para>
 	</listitem>
       </varlistentry>
 
@@ -1338,38 +1364,30 @@ token t input len = return (t input len)
       </varlistentry>
 
       <varlistentry>
-	<term><option>-o</option> <replaceable>file</replaceable></term>
-	<term><option>--output-file</option>=<replaceable>file</replaceable></term>
+	<term><option>-d</option></term>
+	<term><option>--debug</option></term>
 	<listitem>
-	  <para>Specifies the filename in which the output is to be
-	  placed.  By default, this is the name of the input file with
-	  the <literal>.x</literal> suffix replaced by
-	  <literal>.hs</literal>.</para>
+	  <para>Causes Alex to produce a lexer which will output
+	  debugging messsages as it runs.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-i</option> <optional><replaceable>file</replaceable></optional></term>
-	<term><option>--info</option> <optional><replaceable>file</replaceable></optional></term>
+	<term><option>-?</option></term>
+	<term><option>--help</option></term>
 	<listitem>
-	  <para>Produces a human-readable rendition of the state
-	  machine (DFA) that Alex derives from the lexer, in
-	  <replaceable>file</replaceable> (default:
-	  <literal><replaceable>file</replaceable>.info</literal>
-	  where the input file is
-	  <literal><replaceable>file</replaceable>.x</literal>).</para>
-
-	  <para>The format of the info file is currently a bit basic,
-	  and not particularly informative.</para>
+	  <para>Display help and exit.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-v</option></term>
+	<term><option>-V</option></term>
 	<term><option>--version</option></term>
 	<listitem>
-	  <para>Be more verbose.  This currently doesn't do
-	  anything, but it might in the future.</para>
+	  <para>Output version information and exit. Note that for legacy
+	  reasons <option>-v</option> is supported, too, but the use of it
+	  is deprecated. <option>-v</option> will be used for verbose mode
+	  when it is actually implemented.</para>
 	</listitem>
       </varlistentry>
     </variablelist>
