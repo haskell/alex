@@ -27,7 +27,7 @@ import System.Console.GetOpt
 import Data.Char
 import Data.List
 import Data.FiniteMap
-import System.IO hiding ( catch )
+import System.IO
 import Control.Monad
 import Data.Maybe
 #if defined(mingw32_HOST_OS)
