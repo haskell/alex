@@ -24,7 +24,8 @@ Chris Dornan, 23-Jun-94, 2-Jul-96, 29-Aug-96, 29-Sep-97
 module DFS where
 
 import Array
-import Map
+import Set ( Set )
+import qualified Set hiding ( Set )
 
 
 -- The result of a depth-first search of a graph is a list of trees,
@@ -109,15 +110,15 @@ generate_g f v = GNode v (map (generate_g f) (f v))
 prune:: GForrest -> GForrest
 prune ts = snd(chop(empty_int,ts))
 	where
-	empty_int:: MSet Int
-	empty_int = empty (<)
+	empty_int:: Set Int
+	empty_int = Set.empty
 
-chop:: (MSet Int,GForrest) -> (MSet Int,GForrest)
+chop:: (Set Int,GForrest) -> (Set Int,GForrest)
 chop p@(vstd,[]) = p
 chop (vstd,GNode v ts:us) =
-	if v `elt` vstd
+	if v `Set.member` vstd
 	   then chop (vstd,us)
-	   else let vstd1 = ins v () vstd
+	   else let vstd1 = Set.insert v vstd
 		    (vstd2,ts') = chop (vstd1,ts)
 		    (vstd3,us') = chop (vstd2,us)
 		in
