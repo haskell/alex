@@ -5,6 +5,6 @@
 #	ALEXBIN
 
 case $* in
-*--template*) $ALEXBIN $*;;
-*)            $ALEXBIN --template $ALEXLIB $*;;
+*--template*) $ALEXBIN "$@";;
+*)            $ALEXBIN --template $ALEXLIB ${1+"$@"};;
 esac
