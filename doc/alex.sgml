@@ -460,7 +460,7 @@ $graphic    = $printable # $white
       an Alex file is:</para>
 
 <programlisting>
-    alex :=  [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]
+    alex := [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]
 </programlisting>
 
       <para>The file begins and ends with optional code fragments.
@@ -1257,7 +1257,7 @@ type AlexAction result = AlexInput -> Int -> Alex result
 skip input len = alexMonadScan
 
 -- andBegin :: AlexAction result -> Int -> AlexAction result
-(action `andBegin` code) input len = do alexSetStartCode code; action input len
+(act `andBegin` code) input len = do alexSetStartCode code; act input len
 
 -- begin :: Int -> AlexAction result
 begin code = skip `andBegin` code
