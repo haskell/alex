@@ -858,6 +858,9 @@ set0    := @char [ '-' @char ]
 	    <para>The built-in set &lsquo;<literal>.</literal>&rsquo;
             matches all characters except newline
             (<literal>\n</literal>).</para>
+
+	    <para>Equivalent to the set
+	    <literal>[\x00-\xff]&nbsp;#&nbsp;\n</literal>.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -905,6 +908,9 @@ set0    := @char [ '-' @char ]
 	  <listitem>
 	    <para>Matches all whitespace characters, including
 	    newline.</para>
+
+	    <para>Equivalent to the set
+	    <literal>[\t\n\f\v\r]</literal>.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -912,7 +918,8 @@ set0    := @char [ '-' @char ]
 	  <term><literal>$printable</literal></term>
 	  <listitem>
 	    <para>Matches all printable characters (characters 32 to
-	    126 in ASCII).</para>
+	    126 in ASCII).  Equivalent to the set
+	    <literal>[\32-\126]</literal>.</para>
 	  </listitem>
 	</varlistentry>
       </variablelist>
