@@ -1024,7 +1024,7 @@ $del      = \127                  -- ASCII DEL
       specification, then you can safely forget about the previous
       character in the input stream, and have
       <literal>alexInputPrevChar</literal> return
-      <literal>undefined</literal></para>
+      <literal>undefined</literal>.</para>
 
       <para>Alex will provide the following function:</para>
 
