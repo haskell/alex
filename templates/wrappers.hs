@@ -152,7 +152,7 @@ alexScanTokens str = go ('\n',str)
 
 #ifdef ALEX_POSN
 --alexScanTokens :: String -> [token]
-alexScanTokens str end = go (alexStartPos,'\n',str)
+alexScanTokens str = go (alexStartPos,'\n',str)
   where go inp@(pos,_,str) =
 	  case alexScan inp 0 of
 		AlexEOF -> []
