@@ -1356,8 +1356,8 @@ token t input len = return (t input len)
 	<term><option>-g</option></term>
 	<term><option>--ghc</option></term>
 	<listitem>
-	  <para>Causes Alex to produce a parser which is optimised for
-	  compiling with GHC.  The parser will be significantly more
+	  <para>Causes Alex to produce a lexer which is optimised for
+          compiling with GHC.  The lexer will be significantly more
 	  efficient, both in terms of the size of the compiled
 	  lexer and its runtime.</para>
 	</listitem>
