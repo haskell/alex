@@ -383,7 +383,7 @@ main = do
     the action functions to be passed the appriate
     <literal>String</literal>, and a list of <literal>Token</literal>s
     returned as the result.  If the input stream is lazy, the output
-    stream will also be produced lazilly<footnote><para>that is, unless you
+    stream will also be produced lazily<footnote><para>that is, unless you
     have any patterns that require a long lookahead.</para>
       </footnote>.</para>
 
@@ -524,7 +524,7 @@ $graphic    = $printable # $white
     rhs        := @code | ';'
 </programlisting>
 
-	<para>Each rule defines one token in the lexcial
+	<para>Each rule defines one token in the lexical
 	specification.  When the input stream matches the regular
 	expression in a rule, the Alex lexer will return the value of
 	the expression on the right hand side, which we call the
