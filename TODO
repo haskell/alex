@@ -1,3 +1,5 @@
+- Option for pure Haskell 98 output?
+
 - Extend to Unicode (32-bit Char)
 
 - Put in {-# LINE #-} pragmas for token actions
@@ -18,4 +20,12 @@
 - Improve performance of Alex itself
 
 - AlexEOF doesn't provide a way to get at the text position of the EOF.
+
+- AlexState should include some user state - would make this monad
+  more useful in general.
+
+- Allow user-defined wrappers?  Wrappers in files relative to the
+  current directory, for example?
+
+- case-insensitivity option (like flex's -i).
 
