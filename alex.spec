@@ -12,7 +12,7 @@ Source:         http://haskell.org/alex/dist/%{version}/alex-%{version}-src.tar.
 Packager:       Sven Panne <sven.panne@aedion.de>
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Prefix:         %{_prefix}
-BuildRequires:  happy, ghc, docbk31
+BuildRequires:  happy, ghc, docbook-dtd, docbook-xsl-stylesheets, libxslt, libxml2, fop, xmltex, dvips
 Summary:        The lexer generator for Haskell
 
 %description
