@@ -167,7 +167,7 @@ importsToInject tgt cli = always_imports ++ debug_imports ++ glaexts_import
 -- compilation.  We need to #include "config.h" to get hold of
 -- WORDS_BIGENDIAN (see GenericTemplate.hs).
 
-always_imports = "#if __GLASGOW_HASKELL__ >= 604\n" ++
+always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
 		 "#include \"ghcconfig.h\"\n" ++
 		 "#else\n" ++
 		 "#include \"config.h\"\n" ++
