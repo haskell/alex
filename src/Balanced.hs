@@ -413,10 +413,9 @@ difference_b (<) t@(NodeB _ _ _ _) EmptyB = t
 difference_b (<) (NodeB a _ l r) t@(NodeB _ _ _ _) =
 	split_b (<) a t						$ \ma' l' r' ->
 	let t_i = concatB (<) a (difference_b (<) l l')
-				 (difference_b (<) r r')
+				(difference_b (<) r r')
 	in
 	if is_full ma' then delete_b (<) a t_i else t_i
-difference_b _ _ _ = error "difference_b"
 
 intersection_b:: (a->a->Bool) -> Balanced a -> Balanced a -> Balanced a
 intersection_b (<) EmptyB _ = EmptyB
@@ -424,7 +423,7 @@ intersection_b (<) (NodeB _ _ _ _) EmptyB = EmptyB
 intersection_b (<) t@(NodeB _ _ _ _) (NodeB a' _ l' r') =
 	split_b (<) a' t					$ \mb_a l r ->
 	let t_i = concatB (<) a' (intersection_b (<) l l')
-				  (intersection_b (<) r r')
+				 (intersection_b (<) r r')
 	in
 	if is_full mb_a then t_i else delete_b (<) a' t_i
 
