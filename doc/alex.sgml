@@ -1,0 +1,1158 @@
+<!DOCTYPE BOOK PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+<!entity  the-index SYSTEM "genindex.sgml">
+]>
+
+<book id="alex">
+  <bookinfo>
+    <date>2003-8-11</date>
+    <title>Alex User Guide</title>
+    <author>
+      <firstname>Chris</firstname>
+      <surname>Dornan</surname>
+    </author>
+    <author>
+      <firstname>Isaac</firstname>
+      <surname>Jones</surname>
+    </author>
+    <author>
+      <firstname>Simon</firstname>
+      <surname>Marlow</surname>
+    </author>
+    <address><email>ijones@syntaxpolice.org</email></address>
+<!--     <copyright> -->
+<!--       <year>1997-2001</year> -->
+<!--       <holder>Simon Marlow</holder> -->
+<!--     </copyright> -->
+
+    <abstract>
+      <para>Alex is a tool for generating lexical analysers
+      in Haskell, given a description of the tokens to be recognised
+      in the form of regular expressions.  It is similar to the tool
+      <quote>lex</quote> or <quote>flex</quote> for C/C++.</para>
+    </abstract>
+
+  </bookinfo>
+
+  <!-- Table of contents -->
+  <toc></toc>
+
+<!-- Introduction
+--------------------------------------------------------- -->
+
+  <chapter id="introduction">
+    <title>Introduction</title>
+
+    <para>Alex is a tool for generating lexical analysers in Haskell,
+    given a description of the tokens to be recognised in the form of
+    regular expressions.  It is similar to the tools
+    lex and flex for C/C++.</para>
+
+    <para> The <application>Alex</application> package,
+           like <application>Lex</application>, takes a description of
+           tokens based on regular expressions and generates a program
+           module for scanning text efficiently.  The difference is
+           that <application>Alex</application> generates Haskell
+           modules rather than C/Ratfor source files.  Although
+           <application>Alex</application> takes after
+           <application>lex</application>, it is intended for Haskell
+           programmers and so departs quite radically from Lex in some
+           respects.</para>
+
+    <figure ID="fig-tokens" FLOAT="1"><TITLE>A simple Alex
+	  specification.</TITLE>
+<programlisting>
+
+%{
+module Tokens where
+
+import Alex
+%}
+
+
+	  { ^d = 0-9      }-- digits
+	  { ^l = [a-zA-Z] }-- alphabetic characters
+
+"tokens_lx"/"tokens_acts":-
+
+	  &lt;>     ::=  ^w+-- white space
+	  &lt;>     ::=  ^-^-.*-- comments
+	  &lt;let'> ::=  let%{ let' p s = Let p          %}
+	  &lt;in'>  ::=  in%{ in'  p s = In  p          %}
+	  &lt;int>  ::=  ^d+%{ int  p s = Int p (read s) %}
+	  &lt;sym>  ::=  `=+-*/()'%{ sym  p s = Sym p (head s) %}
+	  &lt;var>  ::=  ^l[^l^d^_^']*%{ var  p s = Var p s        %}
+
+
+%{
+data Token =
+	  Let Posn|
+	  In  Posn|
+	  Sym Posn Char|
+	  Var Posn String|
+	  Int Posn Int|
+	  Err Posn
+	  deriving (Eq,Text)
+
+
+tokens:: String -> [Token]
+tokens inp = scan tokens_scan inp
+
+tokens_scan:: Scan Token
+tokens_scan = load_scan (tokens_acts,stop_act) tokens_lx
+	  where
+	  stop_act p ""  = []
+	  stop_act p inp = [Err p]
+%}
+</programlisting></figure>
+
+    <para> A sample specification is given in <xref
+	linkend="fig-tokens">.
+           The first few lines between the <literal>%{</literal> and
+           <literal>%}</literal> provide a code scrap (some inlined
+           Haskell code) to be placed in the output.  All such code
+           fragments will be placed in order at the head of the module
+           with the \lx-generated tables appearing at the end.</para>
+
+    <para>The next two lines define the <literal>^d</literal> and
+    <literal>^l</literal> macros for use in the token
+    definitions.</para>
+
+    <para>The <literal>"tokens_lx"/"tokens_acts":-</literal> line
+          starts the definition of a scanner.  It is generated in two
+          parts: the main tables being placed in
+          <literal>token_lx</literal> and the actions for each token
+          being bound to <literal>tokens_acts</literal>.</para>
+
+     <para>The scanner is specified as a series of token definitions
+          where each token specification takes the form of</para>
+
+<programlisting>
+&lt;token-id> ::= rexp
+</programlisting>
+
+    <para>If <emphasis>token-id</emphasis> is omitted then the token
+      will be
+          discarded (this is done for the first two white-space and
+          comment token definitions), otherwise a corresponding action
+          function for constructing the token must be given somewhere
+          in the script.  In this case the action functions are given
+          in the code scraps to the right of the token definition but
+          they could be specified anywhere.  Here
+          <application>Alex</application> differs from
+          <application>Lex</application>; while each action must be
+          named in a code scrap, the programmer has more flexibility
+          in laying out the script.  Like comments, code scraps may be
+          placed anywhere in the module.</para>
+
+    <para>The action function for each token takes the text matched
+          and its position and generates a token suitable for the
+          parser, of type <literal>Token</literal> in this
+      case.</para>
+
+    <para>The remaining lines define the <literal>Token</literal> data
+          type and the scanner in two parts,
+          <literal>tokens_scan</literal> which uses
+          <literal>load_scan</literal> for amalgamating the token
+          actions, stop action (for stopping the scanner) and token
+          specification tables into a <literal>Scan</literal>
+          structure, and <literal>tokens</literal>, the scanner, which
+          simply passes the <literal>Scan</literal> structure to
+          <literal>scan</literal>.  <literal>load_scan</literal>,
+          <literal>Scan</literal> and <literal>scan</literal> were
+          imported from the <literal>Scan</literal> module that comes
+          with the <application>Alex</application>
+          distribution.</para>
+
+    <para>While delegating the task of assembling the scanner to the
+          programmer may seem a bit bothersome, the effort is rewarded
+          with a flexible and modular scheme for generating
+          scanners.</para>
+
+    <para>With this specification in <literal>Tokens.x</literal>,
+          <application>Alex</application> can be used to generate
+          <literal>Tokens.hs</literal>:</para>
+
+<programlisting>
+alex Tokens.x
+</programlisting>
+
+
+    <para>If the module needed to be placed in different file,
+          <literal>tkns.hs</literal> for example, then a second
+          file-name can be specified on the command line:</para>
+
+<programlisting>alex Tokens.x tkns.hs</programlisting>
+
+    <para>The resulting module is Haskell~1.2 and Haskell~1.3
+          compatible.  It can also be readily used with a Happy
+          parser, with the catch that the <literal>Err</literal> token
+          must be declared.</para>
+
+    <para>If the script were written with literate conventions then
+          the <literal>.lx</literal> extension would be used instead
+          of <literal>.x</literal>.  (Literate scripts will be
+          described in Section~\ref{sec-lexical-syntax} on lexical
+          syntax.)</para>
+
+  </chapter>
+
+  <chapter id="syntax">
+    <title>Alex Files</title>
+
+    <para>In this section we describe the layout of an Alex lexical
+    specification.  We begin with the lexical syntax; elements of the
+    lexical syntax are referred to throughout the rest of this
+    documentation, so you may need to refer back to the following
+    section several times.</para>
+
+    <section id="lexical">
+      <title>Lexical syntax</title>
+      
+      <para>Alex's lexical syntax is given below.  It is written as a
+      set of macro definitions using Alex's own syntax.  These macros
+      are used in the BNF specification of the syntax later on,
+      although we will omit the leading <literal>$</literal> and
+      <literal>@</literal> from the names.</para>
+
+<programlisting>
+$digit      = [0-9]
+$octdig     = [0-7]
+$hexdig     = [0-9A-Fa-f]
+$special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^\/]
+$graphic    = $printable # $white
+@string     = \" ($graphic # \")* \"
+@id         = [A-Za-z][A-Za-z'_]*
+@smac       = '$' id
+@rmac       = '@' id
+@char       = ($graphic # $special) | @escape
+@escape     = '\\' ('x' $hexdig+ | 'o' $octdig+ | $digit+)
+            | '\\' .
+@code       = -- curly braces surrounding a Haskell code fragment
+</programlisting>
+    </section>
+
+    <section id="alex-files">
+      <title>Syntax of Alex files</title>
+
+      <para>An Alex lexical specification is normally placed in a file
+      with a <literal>.x</literal> extension.  The overall layout of
+      an Alex file is:</para>
+
+<programlisting>
+    alex :=  [ code ] [ wrapper ] { macrodef } id ':-' { rule } [ code ]
+</programlisting>
+
+      <para>The file begins and ends with optional code fragments.
+      These code fragments are copied verbatim into the generated
+      source file.</para>
+
+      <para>At the top of the file, the code fragment is normally used
+      to declare the module name and some imports, and that is all it
+      should do: don't declare any functions or types in the top code
+      fragment, because Alex may need to inject some imports of its
+      own into the generated lexer code, and it does this by adding
+      them directly after this code fragment in the output
+      file.</para>
+
+      <para>Next comes an optional wrapper specification:</para>
+
+<programlisting>
+    wrapper := '%wrapper' string
+</programlisting>
+
+      <para>wrappers are described in <xref
+      linkend="wrappers">.</para>
+
+      <section id="macrodefs">
+	<title>Macro definitions</title>
+
+	<para>Next, the lexer specification can contain a series of
+	macro definitions.  There are two kinds of macros,
+	<firstterm>character set macros</firstterm>, which begin with
+	a <literal>$</literal>, and <firstterm>regular expression
+	macros</firstterm>, which begin with a <literal>@</literal>.
+	A character set macro can be used wherever a character set is
+	valid (see <xref linkend="charsets">), and a regular
+	expression macro can be used wherever a regular expression is
+	valid (see <xref linkend="regexps">).</para>
+
+<programlisting>
+    macrodef  :=  smac '=' set
+               |  rmac '=' regexp
+</programlisting>
+      </section>
+
+      <section id="rules">
+	<title>Rules</title>
+	
+	<para>The rules are heralded by the sequence
+	&lsquo;<literal><replaceable>id</replaceable> :-</literal>&rsquo;
+        in the file.  It doesn't matter what you use for the
+        identifer, it is just there for documentation purposes.  In
+	fact, it can be omitted, but the <literal>:-</literal> must be
+	left in.</para>
+
+	<para>The syntax of rules is as follows:</para>
+
+<programlisting>
+    rule       := [ startcodes ] token
+    		| startcodes '{' { token } '}'
+    
+    token      := [ left_ctx ] regexp [ right_ctx ]  rhs
+
+    rhs        := code | ';'
+</programlisting>
+
+	<para>Each rule defines one token in the lexcial
+	specification.  When the input stream matches the regular
+	expression in a rule, the Alex lexer will return the value of
+	the expression on the right hand side, which we call the
+	<firstterm>action</firstterm>.  More about how exactly this
+	happens is in <xref linkend="api">.</para>
+
+	<para>The action may be missing, indicated by replacing it
+	with &lsquo;<literal>;</literal>&rsquo;, in which case the
+	token will be skipped in the input stream.</para>
+
+	<para>Alex will always find the longest match.  For example,
+	if we have a rule that matches whitespace:</para>
+
+<programlisting>
+    $white+        ;
+</programlisting>
+
+        <para>Then this rule will match as much whitespace at the
+        beginning of the input stream as it can.  Be careful: if we
+        had instead written this rule as</para>
+
+<programlisting>
+    $white*        ;
+</programlisting>
+
+	<para>then it would also match the empty string, which would
+	mean that Alex could never fail to match a rule!</para>
+
+	<para>When the input stream matches more than one rule, the
+	rule which matches the longest prefix of the input stream
+	wins.  If there are still several rules which match an equal
+	number of characters, then the rule which appears earliest in
+	the file wins.</para>
+
+	<section id="contexts">
+	  <title>Contexts</title>
+    
+	  <para>Alex allows a left and right context to be placed on
+	  any rule:</para>
+	  
+<programlisting>
+    left_ctx   := '^'
+    		| set '^'
+    
+    right_ctx  := '$'
+    		| '/' regexp
+    		| '/' code
+</programlisting>
+
+	  <para>The left context matches the character which
+	  immediately precedes the token in the input stream.  The
+	  character immediately preceding the beginning of the stream
+	  is assumed to be &lsquo;<literal>\n</literal>&rsquo;.  The
+	  special left-context &lsquo;<literal>^</literal>&rsquo; is
+	  shorthand for &lsquo;<literal>\n^</literal>&rsquo;.</para>
+
+	  <para>Right context is rather more general.  There are three
+	  forms:</para>
+
+	  <variablelist>
+	    <varlistentry>
+	      <term><literal>/
+	      <replaceable>regexp</replaceable></literal></term>
+	      <listitem>
+		<para>This right-context causes the rule to match if
+ 	        and only if it is followed in the input stream by text
+ 	        which matches
+ 	        <replaceable>regexp</replaceable>.</para>
+
+		<para>NOTE: this should be used sparingly, because it
+		can have a serious impact on performance.  Any time
+		this rule <emphasis>could</emphasis> match, its
+		right-context will be checked against the current
+		input stream.</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><literal>$</literal></term>
+	      <listitem>
+		<para>Equivalent to
+		&lsquo;<literal>/\n</literal>&rsquo;.</para>
+	      </listitem>
+	    </varlistentry>
+
+	    <varlistentry>
+	      <term><literal>/ { ... }</literal></term>
+	      <listitem>
+		<para>This form is called a
+		<emphasis>predicate</emphasis> on the rule.  The
+		Haskell expression inside the curly braces should have
+		type:
+<programlisting>
+    { ... } :: user       -- predicate state
+    	    -> AlexInput  -- input stream before the token
+    	    -> Int        -- length of the token
+    	    -> AlexInput  -- input stream after the token
+    	    -> Bool       -- True <=> accept the token
+</programlisting>
+                Alex will only accept the token as matching if
+                the predicate returns <literal>True</literal>.</para>
+
+                <para>See <xref linkend="api"> for the meaning of the
+                <literal>AlexInput</literal> type.  The
+                <literal>user</literal> argument is available for
+                passing into the lexer a special state which is used
+                by predicates; to give this argument a value, the
+                <literal>alexScanUser</literal> entry point to the
+                lexer must be used (see <xref
+                linkend="basic-api">).</para>
+	      </listitem>
+	    </varlistentry>
+	  </variablelist>
+	</section>
+
+	<section id="startcodes">
+	  <title>Start codes</title>
+	  
+	  <para>Start codes are a way of adding state to a lexical
+	  specification, such that only certain rules will match for a
+	  given state.</para>
+
+	  <para>A startcode is simply an identifer, or the special
+	  start code &lsquo;<literal>0</literal>&rsquo;.  Each rule
+	  may be given a list of startcodes under which it
+	  applies:</para>
+
+<programlisting>
+    startcode  := id | '0'
+    startcodes := '<' startcode { ',' startcode } '>'
+</programlisting>
+    
+	  <para>When the lexer is invoked to scan the next token from
+	  the input stream, the start code to use is also specified
+	  (see <xref linkend="api">).  Only rules that mention this
+	  start code are then enabled.  Rules which do not have a list
+	  of startcodes are available all the time.</para>
+
+	  <para>Each distinct start code mentioned in the lexical
+	  specification causes a definition of the same name to be
+	  inserted in the generated source file, whose value is of
+	  type <literal>Int</literal>.  For example, if we mentioned
+	  startcodes <literal>foo</literal> and <literal>bar</literal>
+	  in the lexical spec, then Alex will create definitions such
+	  as:
+<programlisting>
+    foo = 1
+    bar = 2
+</programlisting>
+          in the output file.</para>
+
+	  <para>Another way to think of start codes is as a way to
+	  define several different (but possibly overlapping) lexical
+	  specifications in a single file, since each start code
+	  corresponds to a different set of rules.  In concrete terms,
+	  each start code corresponds to a distinct initial state in
+	  the state machine that Alex derives from the lexical
+	  specification.</para>
+
+	  <para>Here is an example of using startcodes as states, for
+	  collecting the characters inside a string:</para>
+
+<programlisting>
+    <0>      ([^\"] | \n)*  ;
+    <0>      \"             { begin string }
+    &lt;string> [^\"]          { stringchar }
+    &lt;string> \"             { begin 0 }
+</programlisting>
+
+          <para>When it sees a quotation mark, the lexer switches into
+          the <literal>string</literal> state and each character
+          thereafter causes a <literal>stringchar</literal> action,
+          until the next quotation mark is found, when we switch back
+          into the <literal>0</literal> state again.</para>
+	  
+	  <para>From the lexer's point of view, the startcode is just
+	  an integer passed in, which tells it which state to start
+	  in.  In order to actually use it as a state, you must have
+	  some way for the token actions to specify new start codes -
+	  <xref linkend="api"> describes some ways this can be done.
+	  In some applications, it might be necessary to keep a
+	  <emphasis>stack</emphasis> of start codes, where at the end
+	  of a state we pop the stack and resume parsing in the
+	  previous state.  If you want this functionality, you have to
+	  program it yourself.</para>
+	</section>
+
+      </section> <!-- rules -->
+    </section> <!-- syntax of alex files -->
+  </chapter> <!-- alex files -->
+
+  <chapter id="regexps">
+    <title>Regular Expression</title>
+
+    <para>Regular expressions are the patterns that Alex uses to match
+    tokens in the input stream.</para>
+
+    <section id="regexp-syntax">
+      <title>Syntax of regular expressions</title>
+
+<programlisting>
+    regexp  := rexp2 { '|' rexp2 }
+    
+    rexp2   := rexp1 { rexp1 }
+    
+    rexp1   := rexp0 [ '*' | '+' | '?' | repeat ]
+
+    rexp0   := set
+    	     | rmac
+    	     | string
+    	     | '(' [ regexp ] ')'
+
+    repeat  := '{' $digit '}'
+    	     | '{' $digit ',' '}'
+    	     | '{' $digit ',' $digit '}'
+</programlisting>
+
+      <para>The syntax of regular expressions is fairly standard, the
+      only difference from normal lex-style regular expressions being
+      that we allow the sequence <literal>()</literal> to denote the
+      regular expression that matches the empty string.</para>
+
+      <para>Spaces are ignored in a regular expression, so feel free
+      to space out your regular expression as much as you like, even
+      split it over multiple lines and include comments.  Literal
+      whitespace can be included by surrounding it with quotes
+      <literal>"&nbsp;&nbsp;&nbsp;"</literal>, or by escaping each whitespace character
+      with <literal>\</literal>.</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term><literal><replaceable>set</replaceable></literal></term>
+	  <listitem>
+	    <para>Matches any of the characters in
+	    <replaceable>set</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>rmac</literal></term>
+	  <listitem>
+	    <para>Expands to the definition of the appropriate
+	    regular expression macro.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>string</literal></term>
+	  <listitem>
+	    <para>Matches the sequence of characters in the string, in
+	    that order.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>r</replaceable>*</literal></term>
+	  <listitem>
+	    <para>Matches zero or more occurences of
+	    <replaceable>r</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>r</replaceable>+</literal></term>
+	  <listitem>
+	    <para>Matches one or more occurences of
+	    <replaceable>r</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>r</replaceable>?</literal></term>
+	  <listitem>
+	    <para>Matches zero or one occurences of
+	    <replaceable>r</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>r</replaceable>{<replaceable>n</replaceable>}</literal></term>
+	  <listitem>
+	    <para>Matches <replaceable>n</replaceable> occurrences of
+	    <replaceable>r</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>r</replaceable>{<replaceable>n</replaceable>,}</literal></term>
+	  <listitem>
+	    <para>Matches <replaceable>n</replaceable> or more occurrences of
+	    <replaceable>r</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>r</replaceable>{<replaceable>n</replaceable>,<replaceable>m</replaceable>}</literal></term>
+	  <listitem>
+	    <para>Matches between <replaceable>n</replaceable> and
+	    <replaceable>m</replaceable> (inclusive) occurrences of
+	    <replaceable>r</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+    </section>
+
+    <section id="charsets">
+      <title>Syntax of character sets</title>
+
+      <para>Character sets are the fundamental elements in a regular
+      expression.  A character set is a pattern that matches a single
+      character.  The syntax of character sets is as follows:</para>
+
+<programlisting>
+    set     := set ['#' set0]
+    
+    set0    := char [ '-' char ]
+    	    | '.'
+    	    |  smac
+    	    | '[' [^] { set } ']'
+    	    | '~' set0
+</programlisting>
+
+      <para>The various character set constructions are:</para>
+      
+      <variablelist>
+	<varlistentry>
+	  <term><literal><replaceable>char</replaceable></literal></term>
+	  <listitem>
+	    <para>The simplest character set is a single character.
+            Note that special characters such as <literal>[</literal>
+            and <literal>.</literal> must be escaped by prefixing them
+            with <literal>\</literal> (see the lexical syntax, <xref
+            linkend="lexical">, for the list of special
+            characters).</para>
+
+	    <para>Certain non-printable characters have special escape
+            sequences.  These are: <literal>\a</literal>,
+            <literal>\b</literal>, <literal>\f</literal>,
+            <literal>\n</literal>, <literal>\r</literal>,
+            <literal>\t</literal>, and <literal>\v</literal>.  Other
+            characters can be represented by using their numerical
+            character values (although this may be non-portable):
+            <literal>\x0A</literal> is equivalent to
+            <literal>\n</literal>, for example.</para>
+
+	    <para>Whitespace characters are ignored; to represent a
+	    literal space, escape it with <literal>\</literal>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>char</replaceable>-<replaceable>char</replaceable></literal></term>
+	  <listitem>
+	    <para>A range of characters can be expressed by separating
+            the characters with a &lsquo;<literal>-</literal>&rsquo;,
+            all the characters with codes in the given range are
+            included in the set.  Character ranges can also be
+            non-portable.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>.</literal></term>
+	  <listitem>
+	    <para>The built-in set &lsquo;<literal>.</literal>&rsquo;
+            matches all characters except newline
+            (<literal>\n</literal>).</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal><replaceable>set0</replaceable> # <replaceable>set1</replaceable></literal></term>
+	  <listitem>
+	    <para>Matches all the characters in
+	    <replaceable>set0</replaceable> that are not in
+	    <replaceable>set1</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>[<replaceable>sets</replaceable>]</literal></term>
+	  <listitem>
+	    <para>The union of <replaceable>sets</replaceable>.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>[^<replaceable>sets</replaceable>]</literal></term>
+	  <listitem>
+	    <para>The complement of the union of the
+	    <replaceable>sets</replaceable>.  Equivalent to
+	    &lsquo;<literal>. # [<replaceable>sets</replaceable>]</literal>&rsquo;.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>~<replaceable>set</replaceable></literal></term>
+	  <listitem>
+	    <para>The complement of <replaceable>set</replaceable>.
+	    Equivalent to &lsquo;<literal>. # <replaceable>set</replaceable></literal>&rsquo;</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+
+      <para>A set macro is written as <literal>$</literal> followed by
+      an identifier.  There are some builtin character set
+      macros:</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term><literal>$white</literal></term>
+	  <listitem>
+	    <para>Matches all whitespace characters, including
+	    newline.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>$printable</literal></term>
+	  <listitem>
+	    <para>Matches all printable characters (characters 32 to
+	    126 in ASCII).</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
+      
+      <para>Character set macros can be defined at the top of the file
+      at the same time as regular expression macros (see <xref
+      linkend="regexps">).  Here are some example character set
+      macros:</para>
+
+<programlisting>
+$lls      = a-z                   -- little letters
+$not_lls  = ~a-z                  -- anything but little letters
+$ls_ds    = [a-zA-Z0-9]           -- letters and digits
+$sym      = [ \! \@ \# \$ ]       -- the symbols !, @, #, and $
+$sym_q_nl = [ \' \! \@ \# \$ \n ] -- the above symbols with ' and newline
+$quotable = $printable # \'       -- any graphic character except '
+$del      = \127                  -- ASCII DEL
+</programlisting>
+    </section>
+
+  </chapter>
+
+  <chapter id="api">
+    <title>The Interface to an Alex-generated lexer</title>
+
+    <para>This section answers the question: "How do I include an
+    Alex lexer in my program?</para>
+
+    <para>Alex provides for a great deal of flexibility in how the
+    lexer is exposed to the rest of the program.  For instance,
+    there's no need to parse a <literal>String</literal> directly if
+    you have some special character-buffer operations that avoid the
+    overheads of ordinary Haskell <literal>String</literal>s.  You
+    might want Alex to keep track of the line and column number in the
+    input text, or you might wish to do it yourself (perhaps you use a
+    different tab width from the standard 8-columns, for
+    example).</para>
+
+    <para>The general story is this: Alex provides a basic interface
+    to the generated lexer (described in the next section), which you
+    can use to parse tokens given an abstract input type with
+    operations over it.  You also have the option of including a
+    <firstterm>wrapper</firstterm>, which provides a higher-level
+    abstraction over the basic interface; Alex comes with several
+    wrappers.</para>
+
+    <section id="basic-api">
+      <title>Basic interface</title>
+
+      <para>If you compile your Alex file without a
+      <literal>%wrapper</literal> declaration, then you get access to
+      the lowest-level API to the lexer.  You must provide definitions
+      for the following, either in the same module or imported from
+      another module:</para>
+
+<programlisting>
+    type AlexInput
+    alexGetChar       :: AlexInput -> Maybe (Char,AlexInput)
+    alexInputPrevChar :: AlexInput -> Char
+</programlisting>
+
+      <para>The generated lexer is independent of the input type,
+      which is why you have to provide a definition for the input type
+      yourself.  Note that the input type needs to keep track of the
+      <emphasis>previous</emphasis> character in the input stream;
+      this is used for implementing patterns with a left-context
+      (those that begin with <literal>^</literal> or
+      <literal><replaceable>set</replaceable>^</literal>).  If you
+      don't ever use patterns with a left-context in your lexical
+      specification, then you can safely forget about the previous
+      character in the input stream, and have
+      <literal>alexInputPrevChar</literal> return
+      <literal>undefined</literal></para>
+
+      <para>Alex will provide the following function:</para>
+
+<programlisting>
+    alexScan :: AlexInput	 -- The current input
+             -> Int		 -- The "start code"
+             -> Maybe (          -- Nothing on error or EOF
+                     AlexInput,  -- The remaining input
+                     Int,        -- Length of this token
+                     action      -- The action (an unknown type)
+        	  )
+</programlisting>
+
+      <para>Calling <literal>alexScan</literal> will scan a single
+      token from the input stream, and return the remaining input
+      stream, the length of the token, and the
+      <literal>action</literal>.</para>
+
+      <para>The <literal>action</literal> is simply the value of the
+      expression inside <literal>{...}</literal> on the
+      right-hand-side of the appropriate rule in the Alex file.
+      Alex doesn't specify what type these expressions should have, it
+      simply requires that they all have the same type, or else you'll
+      get a type error when you try to compile the generated
+      lexer.</para>
+
+      <para>Once you have the <literal>action</literal>, it is up to
+      you what to do with it.  The type of <literal>action</literal>
+      could be a function which takes the <literal>String</literal>
+      representation of the token and returns a value in some token
+      type, or it could be a continuation that takes the new input and
+      calls <literal>alexScan</literal> again, building a list of
+      tokens as it goes.</para>
+
+      <para>This is pretty low-level stuff; you have complete
+      flexibility about how you use the lexer, but there might be a
+      fair amount of support code to write before you can actually use
+      it.  For this reason, we also provide a selection of wrappers
+      that add some common functionality to this basic scheme.
+      Wrappers are described in the next section.</para>
+
+      <para>There is another entry point, which is useful if your
+      grammar contains any predicates (see <xref
+      linkend="contexts">):</para>
+
+<programlisting>
+    alexScanUser
+             :: user             -- predicate state
+             -> AlexInput	 -- The current input
+             -> Int		 -- The "start code"
+             -> Maybe (          -- Nothing on error or EOF
+                     AlexInput,  -- The remaining input
+                     Int,        -- Length of this token
+                     action      -- The action (an unknown type)
+        	  )
+</programlisting>
+
+      <para>The extra argument, of some type <literal>user</literal>,
+      is passed to each predicate.</para>
+    </section>
+
+    <section id="wrappers">
+      <title>Wrappers</title>
+
+      <para>To use one of the provided wrappers, include the following
+      declaration in your file:</para>
+
+<programlisting>
+    %wrapper "<replaceable>name</replaceable>"
+</programlisting>
+
+      <para>where <replaceable>name</replaceable> is the name of the
+      wrapper, eg. <literal>basic</literal>.  The following sections
+      describe each of the wrappers that come with Alex.</para>
+
+      <section>
+	<title>The "basic" wrapper</title>
+
+	<para>The basic wrapper is a good way to obtain a function of
+	type <literal>String -> [token]</literal> from a lexer
+	specification, with little fuss.</para>
+
+	<para>It provides definitions for
+	<literal>AlexInput</literal>, <literal>alexGetChar</literal>
+	and <literal>alexInputPrevChar</literal> that are suitable for
+	lexing a <literal>String</literal> input.  It also provides a
+	function <literal>alexScanTokens</literal> which takes a
+	<literal>String</literal> input and returns a list of the
+	tokens it contains.</para>
+
+	<para>The <literal>basic</literal> wrapper provides no support
+	for using startcodes; the initial startcode is always set to
+	zero.</para>
+
+	<para>Here is the actual code included in the lexer when the
+	basic wrapper is selected:</para>
+
+<programlisting>
+    type AlexInput = (Char,	-- previous char
+		      String)	-- current input string
+
+    alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
+    alexGetChar (_, [])   = Nothing
+    alexGetChar (_, c:cs) = Just (c, (c,cs))
+
+    alexInputPrevChar :: AlexInput -> Char
+    alexInputPrevChar (c,_) = c
+
+    -- alexScanTokens :: String -> [token]
+    alexScanTokens str = go ('\n',str)
+      where go inp@(_,str) =
+    	      case alexScan inp 0 of
+    		    AlexEOF -> []
+    		    AlexError _ -> error "lexical error"
+    		    AlexSkip  inp' len     -> go inp'
+    		    AlexToken inp' len act -> act (take len str) : go inp'
+</programlisting>
+
+	<para>The type signature for <literal>alexScanTokens</literal>
+        is commented out, because the <literal>token</literal> type is
+        unkonwn.  All of the actions in your lexical specification
+        should have type:</para>
+
+<programlisting>
+    { ... } :: String -> token
+</programlisting>
+
+        <para>for some type <literal>token</literal>.</para>
+
+	<para>For an example of the use of the basic wrapper, see the
+	file <literal>examples/Tokens_basic.x</literal> in the Alex
+	distribution.</para>
+      </section>
+
+      <section>
+	<title>The "posn" wrapper</title>
+
+	<para>The posn wrapper provides slightly more functionality
+	than the basic wrapper: it keeps track of line and column
+	numbers of tokens in the input text.</para>
+
+	<para>The posn wrapper provides the following, in addition to
+	the straightforward definitions of
+	<literal>alexGetChar</literal> and
+	<literal>alexInputPrevChar</literal>:</para>
+
+<programlisting>
+    data AlexPosn = AlexPn !Int  -- absolute character offset
+                           !Int  -- line number
+                           !Int  -- column number
+
+    type AlexInput = (AlexPosn, -- current position,
+		      Char,	-- previous char
+		      String)	-- current input string
+
+    --alexScanTokens :: String -> [token]
+    alexScanTokens str end = go (alexStartPos,'\n',str)
+      where go inp@(pos,_,str) =
+    	      case alexScan inp 0 of
+    		    AlexEOF -> []
+    		    AlexError _ -> error "lexical error"
+    		    AlexSkip  inp' len     -> go inp'
+    		    AlexToken inp' len act -> act pos (take len str) : go inp'
+</programlisting>
+
+	<para>The types of the token actions should be:</para>
+
+<programlisting>
+    { ... } :: AlexPosn -> String -> token
+</programlisting>
+
+	<para>For an example using the <literal>posn</literal>
+	wrapper, see the file
+	<literal>examples/Tokens_posn.x</literal> in the Alex
+	distribution.</para>
+      </section>
+
+      <section>
+	<title>The "monad" wrapper</title>
+
+	<para>The <literal>monad</literal> wrapper is the most
+	flexible of the wrappers provided with Alex.  It includes a
+	state monad which keeps track of the current input and text
+	position, and the startcode.  It is intended to be a template
+	for building your own monads - feel free to copy the code and
+	modify it to build a monad with the facilities you
+	need.</para>
+
+<programlisting>
+data AlexState = AlexState {
+        alex_pos :: !AlexPosn,	-- position at current input location
+        alex_inp :: String,	-- the current input
+        alex_chr :: !Char,	-- the character before the input
+        alex_scd :: !Int 	-- the current startcode
+    }
+
+newtype Alex a = Alex { unAlex :: AlexState
+                               -> Either String (AlexState, a) }
+
+runAlex          :: String -> Alex a -> Either String a
+
+alexGetInput     :: Alex AlexInput
+alexSetInput     :: AlexInput -> Alex ()
+
+alexError        :: String -> Alex a
+
+alexGetStartCode :: Alex Int
+alexSetStartCode :: Int -> Alex ()
+</programlisting>
+
+	<para>To invoke a scanner under the <literal>monad</literal>
+	wrapper, use <literal>alexMonadScan</literal>:</para>
+
+<programlisting>
+alexMonadScan    :: Alex result
+</programlisting>
+
+	<para>The token actions should have the following type:</para>
+
+<programlisting>
+type AlexAction result = AlexInput -> Int -> Alex result
+{ ... }  :: AlexAction result
+</programlisting>
+
+	<para>The <literal>monad</literal> wrapper also provides some
+	useful combinators for constructing token actions:</para>
+
+<programlisting>
+-- skip :: AlexAction result
+skip input len = alexMonadScan
+
+-- andBegin :: AlexAction result -> Int -> AlexAction result
+(action `andBegin` code) input len = do alexSetStartCode code; action input len
+
+-- begin :: Int -> AlexAction result
+begin code = skip `andBegin` code
+
+-- token :: (String -> Int -> token) -> AlexAction token
+token t input len = return (t input len)
+</programlisting>
+      </section>
+
+      <section>
+	<title>The "gscan" wrapper</title>
+
+	<para>The <literal>gscan</literal> wrapper is provided mainly
+	for historical reasons: it exposes an interface which is very
+	similar to that provided by Alex version 1.x.  The interface
+	is intended to be very general, allowing actions to modify the
+	startcode, and pass around an arbitrary state value.</para>
+
+<programlisting>
+    alexGScan :: StopAction state result -> state -> String -> result
+
+    type StopAction state result 
+             = AlexPosn -> Char -> String -> (Int,state) -> result
+</programlisting>    
+
+	<para>The token actions should all have this type:</para>
+
+<programlisting>
+    { ... }      :: AlexPosn                -- token position
+                 -> Char                    -- previous character
+                 -> String                  -- input string at token
+                 -> Int                     -- length of token
+                 -> ((Int,state) -> result) -- continuation
+                 -> (Int,state)             -- current (startcode,state)
+                 -> result
+</programlisting>    
+      </section>
+    </section>
+  </chapter>
+
+  <chapter id="invoking">
+    <title>Invoking Alex</title>
+
+    <para>The command line syntax for Alex is entirely
+    standard:</para>
+
+<screen>
+    alex { <replaceable>option</replaceable> } <replaceable>file</replaceable>.x  { <replaceable>option</replaceable> }
+</screen>
+
+    <para>Alex expects a single
+    <literal><replaceable>file</replaceable>.x</literal> to be named
+    on the command line.  By default, Alex will create
+    <literal><replaceable>file</replaceable>.hs</literal> containing
+    then Haskell source for the lexer.</para>
+
+    <para>The options that Alex accepts are listed below:</para>
+
+    <variablelist>
+      <varlistentry>
+	<term><option>-d</option></term>
+	<term><option>--debug</option></term>
+	<listitem>
+	  <para>Causes Alex to produce a lexer which will output
+	  debugging messsages as it runs.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-g</option></term>
+	<term><option>--ghc</option></term>
+	<listitem>
+	  <para>Causes Alex to produce a parser which is optimised for
+	  compiling with GHC.  The parser will be significantly more
+	  efficient, both in terms of the size of the compiled
+	  lexer and its runtime.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-o</option> <replaceable>file</replaceable></term>
+	<term><option>--output-file</option>=<replaceable>file</replaceable></term>
+	<listitem>
+	  <para>Specifies the filename in which the output is to be
+	  placed.  By default, this is the name of the input file with
+	  the <literal>.x</literal> suffix replaced by
+	  <literal>.hs</literal>.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-i</option> <optional><replaceable>file</replaceable></optional></term>
+	<term><option>--info</option> <optional><replaceable>file</replaceable></optional></term>
+	<listitem>
+	  <para>Produces a human-readable rendition of the state
+	  machine (DFA) that Alex derives from the lexer, in
+	  <replaceable>file</replaceable> (default:
+	  <literal><replaceable>file</replaceable>.info</literal>
+	  where the input file is
+	  <literal><replaceable>file</replaceable>.x</literal>).</para>
+
+	  <para>The format of the info file is currently a bit basic,
+	  and not particularly informative.</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-v</option></term>
+	<term><option>--version</option></term>
+	<listitem>
+	  <para>Be more verbose.  This currently doesn't do
+	  anything, but it might in the future.</para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </chapter>
+
+  <chapter id="examples">
+    <title>Examples</title>
+    <para></para>
+  </chapter>
+
+</book>
+
