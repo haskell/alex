@@ -68,9 +68,17 @@ ALEX_ENDIF
 alexIndexShortOffAddr arr off = arr ! off
 #endif
 
+
+#ifdef ALEX_GHC
 ALEX_IF_GHC_LT_503
-unsafeAt arr i = arr ! i
+quickIndex arr i = arr ! i
+ALEX_ELSE
+-- GHC >= 503, unsafeAt is available from Data.Array.Base.
+quickIndex = unsafeAt
 ALEX_ENDIF
+#else
+quickIndex arr i = arr ! i
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Main lexing routines
@@ -124,7 +132,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 
 alex_scan_tkn' user orig_input len input s last_acc =
   let 
-	new_acc = check_accs (alex_accept `unsafeAt` IBOX(s))
+	new_acc = check_accs (alex_accept `quickIndex` IBOX(s))
   in
   new_acc `seq`
   case alexGetChar input of
