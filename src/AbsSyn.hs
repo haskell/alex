@@ -23,8 +23,9 @@ module AbsSyn (
 import CharSet
 import Sort
 import Util
+import Map ( Map )
+import qualified Map hiding ( Map )
 
-import Data.FiniteMap
 import Data.Maybe
 
 infixl 4 :|
@@ -87,10 +88,10 @@ showRCtx (RightContextCode code) = showString "\\ " . showCode code
 
 data DFA s a = DFA
   { dfa_start_states :: [s],
-    dfa_states       :: FiniteMap s (State s a)
+    dfa_states       :: Map s (State s a)
   }
 
-data State s a = State [Accept a] (FiniteMap Char s)
+data State s a = State [Accept a] (Map Char s)
 
 type SNum = Int
 
@@ -214,7 +215,7 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 	  = RECtx (map mk_sc scs) lc re rc code
 
 	mk_sc (nm,_) = (nm, if nm=="0" then 0 
-				       else fromJust (lookupFM code_map nm))
+				       else fromJust (Map.lookup nm code_map))
 
 	sc_hdr tl =
 		case name_code_pairs of
@@ -226,7 +227,7 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 		where
 		fmt_sc (nm,sc) t = nm ++ " = " ++ show sc ++ "\n" ++ t
 
-	code_map = listToFM name_code_pairs
+	code_map = Map.fromList name_code_pairs
 
 	name_code_pairs = zip (nub' (<=) nms) [1..]
 

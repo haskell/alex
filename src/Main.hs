@@ -20,13 +20,14 @@ import DFA
 import Util
 import ParseMonad ( runP )
 import Version
+import Map ( Map )
+import qualified Map hiding ( Map )
 
 import System.Directory		( removeFile )
 import Control.Exception as Exception
 import System.Console.GetOpt
 import Data.Char
 import Data.List
-import Data.FiniteMap
 import System.IO
 import Control.Monad
 import Data.Maybe
@@ -236,14 +237,14 @@ infoHeader h file = do
   hPutStrLn h hline
   hPutStr h "\n"
 
-initialParserEnv :: (FiniteMap String CharSet, FiniteMap String RExp)
+initialParserEnv :: (Map String CharSet, Map String RExp)
 initialParserEnv = (initSetEnv, initREEnv)
 
-initSetEnv = listToFM [("white", charSet " \t\n\v\f\r"),
-		       ("printable", charSet [chr 32 .. chr 126]),
-		       (".", charSetComplement emptyCharSet 
-				`charSetMinus` charSetSingleton '\n')]
-initREEnv = emptyFM
+initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
+		           ("printable", charSet [chr 32 .. chr 126]),
+		           (".", charSetComplement emptyCharSet 
+			    `charSetMinus` charSetSingleton '\n')]
+initREEnv = Map.empty
 
 -- -----------------------------------------------------------------------------
 -- Command-line flags

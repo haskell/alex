@@ -20,8 +20,8 @@ import Char
 import Sort
 import AbsSyn
 import NFA
+import qualified Map
 
-import Data.FiniteMap
 import Data.Maybe
 
 {- 			  Defined in the Scan Module
@@ -110,7 +110,7 @@ nfa2pdfa nfa pdfa (ss:umkd)
   |  ss `in_pdfa` pdfa =  nfa2pdfa nfa pdfa  umkd
   |  otherwise         =  nfa2pdfa nfa pdfa' umkd'
   where
-	pdfa' = add_pdfa ss (State accs (listToFM ss_outs)) pdfa
+	pdfa' = add_pdfa ss (State accs (Map.fromList ss_outs)) pdfa
 
 	umkd' = rctx_sss ++ map snd ss_outs ++ umkd
 
@@ -161,7 +161,7 @@ type StateSet = [SNum]
 new_pdfa:: Int -> NFA -> DFA StateSet a
 new_pdfa starts nfa
  = DFA { dfa_start_states = start_ss,
-         dfa_states = emptyFM
+         dfa_states = Map.empty
        }
  where
 	start_ss = [ msort (<=) (nst_cl(nfa!n)) | n <- [0..starts]]
@@ -173,10 +173,10 @@ mk_ss:: NFA -> [SNum] -> StateSet
 mk_ss nfa l = nub' (<=) [s'| s<-l, s'<-nst_cl(nfa!s)]
 
 add_pdfa:: StateSet -> State StateSet a -> DFA StateSet a -> DFA StateSet a
-add_pdfa ss pst (DFA st mp) = DFA st (addToFM mp ss pst)
+add_pdfa ss pst (DFA st mp) = DFA st (Map.insert ss pst mp)
 
 in_pdfa:: StateSet -> DFA StateSet a -> Bool
-in_pdfa ss (DFA _ mp) = ss `elemFM` mp
+in_pdfa ss (DFA _ mp) = ss `Map.member` mp
 
 -- Construct a DFA with numbered states, from a DFA whose states are
 -- sets of states from the original NFA.
@@ -184,17 +184,17 @@ in_pdfa ss (DFA _ mp) = ss `elemFM` mp
 mk_int_dfa:: NFA -> DFA StateSet a -> DFA SNum a
 mk_int_dfa nfa pdfa@(DFA start_states mp)
   = DFA [0 .. length start_states-1] 
-	(listToFM [ (lookup st, cnv pds) | (st, pds) <- fmToList mp ])
+	(Map.fromList [ (lookup st, cnv pds) | (st, pds) <- Map.toAscList mp ])
   where
-	mp' = listToFM (zip (start_states ++ 
-				keysFM (delListFromFM mp start_states)) [0..])
+	mp' = Map.fromList (zip (start_states ++ 
+				 (map fst . Map.toAscList) (foldr Map.delete mp start_states)) [0..])
 
-	lookup = fromJust . lookupFM mp'
+	lookup = fromJust . flip Map.lookup mp'
 
 	cnv :: State StateSet a -> State SNum a
 	cnv (State accs as) = State accs' as'
 		where
-		as'   = mapFM (\ch s -> lookup s) as
+		as'   = Map.mapWithKey (\ch s -> lookup s) as
 
 		accs' = map cnv_acc accs
 		cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'

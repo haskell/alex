@@ -14,7 +14,8 @@ module ParseMonad (
 	setStartCode, getStartCode, getInput, setInput,
  ) where
 
-import Data.FiniteMap
+import Map ( Map )
+import qualified Map hiding ( Map )
 import CharSet
 import AbsSyn hiding ( StartCode )
 
@@ -61,8 +62,8 @@ type ParseError = (Maybe AlexPosn, String)
 type StartCode = Int
 
 data PState = PState {
-		smac_env  :: FiniteMap String CharSet,
-		rmac_env  :: FiniteMap String RExp,
+		smac_env  :: Map String CharSet,
+		rmac_env  :: Map String RExp,
 		startcode :: Int,
 		input     :: AlexInput
 	     }
@@ -75,7 +76,7 @@ instance Monad P where
 			Right (env',ok) -> unP (k ok) env'
  return a = P $ \env -> Right (env,a)
 
-runP :: String -> (FiniteMap String CharSet, FiniteMap String RExp) 
+runP :: String -> (Map String CharSet, Map String RExp) 
 	-> P a -> Either ParseError a
 runP str (senv,renv) (P p) 
   = case p initial_state of
@@ -94,24 +95,24 @@ failP str = P $ \PState{ input = (p,_,_) } -> Left (Just p,str)
 lookupSMac :: (AlexPosn,String) -> P CharSet
 lookupSMac (posn,smac)
  = P $ \s@PState{ smac_env = senv } -> 
-       case lookupFM senv smac of
+       case Map.lookup smac senv of
 	Just ok -> Right (s,ok)
 	Nothing -> Left (Just posn, "unknown set macro: $" ++ smac)
 
 lookupRMac :: String -> P RExp
 lookupRMac rmac 
  = P $ \s@PState{ rmac_env = renv } -> 
-       case lookupFM renv rmac of
+       case Map.lookup rmac renv of
 	Just ok -> Right (s,ok)
 	Nothing -> Left (Nothing, "unknown regex macro: %" ++ rmac)
 
 newSMac :: String -> CharSet -> P ()
 newSMac smac set 
-  = P $ \s -> Right (s{smac_env = addToFM (smac_env s) smac set}, ())
+  = P $ \s -> Right (s{smac_env = Map.insert smac set (smac_env s)}, ())
 
 newRMac :: String -> RExp -> P ()
 newRMac rmac rexp 
-  = P $ \s -> Right (s{rmac_env = addToFM (rmac_env s) rmac rexp}, ())
+  = P $ \s -> Right (s{rmac_env = Map.insert rmac rexp (rmac_env s)}, ())
 
 setStartCode :: StartCode -> P ()
 setStartCode sc = P $ \s -> Right (s{ startcode = sc }, ())

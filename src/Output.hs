@@ -14,11 +14,11 @@ module Output (outputDFA) where
 import AbsSyn
 import Util
 import CharSet
+import qualified Map
 
 import Data.Char	( ord, chr )
 import Control.Monad.ST
 import Data.List
-import Data.FiniteMap
 import Data.Array (Array)
 import Data.Array.Unboxed
 import Data.Array.ST
@@ -162,7 +162,7 @@ mkTables (dfa :: DFA SNum a)
  where 
 	accept   = [ as | State as _ <- elems dfa_arr ]
 
-	state_assocs = fmToList (dfa_states dfa)
+	state_assocs = Map.toAscList (dfa_states dfa)
 	n_states = length state_assocs
 	top_state = n_states - 1
 
@@ -175,7 +175,7 @@ mkTables (dfa :: DFA SNum a)
 	 
 	expand (State _ out) = 
 	   [(i, lookup out i) | i <- ['\0'..'\255']]
-	   where lookup out i = case lookupFM out i of
+	   where lookup out i = case Map.lookup i out of
 					Nothing -> -1
 					Just s  -> s
 

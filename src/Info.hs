@@ -12,8 +12,8 @@ module Info (infoDFA) where
 
 import AbsSyn
 import Util
+import qualified Map
 
-import Data.FiniteMap
 import Data.Array
 
 -- -----------------------------------------------------------------------------
@@ -25,7 +25,7 @@ infoDFA n func_nm dfa
   . str "States  : " . shows (length dfa_list) . nl
   . nl . infoDFA dfa
   where    
-    dfa_list = fmToList (dfa_states dfa)
+    dfa_list = Map.toAscList (dfa_states dfa)
 
     infoDFA dfa = interleave_shows nl (map infoStateN dfa_list)
 
@@ -38,7 +38,7 @@ infoDFA n func_nm dfa
 
     infoArr out
 	= char '\t' . interleave_shows (str "\n\t")
-			(map infoTransition (fmToList out))
+			(map infoTransition (Map.toAscList out))
 
     infoTransition (char,state)
 	= str (ljustify 8 (show char))

@@ -21,9 +21,10 @@ import DFS	( t_close, out )
 import AbsSyn
 import CharSet
 import Util
+import Map ( Map )
+import qualified Map hiding ( Map )
 
 import Control.Monad
-import Data.FiniteMap
 --import Debug.Trace
 
 -- Each state of a nondeterministic automaton contains a list of `Accept'
@@ -155,7 +156,7 @@ rexp2nfa b e (Ques re) = do
 -- Partial credit to Thomas Hallgren for this code, as I adapted it from
 -- his "Lexing Haskell in Haskell" lexer generator.
 
-type MapNFA = FiniteMap SNum NState
+type MapNFA = Map SNum NState
 
 newtype NFAM a = N {unN :: SNum -> MapNFA -> (SNum, MapNFA, a)}
 
@@ -166,9 +167,9 @@ instance Monad NFAM where
 				 (s,n,a) -> unN (k a) s n
 
 runNFA :: NFAM () -> NFA
-runNFA m = case unN m 0 emptyFM of
-		(s, nfa_map, ()) -> -- trace (show (fmToList nfa_map)) $ 
-				    e_close (array (0,s-1) (fmToList nfa_map))
+runNFA m = case unN m 0 Map.empty of
+		(s, nfa_map, ()) -> -- trace (show (Map.toAscList nfa_map)) $ 
+				    e_close (array (0,s-1) (Map.toAscList nfa_map))
 
 e_close:: Array Int NState -> NFA
 e_close ar = listArray bds
@@ -184,11 +185,11 @@ charEdge :: SNum -> CharSet -> SNum -> NFAM ()
 charEdge from charset to = N $ \s n -> (s, addEdge n from charset to, ())
  where
    addEdge n from charset to = 
-     case lookupFM n from of
+     case Map.lookup from n of
        Nothing -> 
-	   addToFM n from (NSt [] [] [(charset,to)])
+	   Map.insert from (NSt [] [] [(charset,to)]) n
        Just (NSt acc eps trans) ->
-	   addToFM n from (NSt acc eps ((charset,to):trans))
+	   Map.insert from (NSt acc eps ((charset,to):trans)) n
 
 epsilonEdge :: SNum -> SNum -> NFAM ()
 epsilonEdge from to 
@@ -196,19 +197,19 @@ epsilonEdge from to
  | otherwise  = N $ \s n -> (s, addEdge n from to, ())
  where
    addEdge n from to = 
-     case lookupFM n from of
-       Nothing 			-> addToFM n from (NSt [] [to] [])
-       Just (NSt acc eps trans) -> addToFM n from (NSt acc (to:eps) trans)
+     case Map.lookup from n of
+       Nothing 			-> Map.insert from (NSt [] [to] []) n
+       Just (NSt acc eps trans) -> Map.insert from (NSt acc (to:eps) trans) n
 
 accept :: SNum -> Accept Code -> NFAM ()
 accept state new_acc = N $ \s n -> (s, addAccept n state, ())
  where
    addAccept n state = 
-     case lookupFM n state of
+     case Map.lookup state n of
        Nothing ->
-	   addToFM n state (NSt [new_acc] [] [])
+	   Map.insert state (NSt [new_acc] [] []) n
        Just (NSt acc eps trans) ->
-	   addToFM n state (NSt (new_acc:acc) eps trans)
+	   Map.insert state (NSt (new_acc:acc) eps trans) n
 
 
 rctxt_accept :: Accept Code
