@@ -1312,7 +1312,7 @@ token t input len = return (t input len)
     <literal><replaceable>file</replaceable>.x</literal> to be named
     on the command line.  By default, Alex will create
     <literal><replaceable>file</replaceable>.hs</literal> containing
-    then Haskell source for the lexer.</para>
+    the Haskell source for the lexer.</para>
 
     <para>The options that Alex accepts are listed below:</para>
 
