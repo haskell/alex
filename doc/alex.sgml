@@ -1029,19 +1029,61 @@ $del      = \127                  -- ASCII DEL
       <para>Alex will provide the following function:</para>
 
 <programlisting>
-    alexScan :: AlexInput	 -- The current input
-             -> Int		 -- The "start code"
-             -> Maybe (          -- Nothing on error or EOF
-                     AlexInput,  -- The remaining input
-                     Int,        -- Length of this token
-                     action      -- The action (an unknown type)
-        	  )
+  alexScan :: AlexInput             -- The current input
+           -> Int                   -- The "start code"
+           -> AlexReturn action     -- The return value
+  
+  data AlexReturn action
+    = AlexEOF
+  
+    | AlexError
+        !AlexInput     -- Remaining input
+  
+    | AlexSkip
+        !AlexInput     -- Remaining input
+        !Int           -- Token length
+  
+    | AlexToken  
+        !AlexInput     -- Remaining input
+        !Int           -- Token length
+        action         -- action value
 </programlisting>
 
       <para>Calling <literal>alexScan</literal> will scan a single
-      token from the input stream, and return the remaining input
-      stream, the length of the token, and the
-      <literal>action</literal>.</para>
+      token from the input stream, and return a value of type
+      <literal>AlexReturn</literal>.  The value returned is either:</para>
+
+      <variablelist>
+	<varlistentry>
+	  <term><literal>AlexEOF</literal></term>
+	  <listitem>
+	    <para>The end-of-file was reached.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>AlexError</literal></term>
+	  <listitem>
+	    <para>A valid token could not be recognised.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>AlexSkip</literal></term>
+	  <listitem>
+	    <para>The matched token did not have an action associated
+	    with it.</para>
+	  </listitem>
+	</varlistentry>
+
+	<varlistentry>
+	  <term><literal>AlexToken</literal></term>
+	  <listitem>
+	    <para>A token was matched, and the action associated with
+	    it is returned.</para>
+	  </listitem>
+	</varlistentry>
+      </variablelist>
 
       <para>The <literal>action</literal> is simply the value of the
       expression inside <literal>{...}</literal> on the
