@@ -13,6 +13,7 @@ Packager:     simonmar@microsoft.com
 URL:          http://www.haskell.org/alex/
 Source:       http://www.haskell.org/alex/dist/%{version}/alex-%{version}-src.tar.bz2
 Summary:      The lexer generator for Haskell
+BuildRoot:    /var/tmp/%{name}-%{version}-buildroot
 %description
 Alex is a tool for generating lexical analysers in Haskell, given a
 description of the tokens to be recognised in the form of regular
