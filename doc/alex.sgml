@@ -66,7 +66,7 @@
 	  </listitem>
 
 	  <listitem>
-	    <para>Character-set macros ow begin with
+	    <para>Character-set macros now begin with
             &lsquo;<literal>$</literal>&rsquo; instead of
             &lsquo;<literal>^</literal>&rsquo; and have
             multi-character names.</para>
