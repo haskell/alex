@@ -28,7 +28,7 @@ make
 ( cd alex/doc ; make alex.{dvi,ps,html} ; gzip -9 *.dvi *.ps )
 
 %install
-make install
+make prefix=$RPM_BUILD_ROOT%{prefix} install
 
 %files
 %doc alex/ANNOUNCE
