@@ -23,10 +23,10 @@ Chris Dornan, 23-Jun-94, 2-Jul-96, 29-Aug-96, 29-Sep-97
 
 module DFS where
 
-import Array
 import Set ( Set )
 import qualified Set hiding ( Set )
 
+import Data.Array ( (!), accumArray, listArray )
 
 -- The result of a depth-first search of a graph is a list of trees,
 -- `GForrest'.  `post_order' provides a post-order traversal of a forrest.

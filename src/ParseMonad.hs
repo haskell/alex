@@ -14,10 +14,10 @@ module ParseMonad (
 	setStartCode, getStartCode, getInput, setInput,
  ) where
 
+import AbsSyn hiding ( StartCode )
+import CharSet ( CharSet )
 import Map ( Map )
 import qualified Map hiding ( Map )
-import CharSet
-import AbsSyn hiding ( StartCode )
 
 -- -----------------------------------------------------------------------------
 -- The input type

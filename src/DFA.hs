@@ -15,14 +15,13 @@
 
 module DFA(scanner2dfa) where
 
-import Array
-import Char
-import Sort
 import AbsSyn
-import NFA
 import qualified Map
+import NFA
+import Sort ( msort, nub' )
 
-import Data.Maybe
+import Data.Array ( (!) )
+import Data.Maybe ( fromJust )
 
 {- 			  Defined in the Scan Module
 

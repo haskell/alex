@@ -12,20 +12,19 @@
 module Output (outputDFA) where
 
 import AbsSyn
-import Util
 import CharSet
+import Util
 import qualified Map
 
-import Data.Char	( ord, chr )
-import Control.Monad.ST
-import Data.List
-import Data.Array (Array)
-import Data.Array.Unboxed
-import Data.Array.ST
-import Data.Bits
+import Control.Monad.ST ( ST, runST )
+import Data.Array ( Array )
 import Data.Array.Base ( unsafeRead )
-
-import Debug.Trace
+import Data.Array.ST ( STUArray, newArray, readArray, writeArray, freeze )
+import Data.Array.Unboxed ( UArray, bounds, assocs, elems, (!), array, listArray )
+import Data.Bits
+import Data.Char ( ord, chr )
+-- import Debug.Trace
+import Data.List ( maximumBy, sortBy, groupBy )
 
 -- -----------------------------------------------------------------------------
 -- Printing the output

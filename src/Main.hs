@@ -9,28 +9,30 @@
 
 module Main (main) where
 
-import Output
-import Info
-import Parser
-import Scan
-import CharSet
-import System
 import AbsSyn
+import CharSet
 import DFA
-import Util
-import ParseMonad ( runP )
-import Version
+import Info
 import Map ( Map )
 import qualified Map hiding ( Map )
+import Output
+import ParseMonad ( runP )
+import Parser
+import Scan
+import Util
+import Version
 
-import System.Directory		( removeFile )
-import Control.Exception as Exception
-import System.Console.GetOpt
-import Data.Char
-import Data.List
-import System.IO
-import Control.Monad
-import Data.Maybe
+import Control.Exception as Exception ( block, unblock, catch, throw )
+import Control.Monad ( when, liftM )
+import Data.Char ( chr )
+import Data.List ( isSuffixOf )
+import Data.Maybe ( isJust, fromJust )
+import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
+import System.Directory ( removeFile )
+import System.Environment ( getProgName, getArgs )
+import System.Exit ( ExitCode(..), exitWith )
+import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
+
 #if defined(mingw32_HOST_OS)
 import Foreign.Marshal.Array
 import Foreign

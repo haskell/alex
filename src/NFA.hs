@@ -16,15 +16,15 @@
 
 module NFA where
 
-import Array
-import DFS	( t_close, out )
 import AbsSyn
-import CharSet
-import Util
+import CharSet ( CharSet, charSetToArray )
+import DFS ( t_close, out )
 import Map ( Map )
 import qualified Map hiding ( Map )
+import Util ( str, space )
 
-import Control.Monad
+import Control.Monad ( zipWithM, zipWithM_ )
+import Data.Array ( Array, (!), array, listArray, assocs, bounds )
 --import Debug.Trace
 
 -- Each state of a nondeterministic automaton contains a list of `Accept'

@@ -11,10 +11,8 @@
 module Info (infoDFA) where
 
 import AbsSyn
-import Util
 import qualified Map
-
-import Data.Array
+import Util ( str, nl, interleave_shows, char, ljustify )
 
 -- -----------------------------------------------------------------------------
 -- Generate a human readable dump of the state machine

@@ -20,13 +20,13 @@ module AbsSyn (
   Target(..)
   ) where
 
-import CharSet
-import Sort
-import Util
+import CharSet ( CharSet )
 import Map ( Map )
 import qualified Map hiding ( Map )
+import Sort ( nub' )
+import Util ( str, nl )
 
-import Data.Maybe
+import Data.Maybe ( fromJust )
 
 infixl 4 :|
 infixl 5 :%%

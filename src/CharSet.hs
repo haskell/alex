@@ -23,7 +23,7 @@ module CharSet (
   charSetElems
   ) where
 
-import Data.Array
+import Data.Array ( Array, array )
 
 -- Implementation as functions
 type CharSet = Char -> Bool
