@@ -16,10 +16,12 @@ tokens :-
 
 $white+			{ skip }
 
-<0> "magic"		{ magic } -- should override later patterns
-<0> @word $		{ eol }  -- test trailing context
-<0> ^ @word		{ bol }  -- test left context
-<0> @word		{ word }
+<0> {
+   "magic"		{ magic } -- should override later patterns
+   @word $		{ eol }  -- test trailing context
+   ^ @word		{ bol }  -- test left context
+   @word		{ word }
+}
 
 <0> \(			{ begin parens }
 <parens> [A-Za-z]+	{ parenword }
