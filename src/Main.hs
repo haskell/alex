@@ -19,6 +19,7 @@ import AbsSyn
 import DFA
 import Util
 import ParseMonad ( runP )
+import Version
 
 import System.Directory		( removeFile )
 import Control.Exception as Exception
@@ -35,10 +36,6 @@ import Foreign
 import Foreign.C
 #endif
 import Prelude hiding ( catch )
-
--- hackery to convice cpp to splice ALEX_VERSION into a string
-version = tail "\ 
-   \ ALEX_VERSION"
 
 -- `main' decodes the command line arguments and calls `alex'.  
 
@@ -170,34 +167,34 @@ importsToInject tgt cli = always_imports ++ debug_imports ++ glaexts_import
 -- compilation.  We need to #include "config.h" to get hold of
 -- WORDS_BIGENDIAN (see GenericTemplate.hs).
 
-always_imports = "#if __GLASGOW_HASKELL__ >= 604\n\ 
-		 \#include \"ghcconfig.h\"\n\ 
-		 \#else\n\ 
-		 \#include \"config.h\"\n\ 
-		 \#endif\n" ++
-		 "#if __GLASGOW_HASKELL__ >= 503\n\ 
-		 \import Data.Array\n\ 
-		 \import Data.Char (ord)\n\ 
-		 \import Data.Array.Base (unsafeAt)\n\ 
-		 \#else\n\ 
-		 \import Array\n\ 
-		 \import Char (ord)\n\ 
-		 \#endif\n"
+always_imports = "#if __GLASGOW_HASKELL__ >= 604\n" ++
+		 "#include \"ghcconfig.h\"\n" ++
+		 "#else\n" ++
+		 "#include \"config.h\"\n" ++
+		 "#endif\n" ++
+		 "#if __GLASGOW_HASKELL__ >= 503\n" ++
+		 "import Data.Array\n" ++
+		 "import Data.Char (ord)\n" ++
+		 "import Data.Array.Base (unsafeAt)\n" ++
+		 "#else\n" ++
+		 "import Array\n" ++
+		 "import Char (ord)\n" ++
+		 "#endif\n"
 
-import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n\ 
-		   \import GHC.Exts\n\ 
-		   \#else\n\ 
-		   \import GlaExts\n\ 
-		   \#endif\n"
+import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
+		 "import GHC.Exts\n" ++
+		 "#else\n" ++
+		 "import GlaExts\n" ++
+		 "#endif\n"
 
-import_debug = "#if __GLASGOW_HASKELL__ >= 503\n\ 
-		   \import System.IO\n\ 
-		   \import System.IO.Unsafe\n\ 
-		   \import Debug.Trace\n\ 
-		   \#else\n\ 
-		   \import IO\n\ 
-		   \import IOExts\n\ 
-		   \#endif\n"
+import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
+		 "import System.IO\n" ++
+		 "import System.IO.Unsafe\n" ++
+		 "import Debug.Trace\n" ++
+		 "#else\n" ++
+		 "import IO\n" ++
+		 "import IOExts\n" ++
+		 "#endif\n"
 
 templateDir cli
   = case [ d | OptTemplateDir d <- cli ] of
