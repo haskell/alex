@@ -3,7 +3,7 @@ include $(TOP)/mk/boilerplate.mk
 
 .PRECIOUS: .hs .o .bin
 
-TESTS = simple.x
+TESTS = simple.x tokens.x tokens_posn.x tokens_gscan.x
 
 ALEX=../src/alex-inplace
 
