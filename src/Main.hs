@@ -57,7 +57,7 @@ copyright :: String
 copyright = "Alex version " ++ version ++ ", (c) 2003 Chris Dornan and Simon Marlow\n"
 
 usageHeader :: String -> String
-usageHeader prog = "Usage: " ++ prog ++ " [OPTION...] file"
+usageHeader prog = "Usage: " ++ prog ++ " [OPTION...] file\n"
 
 runAlex cli file = do
   basename <- case (reverse file) of
