@@ -36,9 +36,9 @@
 #ifdef ALEX_GHC
 #undef __GLASGOW_HASKELL__
 #define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
-#define ALEX_IF_GHC_GE_503 #if __GLASGOW_HASKELL__ >= 503
 #define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
 #define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
+#define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
 #define ALEX_ELSE #else
 #define ALEX_ENDIF #endif
 #endif
@@ -46,28 +46,46 @@
 #ifdef ALEX_GHC
 data AlexAddr = AlexA# Addr#
 
-{-# INLINE alexIndexShortOffAddr #-}
-alexIndexShortOffAddr (AlexA# arr) off =
-ALEX_IF_GHC_GT_500
-	narrow16Int# i
-ALEX_ELIF_GHC_500
-	intToInt16# i
-ALEX_ELSE
-	(i `iShiftL#` 16#) `iShiftRA#` 16#
+ALEX_IF_GHC_LT_503
+uncheckedShiftL# = shiftL#
 ALEX_ENDIF
+
+{-# INLINE alexIndexInt16OffAddr #-}
+alexIndexInt16OffAddr (AlexA# arr) off =
+ALEX_IF_BIGENDIAN
+  narrow16Int# i
   where
-ALEX_IF_GHC_GE_503
-	i = word2Int# ((high `uncheckedShiftL#` 8#) `or#` low)
-ALEX_ELSE
-	i = word2Int# ((high `shiftL#` 8#) `or#` low)
-ALEX_ENDIF
+	i    = word2Int# ((high `uncheckedShiftL#` 8#) `or#` low)
 	high = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
 	low  = int2Word# (ord# (indexCharOffAddr# arr off'))
 	off' = off *# 2#
+ALEX_ELSE
+  indexInt16OffAddr# arr off
+ALEX_ENDIF
 #else
-alexIndexShortOffAddr arr off = arr ! off
+alexIndexInt16OffAddr arr off = arr ! off
 #endif
 
+#ifdef ALEX_GHC
+{-# INLINE alexIndexInt32OffAddr #-}
+alexIndexInt32OffAddr (AlexA# arr) off = 
+ALEX_IF_BIGENDIAN
+  narrow32Int# i
+  where
+   i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
+		     (b2 `uncheckedShiftL#` 16#) `or#`
+		     (b1 `uncheckedShiftL#` 8#) `or#` b0)
+   b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
+   b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
+   b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
+   b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
+   off' = off *# 4#
+ALEX_ELSE
+  indexInt32OffAddr# arr off
+ALEX_ENDIF
+#else
+alexIndexInt32OffAddr arr off = arr ! off
+#endif
 
 #ifdef ALEX_GHC
 ALEX_IF_GHC_LT_503
@@ -142,14 +160,14 @@ alex_scan_tkn' user orig_input len input s last_acc =
         trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
 #endif
 	let
-		base   = alexIndexShortOffAddr alex_base s
+		base   = alexIndexInt32OffAddr alex_base s
 		IBOX(ord_c) = ord c
 		offset = PLUS(base,ord_c)
-		check  = alexIndexShortOffAddr alex_check offset
+		check  = alexIndexInt16OffAddr alex_check offset
 		
 		new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
-			  then alexIndexShortOffAddr alex_table offset
-			  else alexIndexShortOffAddr alex_deflt s
+			  then alexIndexInt16OffAddr alex_table offset
+			  else alexIndexInt16OffAddr alex_deflt s
 	in
 	alex_scan_tkn user orig_input PLUS(len,ILIT(1)) new_input new_s new_acc
 

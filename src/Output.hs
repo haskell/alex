@@ -22,9 +22,10 @@ import Data.FiniteMap
 import Data.Array (Array)
 import Data.Array.Unboxed
 import Data.Array.ST
+import Data.Bits
 import Data.Array.Base ( unsafeRead )
 
---import Debug.Trace
+import Debug.Trace
 
 -- -----------------------------------------------------------------------------
 -- Printing the output
@@ -45,16 +46,16 @@ outputDFA target n func_nm dfa
     deflt_nm  = "alex_deflt"
     accept_nm = "alex_accept"
 
-    outputBase    = do_array base_nm  n_states   base
-    outputTable   = do_array table_nm table_size table
-    outputCheck   = do_array check_nm table_size check
-    outputDefault = do_array deflt_nm n_states   deflt
+    outputBase    = do_array hexChars32 base_nm  n_states   base
+    outputTable   = do_array hexChars16 table_nm table_size table
+    outputCheck   = do_array hexChars16 check_nm table_size check
+    outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
-    do_array nm upper_bound ints
+    do_array hex_chars nm upper_bound ints
 	| GhcTarget <- target
 	= str nm . str " :: AlexAddr\n"
 	. str nm . str " = AlexA# \""
-	. str (hexChars ints)
+	. str (hex_chars ints)
 	. str "\"#\n"
 
 	| otherwise
@@ -314,14 +315,25 @@ findFstFreeSlot table n = do
 -- Convert an integer to a 16-bit number encoded in \xNN\xNN format suitable
 -- for placing in a string (copied from Happy's ProduceCode.lhs)
 
-hexChars :: [Int] -> String
-hexChars acts = concat (map hexChar acts)
+hexChars16 :: [Int] -> String
+hexChars16 acts = concat (map conv16 acts)
+  where
+    conv16 i | i > 0x7fff || i < -0x8000
+    		= error ("Internal error: hexChars16: out of range: " ++ show i)
+  	     | otherwise
+	        = hexChar16 i
 
-hexChar :: Int -> String
-hexChar i | i < 0 = hexChar (i + 2^16)
-hexChar i =  toHex (i `mod` 256) ++ toHex (i `div` 256)
+hexChars32 :: [Int] -> String
+hexChars32 acts = concat (map conv32 acts)
+  where
+    conv32 i = hexChar16 (i .&. 0xffff) ++ 
+		hexChar16 ((i `shiftR` 16) .&. 0xffff)
+
+hexChar16 :: Int -> String
+hexChar16 i = toHex (i .&. 0xff)
+		 ++ toHex ((i `shiftR` 8) .&. 0xff)  -- force little-endian
 
 toHex i = ['\\','x', hexDig (i `div` 16), hexDig (i `mod` 16)]
 
-hexDig i | i <= 9      = chr (i + ord '0')
-	   | otherwise = chr (i - 10 + ord 'a')
+hexDig i | i <= 9    = chr (i + ord '0')
+	 | otherwise = chr (i - 10 + ord 'a')

@@ -166,16 +166,23 @@ importsToInject tgt cli = always_imports ++ debug_imports ++ glaexts_import
 	debug_imports  | OptDebugParser `elem` cli = import_debug
 		       | otherwise		   = ""
 
--- CPP is turned on for -fglasogw-exts, so we can use conditional compilation:
+-- CPP is turned on for -fglasogw-exts, so we can use conditional
+-- compilation.  We need to #include "config.h" to get hold of
+-- WORDS_BIGENDIAN (see GenericTemplate.hs).
 
-always_imports = "#if __GLASGOW_HASKELL__ >= 503\n\ 
-		   \import Data.Array\n\ 
-		   \import Data.Char (ord)\n\ 
-		   \import Data.Array.Base (unsafeAt)\n\ 
-		   \#else\n\ 
-		   \import Array\n\ 
-		   \import Char (ord)\n\ 
-		   \#endif\n"
+always_imports = "#if __GLASGOW_HASKELL__ >= 604\n\ 
+		 \#include \"ghcconfig.h\"\n\ 
+		 \#else\n\ 
+		 \#include \"config.h\"\n\ 
+		 \#endif\n" ++
+		 "#if __GLASGOW_HASKELL__ >= 503\n\ 
+		 \import Data.Array\n\ 
+		 \import Data.Char (ord)\n\ 
+		 \import Data.Array.Base (unsafeAt)\n\ 
+		 \#else\n\ 
+		 \import Array\n\ 
+		 \import Char (ord)\n\ 
+		 \#endif\n"
 
 import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n\ 
 		   \import GHC.Exts\n\ 

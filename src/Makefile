@@ -13,7 +13,7 @@ HS_PROG = alex$(HS_PROG_EXT)
 
 Main_HC_OPTS =  -DALEX_VERSION=$(ProjectVersion) 
 
-ifeq "$(HOSTPLATFORM)" "i386-unknown-mingw32"
+ifeq "$(Windows)" "YES"
 Main_HC_OPTS += -Dmingw32_HOST_OS=1
 endif
 
@@ -52,7 +52,11 @@ SCRIPT_SUBST_VARS = 	\
 	ALEXLIB	\
 	ALEXBIN
 
+# The script isn't installed on Windows; we run the binary directly
+ifeq "$(Windows)" "NO"
 INSTALL_SCRIPTS += $(SCRIPT_PROG)
+endif
+
 INSTALL_LIBEXECS = $(HS_PROG)
 
 # Hack to avoid automatic cleaning machinery from cleaning Scan.hs
