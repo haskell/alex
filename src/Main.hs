@@ -1,4 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
+{-# OPTIONS -fglasgow-exts -cpp #-}
 -- -----------------------------------------------------------------------------
 -- 
 -- Main.hs, part of Alex
@@ -32,7 +32,9 @@ import Data.Maybe
 
 import Prelude hiding ( catch )
 
-version = "2.0"
+-- hackery to convice cpp to splice ALEX_VERSION into a string
+version = tail "\ 
+   \ ALEX_VERSION"
 
 -- `main' decodes the command line arguments and calls `alex'.  
 
