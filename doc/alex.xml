@@ -1,8 +1,9 @@
-<!DOCTYPE BOOK PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
-<!entity  the-index SYSTEM "genindex.sgml">
-]>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+   "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <book id="alex">
+
   <bookinfo>
     <date>2003-8-11</date>
     <title>Alex User Guide</title>
@@ -19,25 +20,21 @@
       <surname>Marlow</surname>
     </author>
     <address><email>ijones@syntaxpolice.org</email></address>
-<!--     <copyright> -->
-<!--       <year>1997-2001</year> -->
-<!--       <holder>Simon Marlow</holder> -->
-<!--     </copyright> -->
+    <!--     <copyright> -->
+    <!--       <year>1997-2001</year> -->
+    <!--       <holder>Simon Marlow</holder> -->
+    <!--     </copyright> -->
 
     <abstract>
-      <para>Alex is a tool for generating lexical analysers
-      in Haskell, given a description of the tokens to be recognised
-      in the form of regular expressions.  It is similar to the tool
+      <para>Alex is a tool for generating lexical analysers in
+      Haskell, given a description of the tokens to be recognised in
+      the form of regular expressions.  It is similar to the tool
       <quote>lex</quote> or <quote>flex</quote> for C/C++.</para>
     </abstract>
-
   </bookinfo>
 
   <!-- Table of contents -->
   <toc></toc>
-
-<!-- Introduction
---------------------------------------------------------- -->
 
   <chapter id="about">
     <title>About Alex</title>
@@ -86,9 +83,7 @@
 
 	  <listitem>
 	    <para>Rules are now of the form
-<programlisting>
-    &lt;c1,c2,...>  regex   { code }
-</programlisting>
+<programlisting>&lt;c1,c2,...>  regex   { code }</programlisting>
            where <literal>c1</literal>, <literal>c2</literal> are
            startcodes, and <literal>code</literal> is an arbitrary
            Haskell expression.</para>
@@ -163,7 +158,7 @@
 	  <listitem>
 	    <para>The programmer experience has been simplified, and
             at the same time made more flexible.  See the <xref
-            linkend="api"> for details.</para>
+            linkend="api"/> for details.</para>
 	  </listitem>
 
 	  <listitem>
@@ -177,7 +172,7 @@
 	<title>Usage changes</title>
 	
 	<para>The command-line syntax is quite different.  See <xref
-	linkend="invoking">.</para>
+	linkend="invoking"/>.</para>
       </section>
 
       <section id="changes-implementation">
@@ -282,10 +277,8 @@
     exisiting lex users, although it does depart from lex in a number
     of ways.</para>
 
-    <figure ID="fig-tokens" FLOAT="1"><TITLE>A simple Alex
-	  specification.</TITLE>
-<programlisting>
-{
+    <figure id="fig-tokens" float="1"><title>A simple Alex specification.</title>
+<programlisting>{
 module Main (main) where
 }
 
@@ -317,13 +310,12 @@ data Token =
 	deriving (Eq,Show)
 
 main = do
-  s <- getContents
+  s &lt;- getContents
   print (alexScanTokens s)
-}
-</programlisting></figure>
+}</programlisting></figure>
 
     <para>A sample specification is given in <xref
-    linkend="fig-tokens">.  The first few lines between the
+    linkend="fig-tokens"/>.  The first few lines between the
     <literal>{</literal> and <literal>}</literal> provide a code scrap
     (some inlined Haskell code) to be placed directly in the output,
     the scrap at the top of the module is normally used to declare the
@@ -335,7 +327,7 @@ main = do
     scanner.  The <literal>basic</literal> wrapper selects a scanner
     that tokenises a <literal>String</literal> and returns a list of
     tokens.  Wrappers are described fully in <xref
-    linkend="api">.</para>
+    linkend="api"/>.</para>
 
     <para>The next two lines define the <literal>$digit</literal> and
     <literal>$alpha</literal> macros for use in the token
@@ -347,9 +339,7 @@ main = do
     <para>The scanner is specified as a series of token definitions
     where each token specification takes the form of</para>
 
-<programlisting>
-   <replaceable>regexp</replaceable>   { <replaceable>code</replaceable> }
-</programlisting>
+<programlisting><replaceable>regexp</replaceable>   { <replaceable>code</replaceable> }</programlisting>
 
     <para>The meaming of a this rule is "if the input matches
     <replaceable>regexp</replaceable>, then return
@@ -375,9 +365,7 @@ main = do
     <para>Alex has kindly provided the following function which we can
     use to invoke the scanner:</para>
 
-<programlisting>
-    alexScanTokens :: String -> [Token]
-</programlisting>
+<programlisting>alexScanTokens :: String -> [Token]</programlisting>
 
     <para>Alex arranges for the input stream to be tokenised, each of
     the action functions to be passed the appriate
@@ -397,15 +385,13 @@ main = do
     <literal>Tokens.x</literal>, Alex can be used to generate
     <literal>Tokens.hs</literal>:</para>
 
-<screen>
-    alex Tokens.x</screen>
+<screen>$ alex Tokens.x</screen>
 
     <para>If the module needed to be placed in different file,
     <literal>Main.hs</literal> for example, then the output filename
     can be specified using the <option>-o</option> option:</para>
 
-<screen>
-    alex Tokens.x -o Main.hs</screen>
+<screen>$ alex Tokens.x -o Main.hs</screen>
 
     <para>The resulting module is Haskell&nbsp;98 compatible.  It can also
     be readily used with a <ulink
@@ -428,8 +414,7 @@ main = do
       set of macro definitions using Alex's own syntax.  These macros
       are used in the BNF specification of the syntax later on.</para>
 
-<programlisting>
-$digit      = [0-9]
+<programlisting>$digit      = [0-9]
 $octdig     = [0-7]
 $hexdig     = [0-9A-Fa-f]
 $special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^\/]
@@ -441,8 +426,7 @@ $graphic    = $printable # $white
 @rmac       = '@' id
 @char       = ($graphic # $special) | @escape
 @escape     = '\\' ($printable | 'x' $hexdig+ | 'o' $octdig+ | $digit+)
-@code       = -- curly braces surrounding a Haskell code fragment
-</programlisting>
+@code       = -- curly braces surrounding a Haskell code fragment</programlisting>
     </section>
 
     <section id="alex-files">
@@ -459,9 +443,7 @@ $graphic    = $printable # $white
       with a <literal>.x</literal> extension.  The overall layout of
       an Alex file is:</para>
 
-<programlisting>
-    alex := [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]
-</programlisting>
+<programlisting>alex := [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]</programlisting>
 
       <para>The file begins and ends with optional code fragments.
       These code fragments are copied verbatim into the generated
@@ -477,12 +459,10 @@ $graphic    = $printable # $white
 
       <para>Next comes an optional wrapper specification:</para>
 
-<programlisting>
-    wrapper := '%wrapper' @string
-</programlisting>
+<programlisting>wrapper := '%wrapper' @string</programlisting>
 
       <para>wrappers are described in <xref
-      linkend="wrappers">.</para>
+      linkend="wrappers"/>.</para>
 
       <section id="macrodefs">
 	<title>Macro definitions</title>
@@ -493,14 +473,12 @@ $graphic    = $printable # $white
 	a <literal>$</literal>, and <firstterm>regular expression
 	macros</firstterm>, which begin with a <literal>@</literal>.
 	A character set macro can be used wherever a character set is
-	valid (see <xref linkend="charsets">), and a regular
+	valid (see <xref linkend="charsets"/>), and a regular
 	expression macro can be used wherever a regular expression is
-	valid (see <xref linkend="regexps">).</para>
+	valid (see <xref linkend="regexps"/>).</para>
 
-<programlisting>
-    macrodef  :=  @smac '=' set
-               |  @rmac '=' regexp
-</programlisting>
+<programlisting>macrodef  :=  @smac '=' set
+           |  @rmac '=' regexp</programlisting>
       </section>
 
       <section id="rules">
@@ -515,14 +493,12 @@ $graphic    = $printable # $white
 
 	<para>The syntax of rules is as follows:</para>
 
-<programlisting>
-    rule       := [ startcodes ] token
-    		| startcodes '{' { token } '}'
-    
-    token      := [ left_ctx ] regexp [ right_ctx ]  rhs
+<programlisting>rule       := [ startcodes ] token
+            | startcodes '{' { token } '}'
 
-    rhs        := @code | ';'
-</programlisting>
+token      := [ left_ctx ] regexp [ right_ctx ]  rhs
+
+rhs        := @code | ';'</programlisting>
 
 	<para>Each rule defines one token in the lexical
 	specification.  When the input stream matches the regular
@@ -533,7 +509,7 @@ $graphic    = $printable # $white
 	the actions must have the same type.  They can be values in a
 	token type, for example, or possibly operations in a monad.
 	More about how this all works is in <xref
-	linkend="api">.</para>
+	linkend="api"/>.</para>
 
 	<para>The action may be missing, indicated by replacing it
 	with &lsquo;<literal>;</literal>&rsquo;, in which case the
@@ -542,17 +518,13 @@ $graphic    = $printable # $white
 	<para>Alex will always find the longest match.  For example,
 	if we have a rule that matches whitespace:</para>
 
-<programlisting>
-    $white+        ;
-</programlisting>
+<programlisting>$white+        ;</programlisting>
 
         <para>Then this rule will match as much whitespace at the
         beginning of the input stream as it can.  Be careful: if we
         had instead written this rule as</para>
 
-<programlisting>
-    $white*        ;
-</programlisting>
+<programlisting>$white*        ;</programlisting>
 
 	<para>then it would also match the empty string, which would
 	mean that Alex could never fail to match a rule!</para>
@@ -570,12 +542,12 @@ $graphic    = $printable # $white
 	  any rule:</para>
 	  
 <programlisting>
-    left_ctx   := '^'
-    		| set '^'
-    
-    right_ctx  := '$'
-    		| '/' regexp
-    		| '/' @code
+left_ctx   := '^'
+            | set '^'
+
+right_ctx  := '$'
+            | '/' regexp
+            | '/' @code
 </programlisting>
 
 	  <para>The left context matches the character which
@@ -590,8 +562,9 @@ $graphic    = $printable # $white
 
 	  <variablelist>
 	    <varlistentry>
-	      <term><literal>/
-	      <replaceable>regexp</replaceable></literal></term>
+	      <term>
+                <literal>/ <replaceable>regexp</replaceable></literal>
+              </term>
 	      <listitem>
 		<para>This right-context causes the rule to match if
  	        and only if it is followed in the input stream by text
@@ -621,24 +594,22 @@ $graphic    = $printable # $white
 		<emphasis>predicate</emphasis> on the rule.  The
 		Haskell expression inside the curly braces should have
 		type:
-<programlisting>
-    { ... } :: user       -- predicate state
-    	    -> AlexInput  -- input stream before the token
-    	    -> Int        -- length of the token
-    	    -> AlexInput  -- input stream after the token
-    	    -> Bool       -- True <=> accept the token
-</programlisting>
+<programlisting>{ ... } :: user       -- predicate state
+        -> AlexInput  -- input stream before the token
+        -> Int        -- length of the token
+        -> AlexInput  -- input stream after the token
+        -> Bool       -- True &lt;=> accept the token</programlisting>
                 Alex will only accept the token as matching if
                 the predicate returns <literal>True</literal>.</para>
 
-                <para>See <xref linkend="api"> for the meaning of the
+                <para>See <xref linkend="api"/> for the meaning of the
                 <literal>AlexInput</literal> type.  The
                 <literal>user</literal> argument is available for
                 passing into the lexer a special state which is used
                 by predicates; to give this argument a value, the
                 <literal>alexScanUser</literal> entry point to the
                 lexer must be used (see <xref
-                linkend="basic-api">).</para>
+                linkend="basic-api"/>).</para>
 	      </listitem>
 	    </varlistentry>
 	  </variablelist>
@@ -656,14 +627,12 @@ $graphic    = $printable # $white
 	  may be given a list of startcodes under which it
 	  applies:</para>
 
-<programlisting>
-    startcode  := @id | '0'
-    startcodes := '<' startcode { ',' startcode } '>'
-</programlisting>
+<programlisting>startcode  := @id | '0'
+startcodes := '&lt;' startcode { ',' startcode } '>'</programlisting>
     
 	  <para>When the lexer is invoked to scan the next token from
 	  the input stream, the start code to use is also specified
-	  (see <xref linkend="api">).  Only rules that mention this
+	  (see <xref linkend="api"/>).  Only rules that mention this
 	  start code are then enabled.  Rules which do not have a list
 	  of startcodes are available all the time.</para>
 
@@ -674,10 +643,8 @@ $graphic    = $printable # $white
 	  startcodes <literal>foo</literal> and <literal>bar</literal>
 	  in the lexical spec, then Alex will create definitions such
 	  as:
-<programlisting>
-    foo = 1
-    bar = 2
-</programlisting>
+<programlisting>foo = 1
+bar = 2</programlisting>
           in the output file.</para>
 
 	  <para>Another way to think of start codes is as a way to
@@ -691,12 +658,10 @@ $graphic    = $printable # $white
 	  <para>Here is an example of using startcodes as states, for
 	  collecting the characters inside a string:</para>
 
-<programlisting>
-    <0>      ([^\"] | \n)*  ;
-    <0>      \"             { begin string }
-    &lt;string> [^\"]          { stringchar }
-    &lt;string> \"             { begin 0 }
-</programlisting>
+<programlisting>&lt;0>      ([^\"] | \n)*  ;
+&lt;0>      \"             { begin string }
+&lt;string> [^\"]          { stringchar }
+&lt;string> \"             { begin 0 }</programlisting>
 
           <para>When it sees a quotation mark, the lexer switches into
           the <literal>string</literal> state and each character
@@ -708,7 +673,7 @@ $graphic    = $printable # $white
 	  an integer passed in, which tells it which state to start
 	  in.  In order to actually use it as a state, you must have
 	  some way for the token actions to specify new start codes -
-	  <xref linkend="api"> describes some ways this can be done.
+	  <xref linkend="api"/> describes some ways this can be done.
 	  In some applications, it might be necessary to keep a
 	  <emphasis>stack</emphasis> of start codes, where at the end
 	  of a state we pop the stack and resume parsing in the
@@ -729,22 +694,20 @@ $graphic    = $printable # $white
     <section id="regexp-syntax">
       <title>Syntax of regular expressions</title>
 
-<programlisting>
-    regexp  := rexp2 { '|' rexp2 }
-    
-    rexp2   := rexp1 { rexp1 }
-    
-    rexp1   := rexp0 [ '*' | '+' | '?' | repeat ]
+<programlisting>regexp  := rexp2 { '|' rexp2 }
 
-    rexp0   := set
-    	     | @rmac
-    	     | @string
-    	     | '(' [ regexp ] ')'
+rexp2   := rexp1 { rexp1 }
 
-    repeat  := '{' $digit '}'
-    	     | '{' $digit ',' '}'
-    	     | '{' $digit ',' $digit '}'
-</programlisting>
+rexp1   := rexp0 [ '*' | '+' | '?' | repeat ]
+
+rexp0   := set
+         | @rmac
+         | @string
+         | '(' [ regexp ] ')'
+
+repeat  := '{' $digit '}'
+         | '{' $digit ',' '}'
+         | '{' $digit ',' $digit '}'</programlisting>
 
       <para>The syntax of regular expressions is fairly standard, the
       only difference from normal lex-style regular expressions being
@@ -764,7 +727,7 @@ $graphic    = $printable # $white
 	  <listitem>
 	    <para>Matches any of the characters in
 	    <replaceable>set</replaceable>.  See <xref
-	    linkend="charsets"> for the syntax of sets.</para>
+	    linkend="charsets"/> for the syntax of sets.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -842,15 +805,13 @@ $graphic    = $printable # $white
       expression.  A character set is a pattern that matches a single
       character.  The syntax of character sets is as follows:</para>
 
-<programlisting>
-    set     := set ['#' set0]
-    
-    set0    := @char [ '-' @char ]
-    	    | '.'
-    	    |  @smac
-    	    | '[' [^] { set } ']'
-    	    | '~' set0
-</programlisting>
+<programlisting>set     := set ['#' set0]
+
+set0    := @char [ '-' @char ]
+        | '.'
+        |  @smac
+        | '[' [^] { set } ']'
+        | '~' set0</programlisting>
 
       <para>The various character set constructions are:</para>
       
@@ -862,7 +823,7 @@ $graphic    = $printable # $white
             Note that special characters such as <literal>[</literal>
             and <literal>.</literal> must be escaped by prefixing them
             with <literal>\</literal> (see the lexical syntax, <xref
-            linkend="lexical">, for the list of special
+            linkend="lexical"/>, for the list of special
             characters).</para>
 
 	    <para>Certain non-printable characters have special escape
@@ -958,18 +919,16 @@ $graphic    = $printable # $white
       
       <para>Character set macros can be defined at the top of the file
       at the same time as regular expression macros (see <xref
-      linkend="regexps">).  Here are some example character set
+      linkend="regexps"/>).  Here are some example character set
       macros:</para>
 
-<programlisting>
-$lls      = a-z                   -- little letters
+<programlisting>$lls      = a-z                   -- little letters
 $not_lls  = ~a-z                  -- anything but little letters
 $ls_ds    = [a-zA-Z0-9]           -- letters and digits
 $sym      = [ \! \@ \# \$ ]       -- the symbols !, @, #, and $
 $sym_q_nl = [ \' \! \@ \# \$ \n ] -- the above symbols with ' and newline
 $quotable = $printable # \'       -- any graphic character except '
-$del      = \127                  -- ASCII DEL
-</programlisting>
+$del      = \127                  -- ASCII DEL</programlisting>
     </section>
 
   </chapter>
@@ -1007,11 +966,9 @@ $del      = \127                  -- ASCII DEL
       for the following, either in the same module or imported from
       another module:</para>
 
-<programlisting>
-    type AlexInput
-    alexGetChar       :: AlexInput -> Maybe (Char,AlexInput)
-    alexInputPrevChar :: AlexInput -> Char
-</programlisting>
+<programlisting>type AlexInput
+alexGetChar       :: AlexInput -> Maybe (Char,AlexInput)
+alexInputPrevChar :: AlexInput -> Char</programlisting>
 
       <para>The generated lexer is independent of the input type,
       which is why you have to provide a definition for the input type
@@ -1028,26 +985,24 @@ $del      = \127                  -- ASCII DEL
 
       <para>Alex will provide the following function:</para>
 
-<programlisting>
-  alexScan :: AlexInput             -- The current input
-           -> Int                   -- The "start code"
-           -> AlexReturn action     -- The return value
-  
-  data AlexReturn action
-    = AlexEOF
-  
-    | AlexError
-        !AlexInput     -- Remaining input
-  
-    | AlexSkip
-        !AlexInput     -- Remaining input
-        !Int           -- Token length
-  
-    | AlexToken  
-        !AlexInput     -- Remaining input
-        !Int           -- Token length
-        action         -- action value
-</programlisting>
+<programlisting>alexScan :: AlexInput             -- The current input
+         -> Int                   -- The "start code"
+         -> AlexReturn action     -- The return value
+
+data AlexReturn action
+  = AlexEOF
+
+  | AlexError
+      !AlexInput     -- Remaining input
+
+  | AlexSkip
+      !AlexInput     -- Remaining input
+      !Int           -- Token length
+
+  | AlexToken  
+      !AlexInput     -- Remaining input
+      !Int           -- Token length
+      action         -- action value</programlisting>
 
       <para>Calling <literal>alexScan</literal> will scan a single
       token from the input stream, and return a value of type
@@ -1110,19 +1065,17 @@ $del      = \127                  -- ASCII DEL
 
       <para>There is another entry point, which is useful if your
       grammar contains any predicates (see <xref
-      linkend="contexts">):</para>
+      linkend="contexts"/>):</para>
 
-<programlisting>
-    alexScanUser
-             :: user             -- predicate state
-             -> AlexInput	 -- The current input
-             -> Int		 -- The "start code"
-             -> Maybe (          -- Nothing on error or EOF
-                     AlexInput,  -- The remaining input
-                     Int,        -- Length of this token
-                     action      -- The action (an unknown type)
-        	  )
-</programlisting>
+<programlisting>alexScanUser
+         :: user             -- predicate state
+         -> AlexInput        -- The current input
+         -> Int              -- The "start code"
+         -> Maybe (          -- Nothing on error or EOF
+                 AlexInput,  -- The remaining input
+                 Int,        -- Length of this token
+                 action      -- The action (an unknown type)
+              )</programlisting>
 
       <para>The extra argument, of some type <literal>user</literal>,
       is passed to each predicate.</para>
@@ -1134,9 +1087,7 @@ $del      = \127                  -- ASCII DEL
       <para>To use one of the provided wrappers, include the following
       declaration in your file:</para>
 
-<programlisting>
-    %wrapper "<replaceable>name</replaceable>"
-</programlisting>
+<programlisting>%wrapper "<replaceable>name</replaceable>"</programlisting>
 
       <para>where <replaceable>name</replaceable> is the name of the
       wrapper, eg. <literal>basic</literal>.  The following sections
@@ -1164,35 +1115,31 @@ $del      = \127                  -- ASCII DEL
 	<para>Here is the actual code included in the lexer when the
 	basic wrapper is selected:</para>
 
-<programlisting>
-    type AlexInput = (Char,	-- previous char
-		      String)	-- current input string
+<programlisting>type AlexInput = (Char,     -- previous char
+                  String)   -- current input string
 
-    alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-    alexGetChar (_, [])   = Nothing
-    alexGetChar (_, c:cs) = Just (c, (c,cs))
+alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
+alexGetChar (_, [])   = Nothing
+alexGetChar (_, c:cs) = Just (c, (c,cs))
 
-    alexInputPrevChar :: AlexInput -> Char
-    alexInputPrevChar (c,_) = c
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c,_) = c
 
-    -- alexScanTokens :: String -> [token]
-    alexScanTokens str = go ('\n',str)
-      where go inp@(_,str) =
-    	      case alexScan inp 0 of
-    		    AlexEOF -> []
-    		    AlexError _ -> error "lexical error"
-    		    AlexSkip  inp' len     -> go inp'
-    		    AlexToken inp' len act -> act (take len str) : go inp'
-</programlisting>
+-- alexScanTokens :: String -> [token]
+alexScanTokens str = go ('\n',str)
+  where go inp@(_,str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act (take len str) : go inp'</programlisting>
 
 	<para>The type signature for <literal>alexScanTokens</literal>
         is commented out, because the <literal>token</literal> type is
         unkonwn.  All of the actions in your lexical specification
         should have type:</para>
 
-<programlisting>
-    { ... } :: String -> token
-</programlisting>
+<programlisting>{ ... } :: String -> token</programlisting>
 
         <para>for some type <literal>token</literal>.</para>
 
@@ -1213,30 +1160,26 @@ $del      = \127                  -- ASCII DEL
 	<literal>alexGetChar</literal> and
 	<literal>alexInputPrevChar</literal>:</para>
 
-<programlisting>
-    data AlexPosn = AlexPn !Int  -- absolute character offset
-                           !Int  -- line number
-                           !Int  -- column number
+<programlisting>data AlexPosn = AlexPn !Int  -- absolute character offset
+                       !Int  -- line number
+                       !Int  -- column number
 
-    type AlexInput = (AlexPosn, -- current position,
-		      Char,	-- previous char
-		      String)	-- current input string
+type AlexInput = (AlexPosn, -- current position,
+                  Char,     -- previous char
+                  String)   -- current input string
 
-    --alexScanTokens :: String -> [token]
-    alexScanTokens str = go (alexStartPos,'\n',str)
-      where go inp@(pos,_,str) =
-    	      case alexScan inp 0 of
-    		    AlexEOF -> []
-    		    AlexError _ -> error "lexical error"
-    		    AlexSkip  inp' len     -> go inp'
-    		    AlexToken inp' len act -> act pos (take len str) : go inp'
-</programlisting>
+--alexScanTokens :: String -> [token]
+alexScanTokens str = go (alexStartPos,'\n',str)
+  where go inp@(pos,_,str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act pos (take len str) : go inp'</programlisting>
 
 	<para>The types of the token actions should be:</para>
 
-<programlisting>
-    { ... } :: AlexPosn -> String -> token
-</programlisting>
+<programlisting>{ ... } :: AlexPosn -> String -> token</programlisting>
 
 	<para>For an example using the <literal>posn</literal>
 	wrapper, see the file
@@ -1255,12 +1198,11 @@ $del      = \127                  -- ASCII DEL
 	modify it to build a monad with the facilities you
 	need.</para>
 
-<programlisting>
-data AlexState = AlexState {
-        alex_pos :: !AlexPosn,	-- position at current input location
-        alex_inp :: String,	-- the current input
-        alex_chr :: !Char,	-- the character before the input
-        alex_scd :: !Int 	-- the current startcode
+<programlisting>data AlexState = AlexState {
+        alex_pos :: !AlexPosn,  -- position at current input location
+        alex_inp :: String,     -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_scd :: !Int        -- the current startcode
     }
 
 newtype Alex a = Alex { unAlex :: AlexState
@@ -1274,28 +1216,22 @@ alexSetInput     :: AlexInput -> Alex ()
 alexError        :: String -> Alex a
 
 alexGetStartCode :: Alex Int
-alexSetStartCode :: Int -> Alex ()
-</programlisting>
+alexSetStartCode :: Int -> Alex ()</programlisting>
 
 	<para>To invoke a scanner under the <literal>monad</literal>
 	wrapper, use <literal>alexMonadScan</literal>:</para>
 
-<programlisting>
-alexMonadScan    :: Alex result
-</programlisting>
+<programlisting>alexMonadScan :: Alex result</programlisting>
 
 	<para>The token actions should have the following type:</para>
 
-<programlisting>
-type AlexAction result = AlexInput -> Int -> Alex result
-{ ... }  :: AlexAction result
-</programlisting>
+<programlisting>type AlexAction result = AlexInput -> Int -> Alex result
+{ ... }  :: AlexAction result</programlisting>
 
 	<para>The <literal>monad</literal> wrapper also provides some
 	useful combinators for constructing token actions:</para>
 
-<programlisting>
--- skip :: AlexAction result
+<programlisting>-- skip :: AlexAction result
 skip input len = alexMonadScan
 
 -- andBegin :: AlexAction result -> Int -> AlexAction result
@@ -1305,8 +1241,7 @@ skip input len = alexMonadScan
 begin code = skip `andBegin` code
 
 -- token :: (String -> Int -> token) -> AlexAction token
-token t input len = return (t input len)
-</programlisting>
+token t input len = return (t input len)</programlisting>
       </section>
 
       <section>
@@ -1318,24 +1253,20 @@ token t input len = return (t input len)
 	is intended to be very general, allowing actions to modify the
 	startcode, and pass around an arbitrary state value.</para>
 
-<programlisting>
-    alexGScan :: StopAction state result -> state -> String -> result
+<programlisting>alexGScan :: StopAction state result -> state -> String -> result
 
-    type StopAction state result 
-             = AlexPosn -> Char -> String -> (Int,state) -> result
-</programlisting>    
+type StopAction state result 
+         = AlexPosn -> Char -> String -> (Int,state) -> result</programlisting>    
 
 	<para>The token actions should all have this type:</para>
 
-<programlisting>
-    { ... }      :: AlexPosn                -- token position
-                 -> Char                    -- previous character
-                 -> String                  -- input string at token
-                 -> Int                     -- length of token
-                 -> ((Int,state) -> result) -- continuation
-                 -> (Int,state)             -- current (startcode,state)
-                 -> result
-</programlisting>    
+<programlisting>{ ... }      :: AlexPosn                -- token position
+             -> Char                    -- previous character
+             -> String                  -- input string at token
+             -> Int                     -- length of token
+             -> ((Int,state) -> result) -- continuation
+             -> (Int,state)             -- current (startcode,state)
+             -> result</programlisting>    
       </section>
     </section>
   </chapter>
@@ -1346,9 +1277,7 @@ token t input len = return (t input len)
     <para>The command line syntax for Alex is entirely
     standard:</para>
 
-<screen>
-    alex { <replaceable>option</replaceable> } <replaceable>file</replaceable>.x  { <replaceable>option</replaceable> }
-</screen>
+<screen>$ alex { <replaceable>option</replaceable> } <replaceable>file</replaceable>.x  { <replaceable>option</replaceable> }</screen>
 
     <para>Alex expects a single
     <literal><replaceable>file</replaceable>.x</literal> to be named
@@ -1436,4 +1365,3 @@ token t input len = return (t input len)
   </chapter>
 
 </book>
-
