@@ -37,6 +37,7 @@
 #undef __GLASGOW_HASKELL__
 #define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
 #define ALEX_IF_GHC_GE_503 #if __GLASGOW_HASKELL__ >= 503
+#define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
 #define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
 #define ALEX_ELSE #else
 #define ALEX_ENDIF #endif
@@ -66,6 +67,10 @@ ALEX_ENDIF
 #else
 alexIndexShortOffAddr arr off = arr ! off
 #endif
+
+ALEX_IF_GHC_LT_503
+unsafeAt arr i = arr ! i
+ALEX_ENDIF
 
 -- -----------------------------------------------------------------------------
 -- Main lexing routines
