@@ -1,5 +1,5 @@
 %define name    alex
-%define version 2.0
+%define version 2.0.1
 %define release 1
 
 Name:           %{name}
