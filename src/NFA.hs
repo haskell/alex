@@ -128,6 +128,9 @@ scanner2nfa Scanner{scannerTokens = toks} startcodes
 -- -----------------------------------------------------------------------------
 -- NFA creation from a regular expression
 
+-- rexp2nfa B E R generates an NFA that begins in state B, recognises
+-- R, and ends in state E only if R has been recognised. 
+
 rexp2nfa :: SNum -> SNum -> RExp -> NFAM ()
 rexp2nfa b e Eps    = epsilonEdge b e
 rexp2nfa b e (Ch p) = charEdge b p e
@@ -139,13 +142,17 @@ rexp2nfa b e (re1 :| re2) = do
   rexp2nfa b e re1
   rexp2nfa b e re2
 rexp2nfa b e (Star re) = do
-  rexp2nfa b b re
-  epsilonEdge b e
-rexp2nfa b e (Plus re) = do
   s <- newState
-  rexp2nfa b s re
+  epsilonEdge b s
+  rexp2nfa s s re
   epsilonEdge s e
-  epsilonEdge s b
+rexp2nfa b e (Plus re) = do
+  s1 <- newState
+  s2 <- newState
+  rexp2nfa s1 s2 re
+  epsilonEdge b s1
+  epsilonEdge s2 s1
+  epsilonEdge s2 e
 rexp2nfa b e (Ques re) = do
   rexp2nfa b e re
   epsilonEdge b e
