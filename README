@@ -19,8 +19,8 @@ The sources are in the the `src' directory and the documentation in the `doc'
 directory; various  examples are in the 'examples' subdirectory.
 
 The source code in the 'src' and 'examples' directories is intended
-for a Haskell 98 compiler with hierarchical modules.  It has been
-tested with GHC 5.04.x and 6.0.x.
+for a Haskell 98 compiler with hierarchical modules.  It should work
+with an version of GHC >= 5.04.
 
 Please report any bugs or comments to the email addresses given below.
 
