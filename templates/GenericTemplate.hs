@@ -107,7 +107,7 @@ data AlexReturn a
   | AlexSkip   !AlexInput !Int
   | AlexToken  !AlexInput !Int a
 
--- alexScan :: AlexInput -> StartCode -> Maybe (AlexInput,Int,act)
+-- alexScan :: AlexInput -> StartCode -> AlexReturn a
 alexScan input IBOX(sc)
   = alexScanUser undefined input IBOX(sc)
 
