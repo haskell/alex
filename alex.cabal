@@ -11,7 +11,6 @@ synopsis: Alex is a tool for generating lexical analysers in Haskell
 build-depends: base>=1.0
 extra-source-files:
 	ANNOUNCE
-	Makefile
 	README
 	TODO
 	alex.spec
@@ -32,11 +31,6 @@ extra-source-files:
 	examples/words.x
 	examples/words_monad.x
 	examples/words_posn.x
-	mk/boilerplate.mk
-	mk/config.mk
-	mk/target.mk
-	mk/version.mk
-	src/Makefile
 	src/Parser.y
 	src/Scan.hs
 	src/alex.sh
