@@ -24,13 +24,15 @@ expressions.  It is similar to the tool lex or flex for C/C++.
 %setup -n alex-%{version}
 
 %build
+runhaskell Setup.lhs configure --prefix=%{prefix}
+runhaskell Setup.lhs build
+cd doc
 test -f configure || autoreconf
-./configure --prefix=%{prefix}
-make
+./configure
 make html
 
 %install
-make prefix=${RPM_BUILD_ROOT}%{prefix} install
+runhaskell Setup.lhs copy --destdir=${RPM_BUILD_ROOT}
 
 %clean
 rm -rf ${RPM_BUILD_ROOT}
