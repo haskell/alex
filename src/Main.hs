@@ -1,4 +1,3 @@
-{-# OPTIONS -fglasgow-exts -cpp #-}
 -- -----------------------------------------------------------------------------
 -- 
 -- Main.hs, part of Alex
@@ -20,13 +19,14 @@ import ParseMonad ( runP )
 import Parser
 import Scan
 import Util
-import Version
+import Paths_alex ( version )
 
 import Control.Exception as Exception ( block, unblock, catch, throw )
 import Control.Monad ( when, liftM )
 import Data.Char ( chr )
 import Data.List ( isSuffixOf )
 import Data.Maybe ( isJust, fromJust )
+import Data.Version ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
 import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
@@ -57,8 +57,11 @@ main =	do
 	prog <- getProgramName
         die (concat errors ++ usageInfo (usageHeader prog) argInfo)
 
+projectVersion :: String
+projectVersion = showVersion version
+
 copyright :: String
-copyright = "Alex version " ++ version ++ ", (c) 2003 Chris Dornan and Simon Marlow\n"
+copyright = "Alex version " ++ projectVersion ++ ", (c) 2003 Chris Dornan and Simon Marlow\n"
 
 usageHeader :: String -> String
 usageHeader prog = "Usage: " ++ prog ++ " [OPTION...] file\n"
@@ -153,9 +156,8 @@ injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl code
 
 optsToInject :: Target -> [CLIFlags] -> String
-optsToInject target cli
-   | GhcTarget <- target = "{-# OPTIONS -fglasgow-exts -cpp #-}\n"
-   | otherwise		 = "{-# OPTIONS -cpp #-}\n"
+optsToInject GhcTarget _ = "{-# OPTIONS -fglasgow-exts -cpp #-}\n"
+optsToInject _         _ = "{-# OPTIONS -cpp #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject tgt cli = always_imports ++ debug_imports ++ glaexts_import
@@ -211,9 +213,9 @@ templateDir cli
 templateFile dir target cli
   = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug
   where 
-	maybe_ghc 
-	  | GhcTarget <- target  = "-ghc"
-	  | otherwise            = ""
+	maybe_ghc = case target of
+                      GhcTarget -> "-ghc"
+                      _         -> ""
 
 	maybe_debug
 	  | OptDebugParser `elem` cli  = "-debug"
@@ -234,7 +236,7 @@ infoStart x_file info_file = do
 	)
 
 infoHeader h file = do
-  hPutStrLn h ("Info file produced by Alex version " ++ version ++ 
+  hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++ 
 		", from " ++ file)
   hPutStrLn h hline
   hPutStr h "\n"
@@ -332,7 +334,7 @@ getBaseDir = do let len = (2048::Int) -- plenty, PATH_MAX is 512 under Win32.
 foreign import stdcall "GetModuleFileNameA" unsafe
   getModuleFileName :: Ptr () -> CString -> Int -> IO Int32
 #else
-getBaseDir :: IO (Maybe String) = do return Nothing
+getBaseDir = do return Nothing
 #endif
 normalisePath :: String -> String
 -- Just changes '\' to '/'

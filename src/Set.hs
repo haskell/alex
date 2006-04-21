@@ -1,4 +1,3 @@
-{-# OPTIONS -cpp #-}
 module Set ( Set, member, empty, insert ) where
 
 import Data.Set 

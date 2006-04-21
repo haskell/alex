@@ -1,4 +1,3 @@
-{-# OPTIONS -fglasgow-exts -cpp #-}
 module Map (
    Map,
    member, lookup, findWithDefault,

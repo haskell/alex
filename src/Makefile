@@ -15,20 +15,6 @@ ifeq "$(Windows)" "YES"
 Main_HC_OPTS += -Dmingw32_HOST_OS=1
 endif
 
-# -----------------------------------------------------------------------------=
-# Create the Version.hs file
-
-VERSION_HS = Version.hs
-EXTRA_SRCS += $(VERSION_HS)
-
-boot :: $(VERSION_HS)
-
-Version.hs : $(TOP)/mk/version.mk
-	@$(RM) -f $(VERSION_HS)
-	@echo "Creating $(VERSION_HS) ... "
-	@echo "module Version where" >>$(VERSION_HS)
-	@echo "version = \"$(ProjectVersion)\"" >> $(VERSION_HS)
-
 # -----------------------------------------------------------------------------
 
 ifeq "$(INSTALLING)" "1"

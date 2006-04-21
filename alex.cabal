@@ -1,0 +1,72 @@
+name: alex
+version: 2.0.1
+license: BSD3
+license-file: LICENSE
+copyright: (c) Chis Dornan, Simon Marlow
+author: Chris Dornan and Simon Marlow
+maintainer: Simon Marlow <simonmar@microsoft.com>
+stability: stable
+homepage: http://www.haskell.org/alex/
+synopsis: Alex is a tool for generating lexical analysers in Haskell
+build-depends: base>=1.0
+extra-source-files:
+	ANNOUNCE
+	Makefile
+	README
+	TODO
+	alex.spec
+	doc/Makefile
+	doc/alex.1.in
+	doc/alex.xml
+	examples/Makefile
+	examples/Tokens.x
+	examples/Tokens_gscan.x
+	examples/Tokens_posn.x
+	examples/examples.x
+	examples/haskell.x
+	examples/lit.x
+	examples/pp.x
+	examples/state.x
+	examples/tiny.y
+	examples/tkns.hs
+	examples/words.x
+	examples/words_monad.x
+	examples/words_posn.x
+	mk/boilerplate.mk
+	mk/config.mk
+	mk/target.mk
+	mk/version.mk
+	src/Makefile
+	src/Parser.y
+	src/Scan.hs
+	src/alex.sh
+	src/ghc_hooks.c
+	templates/GenericTemplate.hs
+	templates/Makefile
+	templates/wrappers.hs
+	tests/Makefile
+	tests/simple.x
+	tests/tokens.x
+	tests/tokens_gscan.x
+	tests/tokens_posn.x
+
+executable: alex
+hs-source-dirs: src
+main-is: Main.hs
+extensions: CPP
+other-modules:
+	AbsSyn
+	CharSet
+	DFA
+	DFS
+	Info
+	Main
+	Map
+	NFA
+	Output
+	Parser
+	ParseMonad
+	Scan
+	Set
+	Sort
+	Util

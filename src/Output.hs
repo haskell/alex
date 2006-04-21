@@ -1,4 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
 -- -----------------------------------------------------------------------------
 -- 
 -- Output.hs, part of Alex
@@ -134,7 +133,7 @@ outputDFA target n func_nm dfa
 --    default :: Array SNum SNum
 --		default production for this state
 --
---    accept :: Array SNum [Accept a]
+--    accept :: Array SNum [Accept Code]
 --		maps state to list of accept codes for this state
 --
 -- For each state, we decide what will be the default symbol (pick the
@@ -142,16 +141,15 @@ outputDFA target n func_nm dfa
 -- state reserved as the default.
 
 
-mkTables :: DFA SNum a
+mkTables :: DFA SNum Code
 	 -> ( 
 	      [Int],		-- base
 	      [Int],		-- table
 	      [Int],		-- check
 	      [Int],		-- default
-	      [[Accept a]]	-- accept
+	      [[Accept Code]]	-- accept
 	    )
-
-mkTables (dfa :: DFA SNum a)
+mkTables dfa
  = ( elems base_offs, 
      take max_off (elems table),
      take max_off (elems check),
@@ -165,7 +163,7 @@ mkTables (dfa :: DFA SNum a)
 	n_states = length state_assocs
 	top_state = n_states - 1
 
-	dfa_arr :: Array SNum (State SNum a)
+	dfa_arr :: Array SNum (State SNum Code)
 	dfa_arr = array (0,top_state) state_assocs
 
 	-- fill in all the error productions
