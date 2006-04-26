@@ -18,8 +18,8 @@ import Output
 import ParseMonad ( runP )
 import Parser
 import Scan
-import Util
-import Paths_alex ( version )
+import Util ( hline )
+import Paths_alex ( version, getDataDir )
 
 import Control.Exception as Exception ( block, unblock, catch, throw )
 import Control.Monad ( when, liftM )
@@ -32,13 +32,6 @@ import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
 import System.Exit ( ExitCode(..), exitWith )
 import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
-
-#if defined(mingw32_HOST_OS)
-import Foreign.Marshal.Array
-import Foreign
-import Foreign.C
-#endif
-import Prelude hiding ( catch )
 
 -- `main' decodes the command line arguments and calls `alex'.  
 
@@ -66,6 +59,7 @@ copyright = "Alex version " ++ projectVersion ++ ", (c) 2003 Chris Dornan and Si
 usageHeader :: String -> String
 usageHeader prog = "Usage: " ++ prog ++ " [OPTION...] file\n"
 
+runAlex :: [CLIFlags] -> FilePath -> IO ()
 runAlex cli file = do
   basename <- case (reverse file) of
 		'x':'.':r -> return (reverse r)
@@ -87,6 +81,9 @@ parseScript file prg =
 
 	Right script -> return script
 
+alex :: [CLIFlags] -> FilePath -> FilePath
+     -> (Maybe (AlexPosn, Code), [Directive], Scanner, Maybe (AlexPosn, Code))
+     -> IO ()
 alex cli file basename script = do
    (put_info, finish_info) <- 
       case [ f | OptInfoFile f <- cli ] of
@@ -104,7 +101,7 @@ alex cli file basename script = do
 	| OptGhcTarget `elem` cli = GhcTarget
 	| otherwise               = HaskellTarget
 
-   template_dir  <- templateDir cli
+   template_dir  <- templateDir getDataDir cli
    let template_name = templateFile template_dir target cli
 		
    -- open the output file; remove it if we encounter an error
@@ -160,7 +157,7 @@ optsToInject GhcTarget _ = "{-# OPTIONS -fglasgow-exts -cpp #-}\n"
 optsToInject _         _ = "{-# OPTIONS -cpp #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String
-importsToInject tgt cli = always_imports ++ debug_imports ++ glaexts_import
+importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
   where
 	glaexts_import | OptGhcTarget `elem` cli    = import_glaexts
 		       | otherwise                  = ""
@@ -172,6 +169,7 @@ importsToInject tgt cli = always_imports ++ debug_imports ++ glaexts_import
 -- compilation.  We need to #include "config.h" to get hold of
 -- WORDS_BIGENDIAN (see GenericTemplate.hs).
 
+always_imports :: String
 always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
 		 "#include \"ghcconfig.h\"\n" ++
 		 "#else\n" ++
@@ -186,12 +184,14 @@ always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
 		 "import Char (ord)\n" ++
 		 "#endif\n"
 
+import_glaexts :: String
 import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
 		 "import GHC.Exts\n" ++
 		 "#else\n" ++
 		 "import GlaExts\n" ++
 		 "#endif\n"
 
+import_debug :: String
 import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
 		 "import System.IO\n" ++
 		 "import System.IO.Unsafe\n" ++
@@ -201,15 +201,13 @@ import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
 		 "import IOExts\n" ++
 		 "#endif\n"
 
-templateDir cli
+templateDir :: IO FilePath -> [CLIFlags] -> IO FilePath
+templateDir def cli
   = case [ d | OptTemplateDir d <- cli ] of
-      [] -> base_dir
+      [] -> def
       ds -> return (last ds)
-    where base_dir = do maybe_exec_dir <- getBaseDir -- Get directory of executable
-			case maybe_exec_dir of
-                                       Nothing  -> return "."
-                                       Just dir -> return dir
 
+templateFile :: FilePath -> Target -> [CLIFlags] -> FilePath
 templateFile dir target cli
   = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug
   where 
@@ -221,12 +219,14 @@ templateFile dir target cli
 	  | OptDebugParser `elem` cli  = "-debug"
 	  | otherwise		       = ""
 
+wrapperFile :: FilePath -> [Directive] -> IO (Maybe FilePath)
 wrapperFile dir directives =
   case [ f | WrapperDirective f <- directives ] of
 	[]  -> return Nothing
 	[f] -> return (Just (dir ++ "/AlexWrapper-" ++ f))
 	_many -> dieAlex "multiple %wrapper directives"
 
+infoStart :: FilePath -> FilePath -> IO (String -> IO (), IO ())
 infoStart x_file info_file = do
   bracketOnError
 	(openFile info_file WriteMode)
@@ -235,6 +235,7 @@ infoStart x_file info_file = do
   		  return (hPutStr h, hClose h)
 	)
 
+infoHeader :: Handle -> FilePath -> IO ()
 infoHeader h file = do
   hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++ 
 		", from " ++ file)
@@ -244,10 +245,13 @@ infoHeader h file = do
 initialParserEnv :: (Map String CharSet, Map String RExp)
 initialParserEnv = (initSetEnv, initREEnv)
 
+initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
 		           ("printable", charSet [chr 32 .. chr 126]),
 		           (".", charSetComplement emptyCharSet 
 			    `charSetMinus` charSetSingleton '\n')]
+
+initREEnv :: Map String RExp
 initREEnv = Map.empty
 
 -- -----------------------------------------------------------------------------
@@ -294,15 +298,10 @@ bye :: String -> IO a
 bye s = putStr s >> exitWith ExitSuccess
 
 die :: String -> IO a
-die s = do 
-  hPutStr stderr s
-  exitWith (ExitFailure 1)
+die s = hPutStr stderr s >> exitWith (ExitFailure 1)
 
 dieAlex :: String -> IO a
-dieAlex s = do
-  prog <- getProgramName
-  hPutStr stderr (prog ++ ": " ++ s)
-  exitWith (ExitFailure 1)
+dieAlex s = getProgramName >>= \prog -> die (prog ++ ": " ++ s)
 
 bracketOnError
 	:: IO a		-- ^ computation to run first (\"acquire resource\")
@@ -317,35 +316,3 @@ bracketOnError before after thing =
 	   (\e -> do { after a; throw e })
     return r
  )
-
-
-getBaseDir :: IO (Maybe String)
-#if defined(mingw32_HOST_OS)
-getBaseDir = do let len = (2048::Int) -- plenty, PATH_MAX is 512 under Win32.
-		buf <- mallocArray len
-                ret <- getModuleFileName nullPtr buf len
-                if ret == 0 then free buf >> return Nothing
-                            else do s <- peekCString buf
-                                    free buf
-                                    return (Just (rootDir s))
-  where
-    rootDir s = reverse (dropList "/alex.exe" (reverse (normalisePath s)))
-
-foreign import stdcall "GetModuleFileNameA" unsafe
-  getModuleFileName :: Ptr () -> CString -> Int -> IO Int32
-#else
-getBaseDir = do return Nothing
-#endif
-normalisePath :: String -> String
--- Just changes '\' to '/'
-
-#if defined(mingw32_HOST_OS)
-normalisePath xs = subst '\\' '/' xs
-subst a b ls = map (\ x -> if x == a then b else x) ls
-#else
-normalisePath xs   = xs
-#endif
-dropList :: [b] -> [a] -> [a]
-dropList [] xs    = xs
-dropList _  xs@[] = xs
-dropList (_:xs) (_:ys) = dropList xs ys

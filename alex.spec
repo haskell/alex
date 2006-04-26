@@ -1,5 +1,5 @@
 %define name    alex
-%define version 2.0.1
+%define version 2.1.0
 %define release 1
 
 Name:           %{name}
@@ -8,7 +8,7 @@ Release:        %{release}
 License:        BSD-like
 Group:          Development/Languages/Haskell
 URL:            http://haskell.org/alex/
-Source:         http://haskell.org/alex/dist/%{version}/alex-%{version}-src.tar.gz
+Source:         http://haskell.org/alex/dist/%{version}/alex-%{version}.tar.gz
 Packager:       Sven Panne <sven.panne@aedion.de>
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 Prefix:         %{_prefix}
@@ -39,12 +39,11 @@ rm -rf ${RPM_BUILD_ROOT}
 
 %files
 %defattr(-,root,root)
-%doc alex/ANNOUNCE
-%doc alex/LICENSE
-%doc alex/README
-%doc alex/TODO
-%doc alex/doc/alex
-%doc alex/examples
+%doc ANNOUNCE
+%doc LICENSE
+%doc README
+%doc TODO
+%doc doc/alex
+%doc examples
 %{prefix}/bin/alex
-%{prefix}/bin/alex-%{version}
-%{prefix}/lib/alex-%{version}
+%{prefix}/share/alex-%{version}

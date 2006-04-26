@@ -1,5 +1,5 @@
 name: alex
-version: 2.0.1
+version: 2.1.0
 license: BSD3
 license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
@@ -15,8 +15,13 @@ extra-source-files:
 	TODO
 	alex.spec
 	doc/Makefile
+	doc/aclocal.m4
 	doc/alex.1.in
 	doc/alex.xml
+	doc/config.mk.in
+	doc/configure.ac
+	doc/docbook-xml.mk
+	doc/fptools.css
 	examples/Makefile
 	examples/Tokens.x
 	examples/Tokens_gscan.x
@@ -33,7 +38,6 @@ extra-source-files:
 	examples/words_posn.x
 	src/Parser.y
 	src/Scan.hs
-	src/alex.sh
 	src/ghc_hooks.c
 	templates/GenericTemplate.hs
 	templates/Makefile
