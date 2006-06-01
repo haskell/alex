@@ -144,11 +144,6 @@ alexScanUser user input IBOX(sc)
 
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
-  case s of 
-    ILIT(-1) -> (last_acc, input)
-    _ -> alex_scan_tkn' user orig_input len input s last_acc
-
-alex_scan_tkn' user orig_input len input s last_acc =
   let 
 	new_acc = check_accs (alex_accept `quickIndex` IBOX(s))
   in
@@ -169,7 +164,12 @@ alex_scan_tkn' user orig_input len input s last_acc =
 			  then alexIndexInt16OffAddr alex_table offset
 			  else alexIndexInt16OffAddr alex_deflt s
 	in
-	alex_scan_tkn user orig_input PLUS(len,ILIT(1)) new_input new_s new_acc
+	case new_s of 
+	    ILIT(-1) -> (new_acc, input)
+		-- on an error, we want to keep the input *before* the
+		-- character that failed, not after.
+    	    _ -> alex_scan_tkn user orig_input PLUS(len,ILIT(1)) 
+			new_input new_s new_acc
 
   where
 	check_accs [] = last_acc
