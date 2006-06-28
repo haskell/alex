@@ -8,7 +8,7 @@ maintainer: Simon Marlow <simonmar@microsoft.com>
 stability: stable
 homepage: http://www.haskell.org/alex/
 synopsis: Alex is a tool for generating lexical analysers in Haskell
-build-depends: base>=1.0
+build-depends: base>=1.0, haskell98>=1.0
 extra-source-files:
 	ANNOUNCE
 	README
