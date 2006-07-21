@@ -68,3 +68,4 @@ other-modules:
 	Set
 	Sort
 	Util
+ghc-options: -O
