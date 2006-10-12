@@ -8,10 +8,11 @@ import Distribution.PackageDescription ( PackageDescription )
 import Distribution.Setup ( BuildFlags, CleanFlags, CopyDest(..), CopyFlags(..), InstallFlags )
 import Distribution.Simple ( defaultMainWithHooks, defaultUserHooks, UserHooks(..), Args, compilerPath )
 import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..), mkDataDir )
-import System.Directory ( removeFile, copyFile, getCurrentDirectory, setCurrentDirectory, createDirectoryIfMissing )
+import System.Directory
 import System.Exit ( ExitCode(..) )
-import System.IO ( FilePath, openFile, IOMode(..) )
-import System.Process ( runProcess, waitForProcess )
+import System.IO
+import System.Process
+import System.Cmd
 import Text.Printf ( printf )
 
 main :: IO ()
@@ -25,13 +26,17 @@ myPostBuild _ _ _ lbi =
   excursion "templates" $ do
   let cpp_template src dst opts = do
 	let dst_pp = dst ++ ".hspp"
-	    hc = compilerPath (compiler lbi)
-	    hc_args = "-E" : "-cpp" : "-o" : dst_pp : src : opts
+	    ghc = compilerPath (compiler lbi)
+	    ghc_args = ["-o", dst_pp, "-E", "-cpp", src] ++ opts
 		-- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
 		-- '{-# LINE 27 "GenericTemplate.hs" #-}'.
-	    perl = "perl"
-	    perl_args = "-pe" : "s/^#\\s+(\\d+)\\s+(\"[^\"]*\")/{-# LINE \\1 \\2 #-}/g;s/\\$(Id:.*)\\$/\\1/g" : dst_pp : []
-	do_cmd hc hc_args `cmd_seq` do_cmd_out perl perl_args dst
+	    perl_args = ["-pe", "s/^#\\s+(\\d+)\\s+(\"[^\"]*\")/{-# LINE \\1 \\2 #-}/g;s/\\$(Id:.*)\\$/\\1/g", dst_pp]
+	mb_perl <- findExecutable "perl"
+	perl <- case mb_perl of
+		  Nothing -> ioError (userError "You need \"perl\" installed and on your PATH to complete the build")
+		  Just path -> return path
+	do_cmd ghc ghc_args `cmd_seq` do_cmd_out perl perl_args dst
+
   cmd_seqs ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
   	    [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
 
