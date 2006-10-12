@@ -1,0 +1,9 @@
+Changes in Alex 2.1.0 vs. 2.0.1:
+
+  * Switch to a Cabal build system: you need a recent version of Cabal
+    (1.1.6 or later).  If you have GHC 6.4.2, then you need to upgrade
+    Cabal before building Alex.  GHC 6.6 is fine.
+
+  * Slight change in the error semantics: the input returned on error
+    is before the erroneous character was read, not after.  This helps
+    to give better error messages.
