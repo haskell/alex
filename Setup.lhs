@@ -11,6 +11,7 @@ import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..), mkDataDir )
 import System.Directory
 import System.Exit ( ExitCode(..) )
 import System.IO
+import System.IO.Error
 import System.Process
 import System.Cmd
 import Text.Printf ( printf )
@@ -43,7 +44,8 @@ myPostBuild _ _ _ lbi =
 myPostClean :: Args -> CleanFlags -> PackageDescription -> Maybe LocalBuildInfo -> IO ExitCode
 myPostClean _ _ _ _ =
   excursion "templates" $ do
-  sequence [ removeFile f >> removeFile (f ++ ".hspp") | (f,_) <- all_templates]
+  sequence [ try (removeFile f) >> try (removeFile (f ++ ".hspp"))
+	   | (f,_) <- all_templates]
   return ExitSuccess
 
 myPostInstall :: Args -> InstallFlags -> PackageDescription -> LocalBuildInfo -> IO ExitCode
