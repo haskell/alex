@@ -6,6 +6,11 @@ import Data.Char
 import ParseMonad
 --import Debug.Trace
 
+#if __GLASGOW_HASKELL__ >= 603
+#include "ghcconfig.h"
+#else
+#include "config.h"
+#endif
 #if __GLASGOW_HASKELL__ >= 503
 import Data.Array
 import Data.Char (ord)
@@ -198,6 +203,9 @@ alex_action_19 = special `andBegin` afterstartcodes
 alex_action_20 = special `andBegin` 0 
 alex_action_21 = skip `andBegin` 0 
 {-# LINE 1 "GenericTemplate.hs" #-}
+{-# LINE 1 "<built-in>" #-}
+{-# LINE 1 "<command line>" #-}
+{-# LINE 1 "GenericTemplate.hs" #-}
 -- -----------------------------------------------------------------------------
 -- ALEX TEMPLATE
 --
@@ -207,33 +215,20 @@ alex_action_21 = skip `andBegin` 0
 -- -----------------------------------------------------------------------------
 -- INTERNALS and main scanner engine
 
-{-# LINE 22 "GenericTemplate.hs" #-}
+{-# LINE 35 "GenericTemplate.hs" #-}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+{-# LINE 45 "GenericTemplate.hs" #-}
 
 {-# LINE 66 "GenericTemplate.hs" #-}
+alexIndexInt16OffAddr arr off = arr ! off
 
-alexIndexShortOffAddr arr off = arr ! off
+
+{-# LINE 87 "GenericTemplate.hs" #-}
+alexIndexInt32OffAddr arr off = arr ! off
+
+
+{-# LINE 98 "GenericTemplate.hs" #-}
+quickIndex arr i = arr ! i
 
 
 -- -----------------------------------------------------------------------------
@@ -245,7 +240,7 @@ data AlexReturn a
   | AlexSkip   !AlexInput !Int
   | AlexToken  !AlexInput !Int a
 
--- alexScan :: AlexInput -> StartCode -> Maybe (AlexInput,Int,act)
+-- alexScan :: AlexInput -> StartCode -> AlexReturn a
 alexScan input (sc)
   = alexScanUser undefined input (sc)
 
@@ -262,7 +257,7 @@ alexScanUser user input (sc)
 
 
 
-				   AlexError input
+				   AlexError input'
 
 	(AlexLastSkip input len, _) ->
 
@@ -282,13 +277,8 @@ alexScanUser user input (sc)
 
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
-  case s of 
-    (-1) -> (last_acc, input)
-    _ -> alex_scan_tkn' user orig_input len input s last_acc
-
-alex_scan_tkn' user orig_input len input s last_acc =
   let 
-	new_acc = check_accs (alex_accept `unsafeAt` (s))
+	new_acc = check_accs (alex_accept `quickIndex` (s))
   in
   new_acc `seq`
   case alexGetChar input of
@@ -298,16 +288,21 @@ alex_scan_tkn' user orig_input len input s last_acc =
 
 
 	let
-		base   = alexIndexShortOffAddr alex_base s
+		base   = alexIndexInt32OffAddr alex_base s
 		(ord_c) = ord c
 		offset = (base + ord_c)
-		check  = alexIndexShortOffAddr alex_check offset
+		check  = alexIndexInt16OffAddr alex_check offset
 		
 		new_s = if (offset >= (0)) && (check == ord_c)
-			  then alexIndexShortOffAddr alex_table offset
-			  else alexIndexShortOffAddr alex_deflt s
+			  then alexIndexInt16OffAddr alex_table offset
+			  else alexIndexInt16OffAddr alex_deflt s
 	in
-	alex_scan_tkn user orig_input (len + (1)) new_input new_s new_acc
+	case new_s of 
+	    (-1) -> (new_acc, input)
+		-- on an error, we want to keep the input *before* the
+		-- character that failed, not after.
+    	    _ -> alex_scan_tkn user orig_input (len + (1)) 
+			new_input new_s new_acc
 
   where
 	check_accs [] = last_acc
