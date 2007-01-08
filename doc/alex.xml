@@ -45,7 +45,27 @@
     repository; instructions on accessing that repository are <ulink
     url="http://www.haskell.org/ghc/docs/latest/html/building/sec-cvs.html">here</ulink>.</para>
 
-    <section id="relnotes">
+    <section id="relnotes-210">
+      <title>Release Notes for version 2.1.0</title>
+
+      <itemizedlist>
+        <listitem>
+          <para>Switch to a Cabal build system: you need a recent
+          version of Cabal (1.1.6 or later).  If you have GHC 6.4.2,
+          then you need to upgrade Cabal before building Alex.  GHC
+          6.6 is fine.</para>
+        </listitem>
+
+        <listitem>
+          <para>Slight change in the error semantics: the input
+          returned on error is before the erroneous character was
+          read, not after.  This helps to give better error
+          messages.</para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
+    <section id="relnotes-20">
       <title>Release Notes for version 2.0</title>
       
       <para>Alex has changed a <emphasis>lot</emphasis> between
