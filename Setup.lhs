@@ -79,8 +79,11 @@ templates = [
 wrappers :: [(FilePath,[String])]
 wrappers = [
   ("AlexWrapper-basic", ["-DALEX_BASIC"]),
+  ("AlexWrapper-basic-bytestring", ["-DALEX_BASIC_BYTESTRING"]),
   ("AlexWrapper-posn",  ["-DALEX_POSN"]),
+  ("AlexWrapper-posn-bytestring", ["-DALEX_POSN_BYTESTRING"]),
   ("AlexWrapper-monad", ["-DALEX_MONAD"]),
+  ("AlexWrapper-monad-bytestring", ["-DALEX_MONAD_BYTESTRING"]),
   ("AlexWrapper-gscan", ["-DALEX_GSCAN"])
  ]
 

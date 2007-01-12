@@ -4,6 +4,12 @@
 -- This code is in the PUBLIC DOMAIN; you may copy it freely and use
 -- it for any purpose whatsoever.
 
+#if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
+
+import qualified Data.ByteString.Lazy.Char8 as ByteString
+
+#endif
+
 -- -----------------------------------------------------------------------------
 -- The input type
 
@@ -19,6 +25,23 @@ alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
 alexGetChar (p,c,[]) = Nothing
 alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
 				Just (c, (p', c, s))
+#endif
+
+#if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
+type AlexInput = (AlexPosn, 	-- current position,
+		  Char,		-- previous char
+		  ByteString.ByteString)	-- current input string
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (p,c,s) = c
+
+alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
+alexGetChar (p,_,cs) | ByteString.null cs = Nothing
+                     | otherwise = let c   = ByteString.head cs
+                                       cs' = ByteString.tail cs
+                                       p'  = alexMove p c
+                                    in p' `seq` cs' `seq` Just (c, (p', c, cs'))
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Token positions
@@ -30,6 +53,7 @@ alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
 -- `move_pos' calculates the new position after traversing a given character,
 -- assuming the usual eight character tab stops.
 
+#if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN)
 data AlexPosn = AlexPn !Int !Int !Int
 	deriving (Eq,Show)
 
@@ -124,6 +148,90 @@ begin code input len = do alexSetStartCode code; alexMonadScan
 token t input len = return (t input len)
 #endif /* ALEX_MONAD */
 
+
+-- -----------------------------------------------------------------------------
+-- Monad (with ByteString input)
+
+#ifdef ALEX_MONAD_BYTESTRING
+data AlexState = AlexState {
+	alex_pos :: !AlexPosn,	-- position at current input location
+	alex_inp :: ByteString.ByteString,	-- the current input
+	alex_chr :: !Char,	-- the character before the input
+	alex_scd :: !Int 	-- the current startcode
+    }
+
+-- Compile with -funbox-strict-fields for best results!
+
+runAlex :: ByteString.ByteString -> Alex a -> Either String a
+runAlex input (Alex f) 
+   = case f (AlexState {alex_pos = alexStartPos,
+ 			alex_inp = input,	
+			alex_chr = '\n',
+			alex_scd = 0}) of Left msg -> Left msg
+					  Right ( _, a ) -> Right a
+
+newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
+
+instance Monad Alex where
+  m >>= k  = Alex $ \s -> case unAlex m s of 
+				Left msg -> Left msg
+				Right (s',a) -> unAlex (k a) s'
+  return a = Alex $ \s -> Right (s,a)
+
+alexGetInput :: Alex AlexInput
+alexGetInput
+ = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_inp=inp} -> 
+	Right (s, (pos,c,inp))
+
+alexSetInput :: AlexInput -> Alex ()
+alexSetInput (pos,c,inp)
+ = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_inp=inp} of
+		  s@(AlexState{}) -> Right (s, ())
+
+alexError :: String -> Alex a
+alexError message = Alex $ \s -> Left message
+
+alexGetStartCode :: Alex Int
+alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
+
+alexSetStartCode :: Int -> Alex ()
+alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
+
+alexMonadScan = do
+  inp <- alexGetInput
+  sc <- alexGetStartCode
+  case alexScan inp sc of
+    AlexEOF -> alexEOF
+    AlexError inp' -> alexError "lexical error"
+    AlexSkip  inp' len -> do
+	alexSetInput inp'
+	alexMonadScan
+    AlexToken inp' len action -> do
+	alexSetInput inp'
+	action inp len
+
+-- -----------------------------------------------------------------------------
+-- Useful token actions
+
+type AlexAction result = AlexInput -> Int -> result
+
+-- just ignore this token and scan another one
+-- skip :: AlexAction result
+skip input len = alexMonadScan
+
+-- ignore this token, but set the start code to a new value
+-- begin :: Int -> AlexAction result
+begin code input len = do alexSetStartCode code; alexMonadScan
+
+-- perform an action for this token, and set the start code to a new value
+-- andBegin :: AlexAction result -> Int -> AlexAction result
+(action `andBegin` code) input len = do alexSetStartCode code; action input len
+
+-- token :: (String -> Int -> token) -> AlexAction token
+token t input len = return (t input len)
+#endif /* ALEX_MONAD_BYTESTRING */
+
+
 -- -----------------------------------------------------------------------------
 -- Basic wrapper
 
@@ -145,6 +253,29 @@ alexScanTokens str = go ('\n',str)
 		AlexToken inp' len act -> act (take len str) : go inp'
 #endif
 
+
+-- -----------------------------------------------------------------------------
+-- Basic wrapper, ByteString version
+
+#ifdef ALEX_BASIC_BYTESTRING
+type AlexInput = (Char,ByteString.ByteString)
+
+alexGetChar (_, cs) | ByteString.null cs = Nothing
+                    | otherwise          = Just (ByteString.head cs, (ByteString.head cs, ByteString.tail cs))
+
+alexInputPrevChar (c,_) = c
+
+-- alexScanTokens :: String -> [token]
+alexScanTokens str = go ('\n',str)
+  where go inp@(_,str) =
+	  case alexScan inp 0 of
+		AlexEOF -> []
+		AlexError _ -> error "lexical error"
+		AlexSkip  inp' len     -> go inp'
+		AlexToken inp' len act -> act (ByteString.take (fromIntegral len) str) : go inp'
+#endif
+
+
 -- -----------------------------------------------------------------------------
 -- Posn wrapper
 
@@ -160,6 +291,22 @@ alexScanTokens str = go (alexStartPos,'\n',str)
 		AlexSkip  inp' len     -> go inp'
 		AlexToken inp' len act -> act pos (take len str) : go inp'
 #endif
+
+
+-- -----------------------------------------------------------------------------
+-- Posn wrapper, ByteString version
+
+#ifdef ALEX_POSN_BYTESTRING
+--alexScanTokens :: ByteString -> [token]
+alexScanTokens str = go (alexStartPos,'\n',str)
+  where go inp@(pos,_,str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act pos (ByteString.take (fromIntegral len) str) : go inp'
+#endif
+
 
 -- -----------------------------------------------------------------------------
 -- GScan wrapper

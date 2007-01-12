@@ -122,6 +122,11 @@ alex cli file basename script = do
 
    hPutStr out_h (importsToInject target cli)
 
+   -- add the wrapper, if necessary
+   when (isJust wrapper_name) $
+	do str <- readFile (fromJust wrapper_name)
+	   hPutStr out_h str
+
    let dfa = scanner2dfa scanner_final scs
        nm  = scannerName scanner_final
 
@@ -136,11 +141,6 @@ alex cli file basename script = do
    -- add the template
    tmplt <- readFile template_name
    hPutStr out_h tmplt
-
-   -- add the wrapper, if necessary
-   when (isJust wrapper_name) $
-	do str <- readFile (fromJust wrapper_name)
-	   hPutStr out_h str
 
    hClose out_h
    finish_info
