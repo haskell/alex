@@ -388,7 +388,7 @@ main = do
 <programlisting>alexScanTokens :: String -> [Token]</programlisting>
 
     <para>Alex arranges for the input stream to be tokenised, each of
-    the action functions to be passed the appriate
+    the action functions to be passed the appropriate
     <literal>String</literal>, and a list of <literal>Token</literal>s
     returned as the result.  If the input stream is lazy, the output
     stream will also be produced lazily<footnote><para>that is, unless you
