@@ -172,7 +172,7 @@ importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
 always_imports :: String
 always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
 		 "#include \"ghcconfig.h\"\n" ++
-		 "#else\n" ++
+		 "#elif defined(__GLASGOW_HASKELL__)\n" ++
 		 "#include \"config.h\"\n" ++
 		 "#endif\n" ++
 		 "#if __GLASGOW_HASKELL__ >= 503\n" ++
