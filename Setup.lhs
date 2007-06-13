@@ -22,7 +22,7 @@ main = defaultMainWithHooks defaultUserHooks{ postBuild = myPostBuild,
 					      postCopy  = myPostCopy,
 					      postInst  = myPostInstall }
 
-myPostBuild :: Args -> BuildFlags -> PackageDescription -> LocalBuildInfo -> IO ExitCode
+myPostBuild :: Args -> BuildFlags -> PackageDescription -> LocalBuildInfo -> IO ()
 myPostBuild _ _ _ lbi =
   excursion "templates" $ do
   let cpp_template src dst opts = do
@@ -40,21 +40,23 @@ myPostBuild _ _ _ lbi =
 
   cmd_seqs ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
   	    [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
+  return ()
 
-myPostClean :: Args -> CleanFlags -> PackageDescription -> Maybe LocalBuildInfo -> IO ExitCode
+myPostClean :: Args -> CleanFlags -> PackageDescription -> Maybe LocalBuildInfo -> IO ()
 myPostClean _ _ _ _ =
   excursion "templates" $ do
-  sequence [ try (removeFile f) >> try (removeFile (f ++ ".hspp"))
+  sequence_ [ try (removeFile f) >> try (removeFile (f ++ ".hspp"))
 	   | (f,_) <- all_templates]
-  return ExitSuccess
 
-myPostInstall :: Args -> InstallFlags -> PackageDescription -> LocalBuildInfo -> IO ExitCode
-myPostInstall _ _ pkg_descr lbi =
+myPostInstall :: Args -> InstallFlags -> PackageDescription -> LocalBuildInfo -> IO ()
+myPostInstall _ _ pkg_descr lbi = do
   install pkg_descr lbi NoCopyDest
+  return ()
 
-myPostCopy :: Args -> CopyFlags -> PackageDescription -> LocalBuildInfo -> IO ExitCode
-myPostCopy _ copy_flags pkg_descr lbi = 
+myPostCopy :: Args -> CopyFlags -> PackageDescription -> LocalBuildInfo -> IO ()
+myPostCopy _ copy_flags pkg_descr lbi = do
   install pkg_descr lbi (copyDest copy_flags)
+  return ()
 
 install :: PackageDescription -> LocalBuildInfo -> CopyDest -> IO ExitCode
 install pkg_descr lbi copy_dest =
