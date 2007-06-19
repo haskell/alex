@@ -44,7 +44,7 @@ alex :-
 
 <0> \" [^\"]* \"		{ string }
 <0> (@id @ws?)? \:\-		{ bind }
-<0> \{ (\n | [^$digit])		{ code }
+<0> \{ / (\n | [^$digit])       { code }
 <0> $special			{ special }  -- note: matches {
 <0> \% "wrapper"		{ wrapper }
 
