@@ -87,7 +87,7 @@ particularly informative.
 Print version information on standard output then exit successfully.
 
 .SH FILES
-.I @LIBDIR@
+.I @DATADIR@
 
 .SH "SEE ALSO"
 .BR @DOCDIR@ ,
