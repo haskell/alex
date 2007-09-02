@@ -4,8 +4,8 @@
 module Main where
 
 import Control.Exception ( finally )
-import Distribution.Setup ( CopyDest(..), CopyFlags(..) )
-import Distribution.Simple ( defaultMainWithHooks, defaultUserHooks, UserHooks(..), compilerPath )
+import Distribution.Simple.Setup ( CopyDest(..), CopyFlags(..) )
+import Distribution.Simple ( defaultMainWithHooks, defaultUserHooks, UserHooks(..) )
 import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..), mkDataDir )
 import System.Directory ( findExecutable, removeFile, copyFile, createDirectoryIfMissing, getCurrentDirectory, setCurrentDirectory )
 import System.Exit ( ExitCode(..) )
@@ -23,7 +23,7 @@ myPostBuild _ _ _ lbi =
   excursion "templates" $ do
   let cpp_template src dst opts = do
 	let dst_pp = dst ++ ".hspp"
-	    ghc = compilerPath (compiler lbi)
+	    ghc = "ghc" -- totally wrong, but I've lost the last bit of energy to find out how to do this correctly with Cabal
 	    ghc_args = ["-o", dst_pp, "-E", "-cpp", src] ++ opts
 		-- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
 		-- '{-# LINE 27 "GenericTemplate.hs" #-}'.
@@ -36,6 +36,7 @@ myPostBuild _ _ _ lbi =
 
   cmd_seqs ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
   	    [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
+  return ()
 
 myPostClean _ _ _ _ =
   excursion "templates" $ do
