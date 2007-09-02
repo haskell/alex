@@ -24,7 +24,7 @@ expressions.  It is similar to the tool lex or flex for C/C++.
 %setup -n alex-%{version}
 
 %build
-runhaskell Setup.lhs configure --prefix=%{prefix}
+runhaskell Setup.lhs configure --prefix=%{_prefix} --docdir=%{_datadir}/doc/packages/%{name}
 runhaskell Setup.lhs build
 cd doc
 test -f configure || autoreconf
