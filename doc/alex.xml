@@ -45,7 +45,23 @@
     repository; instructions on accessing that repository are <ulink
     url="http://www.haskell.org/ghc/docs/latest/html/building/sec-cvs.html">here</ulink>.</para>
 
+    <section id="relnotes-22">
+      <title>Release Notes for version 2.2</title>
+
+      <itemizedlist>
+        <listitem>
+          <para>Cabal 1.2 is now required.</para>
+        </listitem>
+
+        <listitem>
+          <para>ByteString wrappers: use Alex to lex ByteStrings
+          directly.</para>
+        </listitem>
+      </itemizedlist>
+
+    </section>
     <section id="relnotes-210">
+
       <title>Release Notes for version 2.1.0</title>
 
       <itemizedlist>
