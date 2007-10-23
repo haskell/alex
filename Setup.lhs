@@ -31,7 +31,7 @@ myPostBuild _ flags _ lbi = do
   let runProgram p = rawSystemProgramConf (buildVerbose flags) p (withPrograms lbi)
       cpp_template src dst opts = do
         runProgram ghcProgram (["-o", dst, "-E", "-cpp", "templates" </> src] ++ opts)
-	runProgram perlProgram ["-i", "-pe", crazy_perl_regexp, dst]
+	runProgram perlProgram ["-i.bak", "-pe", crazy_perl_regexp, dst]
 
   sequence_ ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
   	     [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
