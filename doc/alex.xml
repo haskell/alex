@@ -1311,6 +1311,119 @@ type StopAction state result
              -> (Int,state)             -- current (startcode,state)
              -> result</programlisting>    
       </section>
+      <section>
+        <title>The bytestring wrappers</title>
+
+	<para>The <literal>basic-bytestring</literal>,
+	<literal>posn-bytestring</literal> and
+	<literal>monad-bytestring</literal> wrappers are variations on the
+	<literal>basic</literal>, <literal>posn</literal> and
+	<literal>monad</literal> wrappers that use lazy
+	<literal>ByteString</literal>s as the input and token types instead of
+	an ordinary <literal>String</literal>.</para>
+	
+	<para>The point of using these wrappers is that
+	<literal>ByteString</literal>s provide a more memory efficient
+	representaion of an input stream. They can also be somewhat faster to
+	process. Note however that they only treat the input string as 8-bit
+	ASCII characters. Note also that using these wrappers adds a dependency
+	on the <literal>ByteString</literal> modules, which live in the
+	<literal>bytestring</literal> package (or in the
+	<literal>base</literal> package in <literal>ghc-6.6</literal>)</para>
+	
+	<para>Do note that <literal>token</literal> provides a
+	<emphasis>lazy</emphasis> <literal>ByteString</literal> which is not
+	the most compact representation for short strings. You may want to
+	convert to a strict <literal>ByteString</literal> or perhaps something
+	more compact still. Note also that by default tokens share space with
+	the input <literal>ByteString</literal> which has the advantage that it
+	does not need to make a copy but it also prevents the input from being
+	garbage collected. It may make sense in some applications to use
+	<literal>ByteString</literal>'s <literal>copy</literal> function to
+	unshare tokens that will be kept for a long time, to allow the original
+	input to be collected.</para>
+
+	<section>
+	<title>The "basic-bytestring" wrapper</title>
+	<para>The <literal>basic-bytestring</literal> wrapper is the same as
+	the <literal>basic</literal> wrapper but with lazy
+	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
+
+<programlisting>
+import qualified Data.ByteString.Lazy.Char8 as ByteString
+
+type AlexInput = (Char,       -- previous char
+                  ByteString) -- current input string
+
+alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
+
+alexInputPrevChar :: AlexInput -> Char
+
+-- alexScanTokens :: String -> [token]
+</programlisting>
+
+	<para>All of the actions in your lexical specification
+        should have type:</para>
+
+<programlisting>{ ... } :: ByteString -> token</programlisting>
+
+        <para>for some type <literal>token</literal>.</para>
+	</section>
+
+	<section>
+	<title>The "posn-bytestring" wrapper</title>
+	<para>The <literal>posn-bytestring</literal> wrapper is the same as
+	the <literal>posn</literal> wrapper but with lazy
+	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
+
+<programlisting>
+import qualified Data.ByteString.Lazy.Char8 as ByteString
+
+type AlexInput = (AlexPosn,   -- current position,
+                  Char,       -- previous char
+                  ByteString) -- current input string
+
+-- alexScanTokens :: ByteString -> [token]
+</programlisting>
+
+	<para>All of the actions in your lexical specification
+        should have type:</para>
+
+<programlisting>{ ... } :: AlexPosn -> ByteString -> token</programlisting>
+
+        <para>for some type <literal>token</literal>.</para>
+	</section>
+
+	<section>
+	<title>The "monad-bytestring" wrapper</title>
+	<para>The <literal>monad-bytestring</literal> wrapper is the same as
+	the <literal>monad</literal> wrapper but with lazy
+	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
+
+<programlisting>
+import qualified Data.ByteString.Lazy.Char8 as ByteString
+
+ata AlexState = AlexState {
+        alex_pos :: !AlexPosn,  -- position at current input location
+        alex_inp :: ByteString, -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_scd :: !Int        -- the current startcode
+    }
+
+newtype Alex a = Alex { unAlex :: AlexState
+                               -> Either String (AlexState, a) }
+
+runAlex          :: ByteString -> Alex a -> Either String a
+
+-- token :: (ByteString -> Int -> token) -> AlexAction token
+</programlisting>
+
+	<para>All of the actions in your lexical specification
+        have the same type as in the <literal>monad</literal> wrapper. It is
+	only the types of the function to run the monad and the type of the
+	<literal>token</literal> function that change.</para>
+	</section>
+      </section>
     </section>
   </chapter>
 
