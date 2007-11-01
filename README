@@ -5,7 +5,7 @@ documentation, see the doc directory.
 
 Alex version 2.0 has changed fairly considerably since version 1.x,
 and the syntax is almost completely different.  For a detailed list of
-changes, see the CHANGES file.
+changes, see the release notes in the documentation.
 
 Alex is now covered by a BSD-Style licence; see the licence file in
 the `doc' directory for details.
