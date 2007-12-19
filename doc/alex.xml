@@ -946,7 +946,7 @@ set0    := @char [ '-' @char ]
 	    newline.</para>
 
 	    <para>Equivalent to the set
-	    <literal>[\t\n\f\v\r]</literal>.</para>
+	    <literal>[\ \t\n\f\v\r]</literal>.</para>
 	  </listitem>
 	</varlistentry>
 
