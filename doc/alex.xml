@@ -841,7 +841,8 @@ repeat  := '{' $digit '}'
       expression.  A character set is a pattern that matches a single
       character.  The syntax of character sets is as follows:</para>
 
-<programlisting>set     := set ['#' set0]
+<programlisting>set     := set '#' set0
+        |  set0
 
 set0    := @char [ '-' @char ]
         | '.'
