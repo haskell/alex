@@ -65,6 +65,7 @@ wrappers :: [(FilePath,[String])]
 wrappers = [
   ("AlexWrapper-basic", ["-DALEX_BASIC"]),
   ("AlexWrapper-basic-bytestring", ["-DALEX_BASIC_BYTESTRING"]),
+  ("AlexWrapper-strict-bytestring", ["-DALEX_STRICT_BYTESTRING"]),
   ("AlexWrapper-posn",  ["-DALEX_POSN"]),
   ("AlexWrapper-posn-bytestring", ["-DALEX_POSN_BYTESTRING"]),
   ("AlexWrapper-monad", ["-DALEX_MONAD"]),

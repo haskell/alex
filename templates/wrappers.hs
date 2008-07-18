@@ -8,6 +8,12 @@
 
 import qualified Data.ByteString.Lazy.Char8 as ByteString
 
+#elif defined(ALEX_STRICT_BYTESTRING)
+
+import qualified Data.ByteString.Char8    as ByteString
+import qualified Data.ByteString.Internal as ByteString
+import qualified Data.ByteString.Unsafe   as ByteString
+
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -268,11 +274,38 @@ alexInputPrevChar (c,_) = c
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',str)
   where go inp@(_,str) =
-	  case alexScan inp 0 of
-		AlexEOF -> []
-		AlexError _ -> error "lexical error"
-		AlexSkip  inp' len     -> go inp'
-		AlexToken inp' len act -> act (ByteString.take (fromIntegral len) str) : go inp'
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act (ByteString.take (fromIntegral len) str) : go inp'
+
+
+#endif
+
+#ifdef ALEX_STRICT_BYTESTRING
+
+data AlexInput = AlexInput { alexChar :: {-# UNPACK #-}!Char
+                           , alexStr  :: {-# UNPACK #-}!ByteString.ByteString }
+
+alexGetChar (AlexInput _ cs)
+    | ByteString.null cs = Nothing
+    | otherwise          = Just $!  (ByteString.head cs, AlexInput c cs')
+    where
+        (c,cs') = (ByteString.w2c (ByteString.unsafeHead cs)
+                  , ByteString.unsafeTail cs)
+
+alexInputPrevChar = alexChar
+
+-- alexScanTokens :: String -> [token]
+alexScanTokens str = go (AlexInput '\n' str)
+  where go inp@(AlexInput _ str) =
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act (ByteString.unsafeTake len str) : go inp'
+
 #endif
 
 
