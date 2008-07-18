@@ -14,9 +14,9 @@ import qualified Data.ByteString.Lazy.Char8 as ByteString
 -- The input type
 
 #if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_GSCAN)
-type AlexInput = (AlexPosn, 	-- current position,
-		  Char,		-- previous char
-		  String)	-- current input string
+type AlexInput = (AlexPosn,     -- current position,
+                  Char,         -- previous char
+                  String)       -- current input string
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (p,c,s) = c
@@ -24,13 +24,13 @@ alexInputPrevChar (p,c,s) = c
 alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
 alexGetChar (p,c,[]) = Nothing
 alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
-				Just (c, (p', c, s))
+                                Just (c, (p', c, s))
 #endif
 
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
-type AlexInput = (AlexPosn, 	-- current position,
-		  Char,		-- previous char
-		  ByteString.ByteString)	-- current input string
+type AlexInput = (AlexPosn,     -- current position,
+                  Char,         -- previous char
+                  ByteString.ByteString)        -- current input string
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (p,c,s) = c
@@ -55,7 +55,7 @@ alexGetChar (p,_,cs) | ByteString.null cs = Nothing
 
 #if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN)
 data AlexPosn = AlexPn !Int !Int !Int
-	deriving (Eq,Show)
+        deriving (Eq,Show)
 
 alexStartPos :: AlexPosn
 alexStartPos = AlexPn 0 1 1
@@ -71,10 +71,10 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 
 #ifdef ALEX_MONAD
 data AlexState = AlexState {
-	alex_pos :: !AlexPosn,	-- position at current input location
-	alex_inp :: String,	-- the current input
-	alex_chr :: !Char,	-- the character before the input
-	alex_scd :: !Int 	-- the current startcode
+        alex_pos :: !AlexPosn,  -- position at current input location
+        alex_inp :: String,     -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_scd :: !Int        -- the current startcode
     }
 
 -- Compile with -funbox-strict-fields for best results!
@@ -82,28 +82,28 @@ data AlexState = AlexState {
 runAlex :: String -> Alex a -> Either String a
 runAlex input (Alex f) 
    = case f (AlexState {alex_pos = alexStartPos,
- 			alex_inp = input,	
-			alex_chr = '\n',
-			alex_scd = 0}) of Left msg -> Left msg
-					  Right ( _, a ) -> Right a
+                        alex_inp = input,       
+                        alex_chr = '\n',
+                        alex_scd = 0}) of Left msg -> Left msg
+                                          Right ( _, a ) -> Right a
 
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
-				Left msg -> Left msg
-				Right (s',a) -> unAlex (k a) s'
+                                Left msg -> Left msg
+                                Right (s',a) -> unAlex (k a) s'
   return a = Alex $ \s -> Right (s,a)
 
 alexGetInput :: Alex AlexInput
 alexGetInput
  = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_inp=inp} -> 
-	Right (s, (pos,c,inp))
+        Right (s, (pos,c,inp))
 
 alexSetInput :: AlexInput -> Alex ()
 alexSetInput (pos,c,inp)
  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_inp=inp} of
-		  s@(AlexState{}) -> Right (s, ())
+                  s@(AlexState{}) -> Right (s, ())
 
 alexError :: String -> Alex a
 alexError message = Alex $ \s -> Left message
@@ -121,11 +121,11 @@ alexMonadScan = do
     AlexEOF -> alexEOF
     AlexError inp' -> alexError "lexical error"
     AlexSkip  inp' len -> do
-	alexSetInput inp'
-	alexMonadScan
+        alexSetInput inp'
+        alexMonadScan
     AlexToken inp' len action -> do
-	alexSetInput inp'
-	action inp len
+        alexSetInput inp'
+        action inp len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -154,10 +154,10 @@ token t input len = return (t input len)
 
 #ifdef ALEX_MONAD_BYTESTRING
 data AlexState = AlexState {
-	alex_pos :: !AlexPosn,	-- position at current input location
-	alex_inp :: ByteString.ByteString,	-- the current input
-	alex_chr :: !Char,	-- the character before the input
-	alex_scd :: !Int 	-- the current startcode
+        alex_pos :: !AlexPosn,  -- position at current input location
+        alex_inp :: ByteString.ByteString,      -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_scd :: !Int        -- the current startcode
     }
 
 -- Compile with -funbox-strict-fields for best results!
@@ -165,28 +165,28 @@ data AlexState = AlexState {
 runAlex :: ByteString.ByteString -> Alex a -> Either String a
 runAlex input (Alex f) 
    = case f (AlexState {alex_pos = alexStartPos,
- 			alex_inp = input,	
-			alex_chr = '\n',
-			alex_scd = 0}) of Left msg -> Left msg
-					  Right ( _, a ) -> Right a
+                        alex_inp = input,       
+                        alex_chr = '\n',
+                        alex_scd = 0}) of Left msg -> Left msg
+                                          Right ( _, a ) -> Right a
 
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
-				Left msg -> Left msg
-				Right (s',a) -> unAlex (k a) s'
+                                Left msg -> Left msg
+                                Right (s',a) -> unAlex (k a) s'
   return a = Alex $ \s -> Right (s,a)
 
 alexGetInput :: Alex AlexInput
 alexGetInput
  = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_inp=inp} -> 
-	Right (s, (pos,c,inp))
+        Right (s, (pos,c,inp))
 
 alexSetInput :: AlexInput -> Alex ()
 alexSetInput (pos,c,inp)
  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_inp=inp} of
-		  s@(AlexState{}) -> Right (s, ())
+                  s@(AlexState{}) -> Right (s, ())
 
 alexError :: String -> Alex a
 alexError message = Alex $ \s -> Left message
@@ -204,11 +204,11 @@ alexMonadScan = do
     AlexEOF -> alexEOF
     AlexError inp' -> alexError "lexical error"
     AlexSkip  inp' len -> do
-	alexSetInput inp'
-	alexMonadScan
+        alexSetInput inp'
+        alexMonadScan
     AlexToken inp' len action -> do
-	alexSetInput inp'
-	action inp len
+        alexSetInput inp'
+        action inp len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -246,11 +246,11 @@ alexInputPrevChar (c,_) = c
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',str)
   where go inp@(_,str) =
-	  case alexScan inp 0 of
-		AlexEOF -> []
-		AlexError _ -> error "lexical error"
-		AlexSkip  inp' len     -> go inp'
-		AlexToken inp' len act -> act (take len str) : go inp'
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act (take len str) : go inp'
 #endif
 
 
@@ -285,11 +285,11 @@ alexScanTokens str = go ('\n',str)
 --alexScanTokens :: String -> [token]
 alexScanTokens str = go (alexStartPos,'\n',str)
   where go inp@(pos,_,str) =
-	  case alexScan inp 0 of
-		AlexEOF -> []
-		AlexError _ -> error "lexical error"
-		AlexSkip  inp' len     -> go inp'
-		AlexToken inp' len act -> act pos (take len str) : go inp'
+          case alexScan inp 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp' len     -> go inp'
+                AlexToken inp' len act -> act pos (take len str) : go inp'
 #endif
 
 
@@ -318,10 +318,10 @@ alexGScan stop state inp = alex_gscan stop alexStartPos '\n' inp (0,state)
 
 alex_gscan stop p c inp (sc,state) =
   case alexScan (p,c,inp) sc of
-	AlexEOF     -> stop p c inp (sc,state)
-	AlexError _ -> stop p c inp (sc,state)
-	AlexSkip (p',c',inp') len -> alex_gscan stop p' c' inp' (sc,state)
-	AlexToken (p',c',inp') len k ->
- 	     k p c inp len (\scs -> alex_gscan stop p' c' inp' scs)
-		(sc,state)
+        AlexEOF     -> stop p c inp (sc,state)
+        AlexError _ -> stop p c inp (sc,state)
+        AlexSkip (p',c',inp') len -> alex_gscan stop p' c' inp' (sc,state)
+        AlexToken (p',c',inp') len k ->
+             k p c inp len (\scs -> alex_gscan stop p' c' inp' scs)
+                (sc,state)
 #endif
