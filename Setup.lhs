@@ -70,6 +70,8 @@ wrappers = [
   ("AlexWrapper-posn-bytestring", ["-DALEX_POSN_BYTESTRING"]),
   ("AlexWrapper-monad", ["-DALEX_MONAD"]),
   ("AlexWrapper-monad-bytestring", ["-DALEX_MONAD_BYTESTRING"]),
+  ("AlexWrapper-monadUserState", ["-DALEX_MONAD", "-DALEX_MONAD_USER_STATE"]),
+  ("AlexWrapper-monadUserState-bytestring", ["-DALEX_MONAD_BYTESTRING", "-DALEX_MONAD_USER_STATE"]),
   ("AlexWrapper-gscan", ["-DALEX_GSCAN"])
  ]
 

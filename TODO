@@ -21,9 +21,6 @@
 
 - AlexEOF doesn't provide a way to get at the text position of the EOF.
 
-- AlexState should include some user state - would make this monad
-  more useful in general.
-
 - Allow user-defined wrappers?  Wrappers in files relative to the
   current directory, for example?
 

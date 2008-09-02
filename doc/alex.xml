@@ -1289,6 +1289,78 @@ token t input len = return (t input len)</programlisting>
       </section>
 
       <section>
+	<title>The "monadUserState" wrapper</title>
+
+	<para>The <literal>monadUserState</literal> wrapper is built 
+    upon the <literal>monad</literal> wrapper. It includes a reference
+    to a type which must be defined in the user's program, 
+    <literal>AlexUserState</literal>, and a call to an initialization
+    function which must also be defined in the user's program,
+    <literal>alexInitUserState</literal>. It gives great flexibility
+    because it is now possible to add any needed information and carry
+    it during the whole lexing phase.</para>
+
+    <para>The generated code is the same as in the <literal>monad</literal> 
+    wrapper, except in 2 places:</para>
+    <para>1) The definition of the general state, which now refers to a
+    type (<literal>AlexUserState</literal>) that must be defined in the Alex file.</para>
+
+<programlisting>data AlexState = AlexState {
+        alex_pos :: !AlexPosn,  -- position at current input location
+        alex_inp :: String,     -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_scd :: !Int        -- the current startcode
+      , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
+    }
+</programlisting>
+
+    <para>2) The initialization code, where a user-specified routine (<literal>alexInitUserState</literal>) will be 
+    called.</para>
+
+<programlisting>runAlex :: String -> Alex a -> Either String a
+runAlex input (Alex f)
+   = case f (AlexState {alex_pos = alexStartPos,
+                        alex_inp = input,
+                        alex_chr = '\n',
+                        alex_ust = alexInitUserState,
+                        alex_scd = 0}) of Left msg -> Left msg
+                                          Right ( _, a ) -> Right a
+</programlisting>
+
+    <para>Here is an example of code in the user's Alex file defining
+    the type and function:</para>
+
+<programlisting>data AlexUserState = AlexUserState
+                   {
+                       lexerCommentDepth  :: Int
+                     , lexerStringValue   :: String
+                   }
+
+alexInitUserState :: AlexUserState
+alexInitUserState = AlexUserState
+                   {
+                       lexerCommentDepth  = 0
+                     , lexerStringValue   = ""
+                   }
+
+getLexerCommentDepth :: Alex Int
+getLexerCommentDepth = Alex $ \s@AlexState{alex_ust=ust} -> Right (s, lexerCommentDepth ust)
+
+setLexerCommentDepth :: Int -> Alex ()
+setLexerCommentDepth ss = Alex $ \s -> Right (s{alex_ust=(alex_ust s){lexerCommentDepth=ss}}, ())
+
+getLexerStringValue :: Alex String
+getLexerStringValue = Alex $ \s@AlexState{alex_ust=ust} -> Right (s, lexerStringValue ust)
+
+setLexerStringValue :: String -> Alex ()
+setLexerStringValue ss = Alex $ \s -> Right (s{alex_ust=(alex_ust s){lexerStringValue=ss}}, ())
+
+addCharToLexerStringValue :: Char -> Alex ()
+addCharToLexerStringValue c = Alex $ \s -> Right (s{alex_ust=(alex_ust s){lexerStringValue=c:lexerStringValue (alex_ust s)}}, ())
+</programlisting>
+      </section>
+
+      <section>
 	<title>The "gscan" wrapper</title>
 
 	<para>The <literal>gscan</literal> wrapper is provided mainly
@@ -1421,6 +1493,37 @@ runAlex          :: ByteString -> Alex a -> Either String a
 
 	<para>All of the actions in your lexical specification
         have the same type as in the <literal>monad</literal> wrapper. It is
+	only the types of the function to run the monad and the type of the
+	<literal>token</literal> function that change.</para>
+	</section>
+
+	<section>
+	<title>The "monadUserState-bytestring" wrapper</title>
+	<para>The <literal>monadUserState-bytestring</literal> wrapper is the same as
+	the <literal>monadUserState</literal> wrapper but with lazy
+	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
+
+<programlisting>
+import qualified Data.ByteString.Lazy.Char8 as ByteString
+
+ata AlexState = AlexState {
+        alex_pos :: !AlexPosn,  -- position at current input location
+        alex_inp :: ByteString, -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_scd :: !Int        -- the current startcode
+      , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
+    }
+
+newtype Alex a = Alex { unAlex :: AlexState
+                               -> Either String (AlexState, a) }
+
+runAlex          :: ByteString -> Alex a -> Either String a
+
+-- token :: (ByteString -> Int -> token) -> AlexAction token
+</programlisting>
+
+	<para>All of the actions in your lexical specification
+        have the same type as in the <literal>monadUserState</literal> wrapper. It is
 	only the types of the function to run the monad and the type of the
 	<literal>token</literal> function that change.</para>
 	</section>

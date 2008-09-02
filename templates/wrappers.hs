@@ -81,6 +81,9 @@ data AlexState = AlexState {
         alex_inp :: String,     -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
+#ifdef ALEX_MONAD_USER_STATE
+      , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
+#endif
     }
 
 -- Compile with -funbox-strict-fields for best results!
@@ -90,6 +93,9 @@ runAlex input (Alex f)
    = case f (AlexState {alex_pos = alexStartPos,
                         alex_inp = input,       
                         alex_chr = '\n',
+#ifdef ALEX_MONAD_USER_STATE
+                        alex_ust = alexInitUserState,
+#endif
                         alex_scd = 0}) of Left msg -> Left msg
                                           Right ( _, a ) -> Right a
 
@@ -164,6 +170,9 @@ data AlexState = AlexState {
         alex_inp :: ByteString.ByteString,      -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
+#ifdef ALEX_MONAD_USER_STATE
+      , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
+#endif
     }
 
 -- Compile with -funbox-strict-fields for best results!
@@ -173,6 +182,9 @@ runAlex input (Alex f)
    = case f (AlexState {alex_pos = alexStartPos,
                         alex_inp = input,       
                         alex_chr = '\n',
+#ifdef ALEX_MONAD_USER_STATE
+                        alex_ust = alexInitUserState,
+#endif
                         alex_scd = 0}) of Left msg -> Left msg
                                           Right ( _, a ) -> Right a
 
