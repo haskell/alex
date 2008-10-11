@@ -4,7 +4,7 @@
 module Main where
 
 import Distribution.PackageDescription (PackageDescription(..))
-import Distribution.Simple.Setup ( BuildFlags(..) )
+import Distribution.Simple.Setup ( BuildFlags(..), buildVerbose )
 import Distribution.Simple ( defaultMainWithHooks, defaultUserHooks, UserHooks(..) )
 import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..) )
 import Distribution.Simple.Program
