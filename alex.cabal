@@ -10,6 +10,7 @@ homepage: http://www.haskell.org/alex/
 synopsis: Alex is a tool for generating lexical analysers in Haskell
 category: Development
 cabal-version: >= 1.2
+build-type: Custom
 extra-source-files:
 	ANNOUNCE
 	README
