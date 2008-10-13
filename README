@@ -3,6 +3,15 @@
 Alex is a Lex-like tool for generating Haskell scanners.  For complete
 documentation, see the doc directory.
 
+   http://www.haskell.org/alex/
+   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/alex
+
+Alex is built using Cabal.  First install GHC, then:
+ 
+  $ runhaskell Setup.lhs configure
+  $ runhaskell Setup.lhs build
+  $ runhaskell Setup.lhs install
+
 Alex version 2.0 has changed fairly considerably since version 1.x,
 and the syntax is almost completely different.  For a detailed list of
 changes, see the release notes in the documentation.
