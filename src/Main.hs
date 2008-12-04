@@ -22,6 +22,9 @@ import Util ( hline )
 import Paths_alex ( version, getDataDir )
 
 import Control.Exception as Exception ( block, unblock, catch, throw )
+#if __GLASGOW_HASKELL__ >= 610
+import Control.Exception ( bracketOnError )
+#endif
 import Control.Monad ( when, liftM )
 import Data.Char ( chr )
 import Data.List ( isSuffixOf )
@@ -303,6 +306,7 @@ die s = hPutStr stderr s >> exitWith (ExitFailure 1)
 dieAlex :: String -> IO a
 dieAlex s = getProgramName >>= \prog -> die (prog ++ ": " ++ s)
 
+#if __GLASGOW_HASKELL__ < 610
 bracketOnError
 	:: IO a		-- ^ computation to run first (\"acquire resource\")
 	-> (a -> IO b)  -- ^ computation to run last (\"release resource\")
@@ -316,3 +320,4 @@ bracketOnError before after thing =
 	   (\e -> do { after a; throw e })
     return r
  )
+#endif
