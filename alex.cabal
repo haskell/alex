@@ -4,12 +4,20 @@ license: BSD3
 license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
 author: Chris Dornan and Simon Marlow
-maintainer: Simon Marlow <simonmar@microsoft.com>
+maintainer: Simon Marlow <marlowsd@gmail.com>
+bug-reports: mailto:marlowsd@gmail.com
 stability: stable
 homepage: http://www.haskell.org/alex/
 synopsis: Alex is a tool for generating lexical analysers in Haskell
 category: Development
 cabal-version: >= 1.2
+
+-- Later, this isn't compatible with Cabal 1.2:
+-- source-repository head
+--   type:     darcs
+--   location: http://darcs.haskell.org/alex/
+
+
 build-type: Custom
 extra-source-files:
 	ANNOUNCE
