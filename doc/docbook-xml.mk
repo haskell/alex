@@ -18,7 +18,6 @@ XML_HTML           = $(addsuffix /index.html,$(basename $(XML_DOC)))
 XML_HTML_NO_CHUNKS = $(addsuffix .html,$(XML_DOC))
 XML_CHM            = $(addsuffix .chm,$(XML_DOC))
 XML_HxS            = $(addsuffix .HxS,$(XML_DOC))
-XML_FO             = $(addsuffix .fo,$(XML_DOC))
 XML_DVI            = $(addsuffix .dvi,$(XML_DOC))
 XML_PS             = $(addsuffix .ps,$(XML_DOC))
 XML_PDF            = $(addsuffix .pdf,$(XML_DOC))
@@ -29,17 +28,16 @@ html           :: $(XML_HTML)
 html-no-chunks :: $(XML_HTML_NO_CHUNKS)
 chm            :: $(XML_CHM)
 HxS            :: $(XML_HxS)
-fo             :: $(XML_FO)
 dvi            :: $(XML_DVI)
 ps             :: $(XML_PS)
 pdf            :: $(XML_PDF)
 
-CLEAN_FILES += $(XML_HTML_NO_CHUNKS) $(XML_FO) $(XML_DVI) $(XML_PS) $(XML_PDF)
+CLEAN_FILES += $(XML_HTML_NO_CHUNKS) $(XML_DVI) $(XML_PS) $(XML_PDF)
 
 FPTOOLS_CSS     = fptools.css
 
 clean ::
-	$(RM) -rf $(XML_DOC).out $(basename $(XML_DOC)) $(basename $(XML_DOC))-htmlhelp
+	$(RM) -rf $(XML_DOC).out $(basename $(XML_DOC)) $(basename $(XML_DOC))-htmlhelp $(XML_DOC).pdf $(XML_DOC).dvi $(XML_DOC).ps
 
 validate ::
 	$(XMLLINT) --valid --noout $(XMLLINT_OPTS) $(XML_DOC).xml
@@ -97,34 +95,13 @@ endif
 %.HxS : %-htmlhelp2/collection.HxC
 	( cd $(dir $<) && if Hxcomp -p collection.HxC -o ../$@ ; then false ; else true ; fi )
 
-%.fo : %.xml
-	$(XSLTPROC) --output $@ \
-		    --stringparam draft.mode no \
-		    $(XSLTPROC_LABEL_OPTS) $(XSLTPROC_OPTS) \
-		    $(DIR_DOCBOOK_XSL)/fo/docbook.xsl $<
+ifneq "$(DBLATEX)" ""
+%.pdf : %.xml
+	$(DBLATEX) -tpdf $<
 
-ifeq "$(FOP)" ""
-ifneq "$(PDFXMLTEX)" ""
-%.pdf : %.fo
-	$(PDFXMLTEX) $<
-	if grep "LaTeX Warning: Label(s) may have changed.Rerun to get cross-references right." $(basename $@).log > /dev/null ; then \
-	  $(PDFXMLTEX) $< ; \
-	  $(PDFXMLTEX) $< ; \
-	fi
-endif
-else
-%.ps : %.fo
-	$(FOP) $(FOP_OPTS) -fo $< -ps $@
+%.dvi : %.xml
+	$(DBLATEX) -tdvi $<
 
-%.pdf : %.fo
-	$(FOP) $(FOP_OPTS) -fo $< -pdf $@
-endif
-
-ifneq "$(XMLTEX)" ""
-%.dvi : %.fo
-	$(XMLTEX) $<
-	if grep "LaTeX Warning: Label(s) may have changed.Rerun to get cross-references right." $(basename $@).log > /dev/null ; then \
-	  $(XMLTEX) $< ; \
-	  $(XMLTEX) $< ; \
-	fi
+%.ps : %.xml
+	$(DBLATEX) -tps $<
 endif
