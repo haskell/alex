@@ -981,7 +981,7 @@ $del      = \127                  -- ASCII DEL</programlisting>
     <title>The Interface to an Alex-generated lexer</title>
 
     <para>This section answers the question: "How do I include an
-    Alex lexer in my program?</para>
+    Alex lexer in my program?"</para>
 
     <para>Alex provides for a great deal of flexibility in how the
     lexer is exposed to the rest of the program.  For instance,
