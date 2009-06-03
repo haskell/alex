@@ -19,6 +19,8 @@ Chris Dornan, 14-Aug-93, 17-Nov-94, 29-Dec-95
 
 module Sort where
 
+-- Hide (<=) so that we don't get name shadowing warnings for it
+import Prelude hiding ((<=))
 
 -- `isort' is an insertion sort and is here for historical reasons; msort is
 -- better in almost every situation.
@@ -27,16 +29,16 @@ isort:: (a->a->Bool) -> [a] -> [a]
 isort (<=) = foldr (insrt (<=)) []
 
 insrt:: (a->a->Bool) -> a -> [a] -> [a]
-insrt (<=) e [] = [e]
+insrt _    e [] = [e]
 insrt (<=) e l@(h:t) = if e<=h then e:l else h:insrt (<=) e t
 
 
 msort :: (a->a->Bool) -> [a] -> [a]
-msort (<=) [] = []                    -- (foldb f []) is undefined
+msort _    [] = []                    -- (foldb f []) is undefined
 msort (<=) xs = foldb (mrg (<=)) (runs (<=) xs)
 
 runs :: (a->a->Bool) -> [a] -> [[a]]
-runs (<=) xs = foldr op [] xs
+runs (<=) xs0 = foldr op [] xs0
       where
 	op z xss@(xs@(x:_):xss') | z<=x      = (z:xs):xss'
                                  | otherwise = [z]:xss
@@ -44,14 +46,14 @@ runs (<=) xs = foldr op [] xs
 
 foldb :: (a->a->a) -> [a] -> a
 foldb _ [x] = x
-foldb f xs  = foldb f (fold xs)
+foldb f xs0 = foldb f (fold xs0)
       where
 	fold (x1:x2:xs) = f x1 x2 : fold xs
 	fold xs         = xs
 
 mrg:: (a->a->Bool) -> [a] -> [a] -> [a]
-mrg (<=) [] l = l
-mrg (<=) l@(_:_) [] = l
+mrg _    [] l = l
+mrg _    l@(_:_) [] = l
 mrg (<=) l1@(h1:t1) l2@(h2:t2) =
 	if h1<=h2
 	   then h1:mrg (<=) t1 l2

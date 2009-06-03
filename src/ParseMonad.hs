@@ -27,10 +27,10 @@ type AlexInput = (AlexPosn, 	-- current position,
 		  String)	-- current input string
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (p,c,s) = c
+alexInputPrevChar (_,c,_) = c
 
 alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (p,c,[]) = Nothing
+alexGetChar (_,_,[]) = Nothing
 alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
 				Just (c, (p', c, s))
 
@@ -52,7 +52,7 @@ alexStartPos = AlexPn 0 1 1
 
 alexMove :: AlexPosn -> Char -> AlexPosn
 alexMove (AlexPn a l c) '\t' = AlexPn (a+1)  l     (((c+7) `div` 8)*8+1)
-alexMove (AlexPn a l c) '\n' = AlexPn (a+1) (l+1)   1
+alexMove (AlexPn a l _) '\n' = AlexPn (a+1) (l+1)   1
 alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 
 -- -----------------------------------------------------------------------------
@@ -86,6 +86,7 @@ runP str (senv,renv) (P p)
  	  PState{ smac_env=senv, rmac_env=renv,
 	     startcode = 0, input=(alexStartPos,'\n',str) }
 
+failP :: String -> P a
 failP str = P $ \PState{ input = (p,_,_) } -> Left (Just p,str)
 
 -- Macros are expanded during parsing, to simplify the abstract
