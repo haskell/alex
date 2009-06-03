@@ -29,7 +29,7 @@ import Data.List ( maximumBy, sortBy, groupBy )
 -- Printing the output
 
 outputDFA :: Target -> Int -> String -> DFA SNum Code -> ShowS
-outputDFA target n func_nm dfa
+outputDFA target _ _ dfa
   = interleave_shows nl 
 	[outputBase, outputTable, outputCheck, outputDefault, outputAccept]
   where    
@@ -73,14 +73,14 @@ outputDFA target n func_nm dfa
     outputAccs accs
 	= brack (interleave_shows (char ',') (map (paren.outputAcc) accs))
 
-    outputAcc (Acc prio Nothing Nothing NoRightContext)
+    outputAcc (Acc _ Nothing Nothing NoRightContext)
 	= str "AlexAccSkip"
-    outputAcc (Acc prio (Just act) Nothing NoRightContext)
+    outputAcc (Acc _ (Just act) Nothing NoRightContext)
 	= str "AlexAcc " . paren (str act)
-    outputAcc (Acc prio Nothing lctx rctx)
+    outputAcc (Acc _ Nothing lctx rctx)
 	= str "AlexAccSkipPred " . space
 	. paren (outputPred lctx rctx)
-    outputAcc (Acc prio (Just act) lctx rctx)
+    outputAcc (Acc _ (Just act) lctx rctx)
 	= str "AlexAccPred " . space
 	. paren (str act) . space
 	. paren (outputPred lctx rctx)
@@ -171,8 +171,8 @@ mkTables dfa
 	   [ expand (dfa_arr!state) | state <- [0..top_state] ]
 	 
 	expand (State _ out) = 
-	   [(i, lookup out i) | i <- ['\0'..'\255']]
-	   where lookup out i = case Map.lookup i out of
+	   [(i, lookup' out i) | i <- ['\0'..'\255']]
+	   where lookup' out' i = case Map.lookup i out' of
 					Nothing -> -1
 					Just s  -> s
 
@@ -243,7 +243,7 @@ genTables' base table check off_arr entries max_token
 	= fit_all entries 0 1
   where
 
-	 fit_all [] max_off fst_zero = return max_off
+	 fit_all [] max_off _ = return max_off
 	 fit_all (s:ss) max_off fst_zero = do
 	   (off, new_max_off, new_fst_zero) <- fit s max_off fst_zero
 	   writeArray off_arr off 1
@@ -272,6 +272,11 @@ genTables' base table check off_arr entries max_token
 
 
 -- Find a valid offset in the table for this state.
+findFreeOffset :: Int
+               -> STUArray s Int Int
+               -> STUArray s Int Int
+               -> [(Int, Int)]
+               -> ST s Int
 findFreeOffset off check off_arr state = do
     -- offset 0 isn't allowed
   if off == 0 then try_next else do
@@ -296,7 +301,9 @@ fits off ((t,_):rest) check = do
   if i /= -1 then return False
 	     else fits off rest check
 
-addState off table check [] = return ()
+addState :: Int -> STUArray s Int Int -> STUArray s Int Int -> [(Int, Int)]
+         -> ST s ()
+addState _   _     _     [] = return ()
 addState off table check ((t,val):state) = do
    writeArray table (off+t) val
    writeArray check (off+t) t
@@ -330,7 +337,9 @@ hexChar16 :: Int -> String
 hexChar16 i = toHex (i .&. 0xff)
 		 ++ toHex ((i `shiftR` 8) .&. 0xff)  -- force little-endian
 
+toHex :: Int -> String
 toHex i = ['\\','x', hexDig (i `div` 16), hexDig (i `mod` 16)]
 
+hexDig :: Int -> Char
 hexDig i | i <= 9    = chr (i + ord '0')
 	 | otherwise = chr (i - 10 + ord 'a')

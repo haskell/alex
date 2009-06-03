@@ -18,19 +18,19 @@ import Util ( str, nl, interleave_shows, char, ljustify )
 -- Generate a human readable dump of the state machine
 
 infoDFA :: Int -> String -> DFA SNum Code -> ShowS
-infoDFA n func_nm dfa
+infoDFA _ func_nm dfa
   = str "Scanner : " . str func_nm . nl
   . str "States  : " . shows (length dfa_list) . nl
-  . nl . infoDFA dfa
+  . nl . infoDFA'
   where    
     dfa_list = Map.toAscList (dfa_states dfa)
 
-    infoDFA dfa = interleave_shows nl (map infoStateN dfa_list)
+    infoDFA' = interleave_shows nl (map infoStateN dfa_list)
 
     infoStateN (i,s) = str "State " . shows i . nl . infoState s . nl
 
     infoState :: State SNum Code -> ShowS
-    infoState (State accs out)
+    infoState (State _accs out)
 	= infoArr out . nl
 	-- . str ("\tDefault -> ") . shows df
 
@@ -38,8 +38,8 @@ infoDFA n func_nm dfa
 	= char '\t' . interleave_shows (str "\n\t")
 			(map infoTransition (Map.toAscList out))
 
-    infoTransition (char,state)
-	= str (ljustify 8 (show char))
+    infoTransition (char',state)
+	= str (ljustify 8 (show char'))
 	. str " -> "
 	. shows state
 

@@ -47,7 +47,7 @@ data NState = NSt {
 
 -- Debug stuff
 instance Show (Accept a) where
-  showsPrec _ (Acc p act lctx rctx) = shows p --TODO
+  showsPrec _ (Acc p _act _lctx _rctx) = shows p --TODO
 
 instance Show NState where
   showsPrec _ (NSt accs cl outs) =
@@ -95,7 +95,7 @@ scanner2nfa Scanner{scannerTokens = toks} startcodes
 		startcodes start_states
 
 	where
-	  do_token (RECtx scs lctx re rctx code) prio = do
+	  do_token (RECtx _scs lctx re rctx code) prio = do
 		b <- newState
 		e <- newState
 		rexp2nfa b e re
@@ -103,12 +103,12 @@ scanner2nfa Scanner{scannerTokens = toks} startcodes
 		rctx_e <- case rctx of
 				  NoRightContext ->
 					return NoRightContext
-				  RightContextCode code ->
-					return (RightContextCode code)
-				  RightContextRExp re -> do 
+				  RightContextCode code' ->
+					return (RightContextCode code')
+				  RightContextRExp re' -> do 
 					r_b <- newState
 					r_e <- newState
-		 			rexp2nfa r_b r_e re
+		 			rexp2nfa r_b r_e re'
 					accept r_e rctxt_accept
 					return (RightContextRExp r_b)
 
@@ -171,7 +171,7 @@ instance Monad NFAM where
   return a = N $ \s n -> (s,n,a)
 
   m >>= k  = N $ \s n -> case unN m s n of
-				 (s,n,a) -> unN (k a) s n
+				 (s', n', a) -> unN (k a) s' n'
 
 runNFA :: NFAM () -> NFA
 runNFA m = case unN m 0 Map.empty of
@@ -189,9 +189,9 @@ newState :: NFAM SNum
 newState = N $ \s n -> (s+1,n,s)
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
-charEdge from charset to = N $ \s n -> (s, addEdge n from charset to, ())
+charEdge from charset to = N $ \s n -> (s, addEdge n, ())
  where
-   addEdge n from charset to = 
+   addEdge n =
      case Map.lookup from n of
        Nothing -> 
 	   Map.insert from (NSt [] [] [(charset,to)]) n
@@ -201,17 +201,17 @@ charEdge from charset to = N $ \s n -> (s, addEdge n from charset to, ())
 epsilonEdge :: SNum -> SNum -> NFAM ()
 epsilonEdge from to 
  | from == to = return ()
- | otherwise  = N $ \s n -> (s, addEdge n from to, ())
+ | otherwise  = N $ \s n -> (s, addEdge n, ())
  where
-   addEdge n from to = 
+   addEdge n =
      case Map.lookup from n of
        Nothing 			-> Map.insert from (NSt [] [to] []) n
        Just (NSt acc eps trans) -> Map.insert from (NSt acc (to:eps) trans) n
 
 accept :: SNum -> Accept Code -> NFAM ()
-accept state new_acc = N $ \s n -> (s, addAccept n state, ())
+accept state new_acc = N $ \s n -> (s, addAccept n, ())
  where
-   addAccept n state = 
+   addAccept n = 
      case Map.lookup state n of
        Nothing ->
 	   Map.insert state (NSt [new_acc] [] []) n

@@ -71,14 +71,18 @@ instance Show RECtx where
   showsPrec _ (RECtx scs _ r rctx code) = 
 	showStarts scs . shows r . showRCtx rctx . showMaybeCode code
 
+showMaybeCode :: Maybe String -> String -> String
 showMaybeCode Nothing = id
 showMaybeCode (Just code) = showCode code
 
+showCode :: String -> String -> String
 showCode code = showString " { " . showString code . showString " }"
 
+showStarts :: [(String, StartCode)] -> String -> String
 showStarts [] = id
 showStarts scs = shows scs
 
+showRCtx :: RightContext RExp -> String -> String
 showRCtx NoRightContext = id
 showRCtx (RightContextRExp r) = ('\\':) . shows r
 showRCtx (RightContextCode code) = showString "\\ " . showCode code
@@ -126,7 +130,7 @@ data RExp
 
 instance Show RExp where
   showsPrec _ Eps = showString "()"
-  showsPrec _ (Ch set) = showString "[..]"
+  showsPrec _ (Ch _) = showString "[..]"
   showsPrec _ (l :%% r)  = shows l . shows r
   showsPrec _ (l :| r)  = shows l . ('|':) . shows r
   showsPrec _ (Star r) = shows r . ('*':)
@@ -222,7 +226,7 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 		  [] -> tl
 		  (nm,_):rst -> "\n" ++ nm ++ foldr f t rst
 			where
-			f (nm, _) t = "," ++ nm ++ t
+			f (nm', _) t' = "," ++ nm' ++ t'
 			t = " :: Int\n" ++ foldr fmt_sc tl name_code_pairs
 		where
 		fmt_sc (nm,sc) t = nm ++ " = " ++ show sc ++ "\n" ++ t
@@ -247,7 +251,7 @@ extractActions scanner = (scanner{scannerTokens = new_tokens}, decl_str)
 
   f r@RECtx{ reCtxCode = Just code } name
 	= (r{reCtxCode = Just name}, Just (mkDecl name code))
-  f r@RECtx{ reCtxCode = Nothing } name
+  f r@RECtx{ reCtxCode = Nothing } _
 	= (r{reCtxCode = Nothing}, Nothing)
 
   mkDecl fun code = str fun . str " = " . str code . nl

@@ -37,9 +37,9 @@ data GTree    = GNode Int GForrest
 postorder:: GForrest -> [Int]
 postorder ts = po ts []
 	where
-	po ts l = foldr po_tree l ts
+	po ts' l = foldr po_tree l ts'
 
-	po_tree (GNode a ts) l = po ts (a:l)
+	po_tree (GNode a ts') l = po ts' (a:l)
 
 list_tree:: GTree -> [Int]
 list_tree t = l_t t []
@@ -102,7 +102,7 @@ dff:: Graph -> GForrest
 dff g = dff' (vertices g) g
 
 dff':: [Int] -> Graph -> GForrest
-dff' vs (bs,f) = prune (map (generate_g f) vs)
+dff' vs (_bs, f) = prune (map (generate_g f) vs)
 
 generate_g:: (Int->[Int]) -> Int -> GTree
 generate_g f v = GNode v (map (generate_g f) (f v))
@@ -114,7 +114,7 @@ prune ts = snd(chop(empty_int,ts))
 	empty_int = Set.empty
 
 chop:: (Set Int,GForrest) -> (Set Int,GForrest)
-chop p@(vstd,[]) = p
+chop p@(_, []) = p
 chop (vstd,GNode v ts:us) =
 	if v `Set.member` vstd
 	   then chop (vstd,us)

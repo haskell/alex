@@ -28,6 +28,7 @@ import Data.Array ( Array, array )
 -- Implementation as functions
 type CharSet = Char -> Bool
 
+emptyCharSet :: CharSet
 emptyCharSet = const False
 
 charSetSingleton :: Char -> CharSet
