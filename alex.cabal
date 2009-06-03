@@ -74,6 +74,7 @@ executable alex
   build-depends: haskell98 >= 1.0
 
   extensions: CPP
+  ghc-options: -Wall
   other-modules:
         AbsSyn
         CharSet
