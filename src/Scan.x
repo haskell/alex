@@ -11,6 +11,8 @@
 -------------------------------------------------------------------------------
 
 {
+{-# OPTIONS_GHC -w #-}
+
 module Scan(lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn) where
 
 import Data.Char
