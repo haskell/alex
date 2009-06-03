@@ -9,6 +9,7 @@
 
 #ifdef ALEX_GHC
 #define ILIT(n) n#
+#define FAST_INT_BINDING(n) !(n)
 #define IBOX(n) (I# (n))
 #define FAST_INT Int#
 #define LT(n,m) (n <# m)
@@ -21,6 +22,7 @@
 #define IF_GHC(x) (x)
 #else
 #define ILIT(n) (n)
+#define FAST_INT_BINDING(n) (n)
 #define IBOX(n) (n)
 #define FAST_INT Int
 #define LT(n,m) (n < m)
@@ -155,12 +157,12 @@ alex_scan_tkn user orig_input len input s last_acc =
         trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
 #endif
 	let
-		base   = alexIndexInt32OffAddr alex_base s
-		IBOX(ord_c) = ord c
-		offset = PLUS(base,ord_c)
-		check  = alexIndexInt16OffAddr alex_check offset
+		FAST_INT_BINDING(base) = alexIndexInt32OffAddr alex_base s
+		FAST_INT_BINDING(IBOX(ord_c)) = ord c
+		FAST_INT_BINDING(offset) = PLUS(base,ord_c)
+		FAST_INT_BINDING(check)  = alexIndexInt16OffAddr alex_check offset
 		
-		new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
+		FAST_INT_BINDING(new_s) = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
 			  then alexIndexInt16OffAddr alex_table offset
 			  else alexIndexInt16OffAddr alex_deflt s
 	in
