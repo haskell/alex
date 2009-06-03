@@ -104,7 +104,7 @@ nfa2dfa scs nfa = mk_int_dfa nfa (nfa2pdfa nfa pdfa (dfa_start_states pdfa))
 -- including `rctx_ss' in the search).
 
 nfa2pdfa:: NFA -> DFA StateSet Code -> [StateSet] -> DFA StateSet Code
-nfa2pdfa nfa pdfa [] = pdfa
+nfa2pdfa _   pdfa [] = pdfa
 nfa2pdfa nfa pdfa (ss:umkd)
   |  ss `in_pdfa` pdfa =  nfa2pdfa nfa pdfa  umkd
   |  otherwise         =  nfa2pdfa nfa pdfa' umkd'
@@ -135,7 +135,7 @@ dfa_alphabet = ['\0'..'\255']
 sort_accs:: [Accept a] -> [Accept a]
 sort_accs accs = foldr chk [] (msort le accs)
 	where
-	chk acc@(Acc _ _ Nothing NoRightContext) rst = [acc]
+	chk acc@(Acc _ _ Nothing NoRightContext) _   = [acc]
 	chk acc                                  rst = acc:rst
 
 	le (Acc{accPrio = n}) (Acc{accPrio=n'}) = n<=n'
@@ -181,26 +181,26 @@ in_pdfa ss (DFA _ mp) = ss `Map.member` mp
 -- sets of states from the original NFA.
 
 mk_int_dfa:: NFA -> DFA StateSet a -> DFA SNum a
-mk_int_dfa nfa pdfa@(DFA start_states mp)
+mk_int_dfa nfa (DFA start_states mp)
   = DFA [0 .. length start_states-1] 
-	(Map.fromList [ (lookup st, cnv pds) | (st, pds) <- Map.toAscList mp ])
+	(Map.fromList [ (lookup' st, cnv pds) | (st, pds) <- Map.toAscList mp ])
   where
 	mp' = Map.fromList (zip (start_states ++ 
 				 (map fst . Map.toAscList) (foldr Map.delete mp start_states)) [0..])
 
-	lookup = fromJust . flip Map.lookup mp'
+	lookup' = fromJust . flip Map.lookup mp'
 
 	cnv :: State StateSet a -> State SNum a
 	cnv (State accs as) = State accs' as'
 		where
-		as'   = Map.mapWithKey (\ch s -> lookup s) as
+		as'   = Map.mapWithKey (\_ch s -> lookup' s) as
 
 		accs' = map cnv_acc accs
 		cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'
 		  where rctx' =	
 			  case rctx of
 				RightContextRExp s -> 
-				  RightContextRExp (lookup (mk_ss nfa [s]))
+				  RightContextRExp (lookup' (mk_ss nfa [s]))
 				other -> other
 
 {-
