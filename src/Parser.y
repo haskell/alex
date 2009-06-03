@@ -7,6 +7,8 @@
 --
 -- -----------------------------------------------------------------------------
 
+{-# OPTIONS_GHC -w #-}
+
 module Parser ( parse, P ) where
 import AbsSyn
 import Scan
