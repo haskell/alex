@@ -17,25 +17,10 @@
   <tr>
     <td width="100%" style="padding-top: 20px">
     <ul>
-      <li><a href="#News">News</a></li>
       <li><a href="#Overview">Overview</a></li>
       <li><a href="#Documentation">Documentation</a></li>
-      <li><a href="#Development">Development</a></li>
       <li><a href="#Download">Download</a></li>
-    </ul>
-    </td>
-  </tr>
-  <tr style="border-bottom: 1px dotted">
-    <td width="100%" style="font-size: 18pt; padding-top: 10px">
-    <a name="News">News</a></td>
-  </tr>
-  <tr>
-    <td width="100%" style="padding-left: 10px; padding-top: 5px">
-    <ul>
-      <li>November 2 2007: Alex version 2.2 released (<a href="doc/html/about.html#relnotes-22">Release notes</a>)</li>
-      <li>January 8 2007: Alex version 2.1.0 released (<a href="doc/html/about.html#relnotes-210">Release notes</a>)</li>
-      <li>March 23 2005: Alex version 2.0.1 released (bugfix to 2.0)</li>
-      <li>August 13 2003: Alex version 2.0 released (<a href="doc/html/relnotes-20.html">Release notes</a>)</li>
+      <li><a href="#Development">Development</a></li>
     </ul>
     </td>
   </tr>
@@ -65,6 +50,45 @@
   </tr>
   <tr style="border-bottom: 1px dotted">
     <td width="100%" style="font-size: 18pt; padding-top: 10px">
+    <a name="Download">Download</a></td>
+  </tr>
+  <tr>
+    <td width="100%" style="padding-left: 10px; padding-top: 5px">
+
+      <p>Alex is part of
+        the <a href="http://www.haskell.org/haskellwiki/Haskell_Platform">Haskell
+          Platform</a>, so if you install the platform you will
+        automatically have a working Alex.</p>
+      
+      <p>Alex is also on Hackage.  If you have
+        the <a href="http://hackage.haskell.org/trac/hackage/wiki/CabalInstall">cabal-install</a>
+        tool (which also comes with the Haskell Platform), then you can
+        build and install the latest version of Alex with</p>
+      <pre>
+        cabal install alex
+      </pre>
+      
+      <p>To find out what the latest version of Alex is, and to download
+        the source separately, go to Alex's <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/alex">HackageDB
+          page</a>.
+        
+      <p>Alex might also be pre-packaged for your OS:</p>
+      
+      <UL>
+        <LI>Ubuntu users: packages should be available from the universe repository.</LI>
+        <LI>Debian GNU/Linux users: packages are available <a href="http://packages.debian.org/alex">here</a>.</LI>
+        <LI>RPMs for other versions of Linux can be built directly from the source, using <tt>rpmbuild -ta</tt>.</LI>
+        <LI>FreeBSD/x86 users: Alex is in the ports tree, so either <tt>pkg_add -r
+            hs-alex</tt>, or install it from the ports tree in
+          <tt>/usr/ports/devel/hs-alex</tt>.</LI>
+        <li>OpenBSD users: Alex is in the -current ports tree, you can
+          install it from <tt>/usr/ports/devel/alex</tt>.</li>
+      </UL>
+
+    </td>
+  </tr>
+  <tr style="border-bottom: 1px dotted">
+    <td width="100%" style="font-size: 18pt; padding-top: 10px">
     <a name="Development">Development</a></td>
   </tr>
   <tr>
@@ -78,43 +102,6 @@
     <p>Feel free to hack on Alex and <tt>darcs send</tt> me your
 	    patches.</p>
 
-    </td>
-  </tr>
-  <tr style="border-bottom: 1px dotted">
-    <td width="100%" style="font-size: 18pt; padding-top: 10px">
-    <a name="Download">Download</a></td>
-  </tr>
-  <tr>
-    <td width="100%" style="padding-left: 10px; padding-top: 5px">
-    <ul>
-      <li>Source distribution: <a href="dist/2.2/alex-2.2.tar.gz">alex-2.2.tar.gz</a> 
-      (requires Cabal-1.2 or later to compile).</li>
-
-<!--
-      <li><a href="dist/2.1.0/FC5/alex-2.1.0-1.x86_64.rpm">RPM</a> for RedHat
-      Linux/x86_64 (Fedora Core 5).</li>
-
-      <li><a href="dist/2.1.0/RH9/alex-2.1.0-1.i386.rpm">RPM</a> for RedHat
-      Linux/x86 (RedHat 9).</li>
--->
-      <li>Many Linux distributions have pre-packaged binaries of Alex
-      available, try looking in your OS's package management
-      tools.</li>
-
-      <li>RPMs for other flavours of Linux: RPMs can be built from the
-      source distribution using <tt>rpm -ta</tt>, but you do need GHC
-      installed.</li>
-
-      <li>FreeBSD: Alex is in the ports tree, under <a
-      href="http://www.freshports.org/devel/hs-alex"><tt>devel/hs-alex</tt></a>.
-
-      <li>OpenBSD: Alex is in the ports tree, under <a href="http://www.openbsd.org/cgi-bin/cvsweb/ports/devel/alex/"><tt>devel/alex</tt></a>.
-
-	<li>Windows: <a href="dist/2.2/alex-2.2.zip">zipped binary distribution</a>.
-    </ul>
-    <ul>
-       <li>OLD: Alex Version 1.1 sources: <a href="dist/alex-1.1-src.tar.gz">alex-1.1-src.tar.gz</a></li>
-    </ul>
     </td>
   </tr>
 </table>
