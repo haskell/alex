@@ -35,6 +35,32 @@ import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
 import System.Exit ( ExitCode(..), exitWith )
 import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
+#if __GLASGOW_HASKELL__ >= 612
+import System.IO ( hGetContents, hSetEncoding, utf8 )
+#endif
+
+-- We need to force every file we open to be read in
+-- as UTF8
+alexReadFile :: FilePath -> IO String
+#if __GLASGOW_HASKELL__ >= 612
+alexReadFile file = do
+  h <- alexOpenFile file ReadMode
+  hGetContents h
+#else
+alexReadFile = readFile
+#endif
+
+-- We need to force every file we write to be written
+-- to as UTF8
+alexOpenFile :: FilePath -> IOMode -> IO Handle
+#if __GLASGOW_HASKELL__ >= 612
+alexOpenFile file mode = do
+  h <- openFile file mode
+  hSetEncoding h utf8
+  return h
+#else
+alexOpenFile = openFile
+#endif
 
 -- `main' decodes the command line arguments and calls `alex'.  
 
@@ -68,7 +94,7 @@ runAlex cli file = do
 		'x':'.':r -> return (reverse r)
 		_         -> die (file ++ ": filename must end in \'.x\'\n")
   
-  prg <- readFile file
+  prg <- alexReadFile file
   script <- parseScript file prg
   alex cli file basename script
 
@@ -109,7 +135,7 @@ alex cli file basename script = do
 		
    -- open the output file; remove it if we encounter an error
    bracketOnError 
-	(openFile o_file WriteMode)
+        (alexOpenFile o_file WriteMode)
 	(\h -> do hClose h; removeFile o_file)
 	$ \out_h -> do
 
@@ -127,7 +153,7 @@ alex cli file basename script = do
 
    -- add the wrapper, if necessary
    when (isJust wrapper_name) $
-	do str <- readFile (fromJust wrapper_name)
+	do str <- alexReadFile (fromJust wrapper_name)
 	   hPutStr out_h str
 
    let dfa = scanner2dfa scanner_final scs
@@ -142,7 +168,7 @@ alex cli file basename script = do
    hPutStr out_h (actions "")
 
    -- add the template
-   tmplt <- readFile template_name
+   tmplt <- alexReadFile template_name
    hPutStr out_h tmplt
 
    hClose out_h
@@ -232,7 +258,7 @@ wrapperFile dir directives =
 infoStart :: FilePath -> FilePath -> IO (String -> IO (), IO ())
 infoStart x_file info_file = do
   bracketOnError
-	(openFile info_file WriteMode)
+	(alexOpenFile info_file WriteMode)
 	(\h -> do hClose h; removeFile info_file)
 	(\h -> do infoHeader h x_file
   		  return (hPutStr h, hClose h)
