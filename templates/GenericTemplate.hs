@@ -128,17 +128,17 @@ alexScanUser user input IBOX(sc)
 #endif
 				   AlexError input'
 
-	(AlexLastSkip input len, _) ->
+	(AlexLastSkip input'' len, _) ->
 #ifdef ALEX_DEBUG
 		trace ("Skipping.") $ 
 #endif
-		AlexSkip input len
+		AlexSkip input'' len
 
-	(AlexLastAcc k input len, _) ->
+	(AlexLastAcc k input''' len, _) ->
 #ifdef ALEX_DEBUG
 		trace ("Accept.") $ 
 #endif
-		AlexToken input len k
+		AlexToken input''' len k
 
 
 -- Push the input through the DFA, remembering the most recent accepting
