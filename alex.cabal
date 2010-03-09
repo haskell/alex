@@ -71,7 +71,7 @@ executable alex
   else
     build-depends: base >= 1.0
 
-  build-depends: base < 5, haskell98 >= 1.0
+  build-depends: base < 5
 
   extensions: CPP
   ghc-options: -Wall
