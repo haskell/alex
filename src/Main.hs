@@ -21,7 +21,9 @@ import Scan
 import Util ( hline )
 import Paths_alex ( version, getDataDir )
 
+#if __GLASGOW_HASKELL__ < 610
 import Control.Exception as Exception ( block, unblock, catch, throw )
+#endif
 #if __GLASGOW_HASKELL__ >= 610
 import Control.Exception ( bracketOnError )
 #endif

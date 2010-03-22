@@ -256,7 +256,7 @@ extractActions scanner = (scanner{scannerTokens = new_tokens}, decl_str)
 
   mkDecl fun code = str fun . str " = " . str code . nl
 
-  act_names = map (\n -> "alex_action_" ++ show n) [0..]
+  act_names = map (\n -> "alex_action_" ++ show (n::Int)) [0..]
 
   decl_str = foldr (.) id [ decl | Just decl <- decls ]
 

@@ -11,12 +11,12 @@ module Map (
    toAscList
 ) where
 
-import Prelude hiding ( lookup )
-
 #if __GLASGOW_HASKELL__ >= 603
 import Data.Map
+import Prelude ()
 #else
 import Data.FiniteMap
+import Prelude hiding ( lookup )
 
 type Map k a = FiniteMap k a
 
