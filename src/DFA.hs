@@ -19,6 +19,7 @@ import AbsSyn
 import qualified Map
 import NFA
 import Sort ( msort, nub' )
+import CharSet
 
 import Data.Array ( (!) )
 import Data.Maybe ( fromJust )
@@ -113,17 +114,21 @@ nfa2pdfa nfa pdfa (ss:umkd)
 
 	umkd' = rctx_sss ++ map snd ss_outs ++ umkd
 
-	ss_outs = [ (ch, mk_ss nfa ss')
-		  | ch  <- dfa_alphabet,
-		    let ss'  = [ s' | (p,s') <- outs, p ch ],
-		    not (null ss')
-		  ]
+        -- for each character, the set of states that character would take
+        -- us to from the current set of states in the NFA.
+        ss_outs :: [(Char, StateSet)]
+	ss_outs =  [ (ch, mk_ss nfa ss')
+		   | ch  <- dfa_alphabet,
+		     let ss'  = [ s' | (p,s') <- outs, p ch ],
+		     not (null ss')
+		   ]
 
 	rctx_sss = [ mk_ss nfa [s]
-		   | s <- ss,
-		     Acc _ _ _ (RightContextRExp s) <- accs ]
+		   | Acc _ _ _ (RightContextRExp s) <- accs ]
 
-	outs = [ out | s <- ss, out <- nst_outs (nfa!s) ]
+        outs :: [(CharSet,SNum)]
+	outs =  [ out | s <- ss, out <- nst_outs (nfa!s) ]
+
 	accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
 
 dfa_alphabet:: [Char]
