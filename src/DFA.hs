@@ -163,7 +163,7 @@ new_pdfa starts nfa
          dfa_states = Map.empty
        }
  where
-	start_ss = [ msort (<=) (nst_cl(nfa!n)) | n <- [0..starts]]
+	start_ss = [ msort (<=) (nst_cl(nfa!n)) | n <- [0..(starts-1)]]
 
  -- starts is the number of start states
 
