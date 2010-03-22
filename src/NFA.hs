@@ -46,9 +46,6 @@ data NState = NSt {
  }
 
 -- Debug stuff
-instance Show (Accept a) where
-  showsPrec _ (Acc p _act _lctx _rctx) = shows p --TODO
-
 instance Show NState where
   showsPrec _ (NSt accs cl outs) =
     str "NSt " . shows accs . space . shows cl . space .

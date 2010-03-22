@@ -12,7 +12,10 @@ module Info (infoDFA) where
 
 import AbsSyn
 import qualified Map
-import Util ( str, nl, interleave_shows, char, ljustify )
+import Util
+import CharSet
+
+import Data.Array
 
 -- -----------------------------------------------------------------------------
 -- Generate a human readable dump of the state machine
@@ -27,38 +30,36 @@ infoDFA _ func_nm dfa
 
     infoDFA' = interleave_shows nl (map infoStateN dfa_list)
 
-    infoStateN (i,s) = str "State " . shows i . nl . infoState s . nl
+    infoStateN (i,s) = str "State " . shows i . nl . infoState s
 
     infoState :: State SNum Code -> ShowS
-    infoState (State _accs out)
-	= infoArr out . nl
-	-- . str ("\tDefault -> ") . shows df
+    infoState (State accs out)
+        = foldr (.) id (map infoAccept accs)
+	. infoArr out . nl
 
     infoArr out
 	= char '\t' . interleave_shows (str "\n\t")
 			(map infoTransition (Map.toAscList out))
 
+    infoAccept (Acc p act lctx rctx)
+        = str "\tAccept" . paren (shows p) . space
+        . outputLCtx lctx . space
+        . showRCtx rctx
+        . (case act of
+            Nothing   -> id
+            Just code -> str " { " . str code . str " }")
+        . nl
+        
     infoTransition (char',state)
 	= str (ljustify 8 (show char'))
 	. str " -> "
 	. shows state
 
---    outputAccs :: [Accept Code] -> ShowS
---    outputAccs accs
---	  = brack (interleave_shows (char ',') (map (paren.outputAcc) accs))
---   
---    outputAcc (Acc prio act scs lctx rctx)
---	  = str "Acc " . shows prio . space
---	  . paren (str act) . space
---	  . shows scs . space
---	  . outputLCtx lctx . space
---	  . shows rctx
---
---    outputLCtx Nothing
---	  = str "Nothing"
---    outputLCtx (Just set)
---	  = str "Just " . paren (outputArr (charSetToArray set))
---
---    outputArr arr
---	  = str "Array.array " . shows (bounds arr) . space
---	  . shows (assocs arr)
+    outputLCtx Nothing
+	  = id
+    outputLCtx (Just set)
+	  = paren (outputArr (charSetToArray set)) . char '^'
+
+    outputArr arr
+	  = str "Array.array " . shows (bounds arr) . space
+	  . shows (assocs arr)

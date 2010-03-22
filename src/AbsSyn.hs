@@ -15,7 +15,7 @@ module AbsSyn (
   RECtx(..),
   RExp(..),
   DFA(..), State(..), SNum, StartCode, Accept(..),
-  RightContext(..),
+  RightContext(..), showRCtx,
   encodeStartCodes, extractActions,
   Target(..)
   ) where
@@ -82,7 +82,7 @@ showStarts :: [(String, StartCode)] -> String -> String
 showStarts [] = id
 showStarts scs = shows scs
 
-showRCtx :: RightContext RExp -> String -> String
+showRCtx :: Show r => RightContext r -> String -> String
 showRCtx NoRightContext = id
 showRCtx (RightContextRExp r) = ('\\':) . shows r
 showRCtx (RightContextCode code) = showString "\\ " . showCode code
@@ -105,6 +105,10 @@ data Accept a
 	  accLeftCtx    :: Maybe CharSet,
 	  accRightCtx   :: RightContext SNum
     }
+
+-- debug stuff
+instance Show (Accept a) where
+  showsPrec _ (Acc p _act _lctx _rctx) = shows p --TODO
 
 type StartCode = Int
 
