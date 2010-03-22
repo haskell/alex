@@ -177,11 +177,11 @@ alex_scan_tkn user orig_input len input s last_acc =
 	check_accs [] = last_acc
 	check_accs (AlexAcc a : _) = AlexLastAcc a input IBOX(len)
 	check_accs (AlexAccSkip : _)  = AlexLastSkip  input IBOX(len)
-	check_accs (AlexAccPred a pred' : rest)
-	   | pred' user orig_input IBOX(len) input
+	check_accs (AlexAccPred a predx : rest)
+	   | predx user orig_input IBOX(len) input
 	   = AlexLastAcc a input IBOX(len)
-	check_accs (AlexAccSkipPred pred' : rest)
-	   | pred' user orig_input IBOX(len) input
+	check_accs (AlexAccSkipPred predx : rest)
+	   | predx user orig_input IBOX(len) input
 	   = AlexLastSkip input IBOX(len)
 	check_accs (_ : rest) = check_accs rest
 
