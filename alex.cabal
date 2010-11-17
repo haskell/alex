@@ -62,7 +62,6 @@ flag small_base
   description: Choose the new smaller, split-up base package.
 
 executable alex
-  executable: alex
   hs-source-dirs: src
   main-is: Main.hs
 
