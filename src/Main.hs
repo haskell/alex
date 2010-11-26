@@ -184,14 +184,7 @@ injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl code
 
 optsToInject :: Target -> [CLIFlags] -> String
-optsToInject GhcTarget _ = "{-# LANGUAGE CPP,MagicHash #-}\n" ++
-                           -- disable bogus bang-pattern warnings in GHC
-                           -- 6.12 - 7.0.  This only works for 7.0 because
-                           -- 6.12 didn't support conditional OPTIONS pragmas.
-                           -- 7.2 will stop warning about these anyway.
-                           "#if __GLASGOW_HASKELL__ >= 700\n" ++
-                           "{-# OPTIONS_GHC -fno-warn-lazy-unlifted-bindings #-}\n" ++
-                           "#endif\n"
+optsToInject GhcTarget _ = "{-# LANGUAGE CPP,MagicHash #-}\n"
 optsToInject _         _ = "{-# LANGUAGE CPP #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String
