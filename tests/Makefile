@@ -9,7 +9,7 @@ else
 HS_PROG_EXT = .bin
 endif
 
-TESTS = simple.x tokens.x tokens_posn.x tokens_gscan.x
+TESTS = simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x
 
 TEST_ALEX_OPTS = --template=..
 
@@ -28,7 +28,7 @@ ALL_TEST_HS = $(shell echo $(TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.
 
 ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 
-HC_OPTS += -package array 
+HC_OPTS += -package array  -package bytestring
 #-fglasgow-exts
 
 %.run : %$(HS_PROG_EXT)
