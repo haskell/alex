@@ -142,7 +142,7 @@ alexMonadScan = do
 -- -----------------------------------------------------------------------------
 -- Useful token actions
 
-type AlexAction result = AlexInput -> Int -> result
+type AlexAction result = AlexInput -> Int -> Alex result
 
 -- just ignore this token and scan another one
 -- skip :: AlexAction result
@@ -153,10 +153,10 @@ skip input len = alexMonadScan
 begin code input len = do alexSetStartCode code; alexMonadScan
 
 -- perform an action for this token, and set the start code to a new value
--- andBegin :: AlexAction result -> Int -> AlexAction result
+andBegin :: AlexAction result -> Int -> AlexAction result
 (action `andBegin` code) input len = do alexSetStartCode code; action input len
 
--- token :: (String -> Int -> token) -> AlexAction token
+token :: (AlexInput -> Int -> token) -> AlexAction token
 token t input len = return (t input len)
 #endif /* ALEX_MONAD */
 
@@ -231,7 +231,7 @@ alexMonadScan = do
 -- -----------------------------------------------------------------------------
 -- Useful token actions
 
-type AlexAction result = AlexInput -> Int -> result
+type AlexAction result = AlexInput -> Int -> Alex result
 
 -- just ignore this token and scan another one
 -- skip :: AlexAction result
@@ -242,10 +242,10 @@ skip input len = alexMonadScan
 begin code input len = do alexSetStartCode code; alexMonadScan
 
 -- perform an action for this token, and set the start code to a new value
--- andBegin :: AlexAction result -> Int -> AlexAction result
+andBegin :: AlexAction result -> Int -> AlexAction result
 (action `andBegin` code) input len = do alexSetStartCode code; action input len
 
--- token :: (String -> Int -> token) -> AlexAction token
+token :: (AlexInput -> Int -> token) -> AlexAction token
 token t input len = return (t input len)
 #endif /* ALEX_MONAD_BYTESTRING */
 
