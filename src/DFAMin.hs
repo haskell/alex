@@ -113,7 +113,7 @@ groupEquivStates DFA { dfa_states = statemap }
     incoming :: Int -> IntSet -> IntSet
     incoming i a = IS.fromList (concat ss)
        where
-         map1 = IM.findWithDefault (error "go1") i bigmap
+         map1 = IM.findWithDefault IM.empty i bigmap
          ss = [ IM.findWithDefault [] s map1
               | s <- IS.toList a ]
 
