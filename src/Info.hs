@@ -12,8 +12,8 @@ module Info (infoDFA) where
 
 import AbsSyn
 import qualified Map
+import qualified Data.IntMap as IntMap
 import Util
-import CharSet
 
 import Data.Array
 
@@ -39,7 +39,7 @@ infoDFA _ func_nm dfa
 
     infoArr out
 	= char '\t' . interleave_shows (str "\n\t")
-			(map infoTransition (Map.toAscList out))
+                        (map infoTransition (IntMap.toAscList out))
 
     infoAccept (Acc p act lctx rctx)
         = str "\tAccept" . paren (shows p) . space
@@ -58,7 +58,7 @@ infoDFA _ func_nm dfa
     outputLCtx Nothing
 	  = id
     outputLCtx (Just set)
-	  = paren (outputArr (charSetToArray set)) . char '^'
+	  = paren (show set ++) . char '^'
 
     outputArr arr
 	  = str "Array.array " . shows (bounds arr) . space

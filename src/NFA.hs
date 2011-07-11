@@ -17,15 +17,14 @@
 module NFA where
 
 import AbsSyn
-import CharSet ( CharSet, charSetToArray )
+import CharSet
 import DFS ( t_close, out )
 import Map ( Map )
 import qualified Map hiding ( Map )
 import Util ( str, space )
 
-import Control.Monad ( zipWithM, zipWithM_ )
+import Control.Monad ( forM_, zipWithM, zipWithM_, when )
 import Data.Array ( Array, (!), array, listArray, assocs, bounds )
---import Debug.Trace
 
 -- Each state of a nondeterministic automaton contains a list of `Accept'
 -- values, a list of epsilon transitions (an epsilon transition represents a
@@ -42,14 +41,14 @@ type NFA = Array SNum NState
 data NState = NSt {
  nst_accs :: [Accept Code],
  nst_cl   :: [SNum],
- nst_outs :: [(CharSet,SNum)]
+ nst_outs :: [(ByteSet,SNum)]
  }
 
 -- Debug stuff
 instance Show NState where
   showsPrec _ (NSt accs cl outs) =
     str "NSt " . shows accs . space . shows cl . space .
-	shows [ (charSetToArray c, s) | (c,s) <- outs ]
+	shows [ (c, s) | (c,s) <- outs ]
 
 {- 			     From the Scan Module
 
@@ -75,9 +74,9 @@ instance Show NState where
 -- as that startcode, and epsilon transitions from this state to each
 -- of the sub-NFAs for each of the tokens acceptable in that startcode.
 
-scanner2nfa:: Scanner -> [StartCode] -> NFA
-scanner2nfa Scanner{scannerTokens = toks} startcodes
-   = runNFA $
+scanner2nfa:: Encoding -> Scanner -> [StartCode] -> NFA
+scanner2nfa enc Scanner{scannerTokens = toks} startcodes
+   = runNFA enc $
         do
 	  -- make a start state for each start code (these will be
 	  -- numbered from zero).
@@ -109,7 +108,11 @@ scanner2nfa Scanner{scannerTokens = toks} startcodes
 					accept r_e rctxt_accept
 					return (RightContextRExp r_b)
 
-		accept e (Acc prio code lctx rctx_e)
+		let lctx' = case lctx of
+                                  Nothing -> Nothing
+				  Just st -> Just st
+
+		accept e (Acc prio code lctx' rctx_e)
 		return b
 
 	  tok_transitions toks_with_states start_code start_state = do
@@ -157,17 +160,17 @@ rexp2nfa b e (Ques re) = do
 
 type MapNFA = Map SNum NState
 
-newtype NFAM a = N {unN :: SNum -> MapNFA -> (SNum, MapNFA, a)}
+newtype NFAM a = N {unN :: SNum -> MapNFA -> Encoding -> (SNum, MapNFA, a)}
 
 instance Monad NFAM where
-  return a = N $ \s n -> (s,n,a)
+  return a = N $ \s n e -> (s,n,a)
 
-  m >>= k  = N $ \s n -> case unN m s n of
-				 (s', n', a) -> unN (k a) s' n'
+  m >>= k  = N $ \s n e -> case unN m s n e of
+                                 (s', n', a) -> unN (k a) s' n' e
 
-runNFA :: NFAM () -> NFA
-runNFA m = case unN m 0 Map.empty of
-		(s, nfa_map, ()) -> -- trace (show (Map.toAscList nfa_map)) $ 
+runNFA :: Encoding -> NFAM () -> NFA
+runNFA e m = case unN m 0 Map.empty e of
+		(s, nfa_map, ()) -> -- trace ("runNfa.." ++ show (Map.toAscList nfa_map)) $ 
 				    e_close (array (0,s-1) (Map.toAscList nfa_map))
 
 e_close:: Array Int NState -> NFA
@@ -178,10 +181,51 @@ e_close ar = listArray bds
 	bds@(_,hi) = bounds ar
 
 newState :: NFAM SNum
-newState = N $ \s n -> (s+1,n,s)
+newState = N $ \s n e -> (s+1,n,s)
+
+getEncoding :: NFAM Encoding
+getEncoding = N $ \s n e -> (s,n,e)
+
+anyBytes :: SNum -> Int -> SNum -> NFAM ()
+anyBytes from 0 to = epsilonEdge from to
+anyBytes from n to = do
+        s <- newState
+        byteEdge from (byteSetRange 0 0xff) s
+        anyBytes s (n-1) to
+
+bytesEdge :: SNum -> [Byte] -> [Byte] -> SNum -> NFAM ()
+bytesEdge from [] [] to = epsilonEdge from to
+bytesEdge from [x] [y] to = byteEdge from (byteSetRange x y) to -- (OPTIMISATION)
+bytesEdge from (x:xs) (y:ys) to 
+    | x == y = do 
+        s <- newState
+        byteEdge from (byteSetSingleton x) s
+        bytesEdge s xs ys to
+    | x < y = do
+        do s <- newState
+           byteEdge from (byteSetSingleton x) s
+           bytesEdge s xs (fmap (const 0xff) ys) to
+
+        do t <- newState
+           byteEdge from (byteSetSingleton y) t
+           bytesEdge t (fmap (const 0x00) xs) ys to
+
+        when ((x+1) <= (y-1)) $ do 
+           u <- newState
+           byteEdge from (byteSetRange (x+1) (y-1)) u
+           anyBytes u (length xs) to
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
-charEdge from charset to = N $ \s n -> (s, addEdge n, ())
+charEdge from charset to = do
+  -- trace ("charEdge: " ++ (show $ charset) ++ " => " ++ show (byteRanges charset)) $ 
+  e <- getEncoding
+  forM_ (byteRanges e charset) $ \(xs,ys) -> do
+    bytesEdge from xs ys to
+    
+
+
+byteEdge :: SNum -> ByteSet -> SNum -> NFAM ()
+byteEdge from charset to = N $ \s n e -> (s, addEdge n, ())
  where
    addEdge n =
      case Map.lookup from n of
@@ -193,7 +237,7 @@ charEdge from charset to = N $ \s n -> (s, addEdge n, ())
 epsilonEdge :: SNum -> SNum -> NFAM ()
 epsilonEdge from to 
  | from == to = return ()
- | otherwise  = N $ \s n -> (s, addEdge n, ())
+ | otherwise  = N $ \s n e -> (s, addEdge n, ())
  where
    addEdge n =
      case Map.lookup from n of
@@ -201,7 +245,7 @@ epsilonEdge from to
        Just (NSt acc eps trans) -> Map.insert from (NSt acc (to:eps) trans) n
 
 accept :: SNum -> Accept Code -> NFAM ()
-accept state new_acc = N $ \s n -> (s, addAccept n, ())
+accept state new_acc = N $ \s n e -> (s, addAccept n, ())
  where
    addAccept n = 
      case Map.lookup state n of

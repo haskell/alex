@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Map (
    Map,
    member, lookup, findWithDefault,

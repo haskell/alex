@@ -17,6 +17,7 @@ module DFA(scanner2dfa) where
 
 import AbsSyn
 import qualified Map
+import qualified Data.IntMap as IntMap
 import NFA
 import Sort ( msort, nub' )
 import CharSet
@@ -88,8 +89,8 @@ type StartCode = Int
 -- state of the partial DFA, until all possible state sets have been considered
 -- The final DFA is then constructed with a `mk_dfa'.
 
-scanner2dfa:: Scanner -> [StartCode] -> DFA SNum Code
-scanner2dfa scanner scs = nfa2dfa scs (scanner2nfa scanner scs)
+scanner2dfa:: Encoding -> Scanner -> [StartCode] -> DFA SNum Code
+scanner2dfa enc scanner scs = nfa2dfa scs (scanner2nfa enc scanner scs)
 
 nfa2dfa:: [StartCode] -> NFA -> DFA SNum Code
 nfa2dfa scs nfa = mk_int_dfa nfa (nfa2pdfa nfa pdfa (dfa_start_states pdfa))
@@ -110,29 +111,26 @@ nfa2pdfa nfa pdfa (ss:umkd)
   |  ss `in_pdfa` pdfa =  nfa2pdfa nfa pdfa  umkd
   |  otherwise         =  nfa2pdfa nfa pdfa' umkd'
   where
-	pdfa' = add_pdfa ss (State accs (Map.fromList ss_outs)) pdfa
+        pdfa' = add_pdfa ss (State accs (IntMap.fromList ss_outs)) pdfa
 
 	umkd' = rctx_sss ++ map snd ss_outs ++ umkd
 
         -- for each character, the set of states that character would take
         -- us to from the current set of states in the NFA.
-        ss_outs :: [(Char, StateSet)]
-	ss_outs =  [ (ch, mk_ss nfa ss')
-		   | ch  <- dfa_alphabet,
-		     let ss'  = [ s' | (p,s') <- outs, p ch ],
-		     not (null ss')
-		   ]
+        ss_outs :: [(Int, StateSet)]
+        ss_outs = [ (fromIntegral ch, mk_ss nfa ss')
+		  | ch  <- byteSetElems $ setUnions [p | (p,_) <- outs],
+		    let ss'  = [ s' | (p,s') <- outs, byteSetElem p ch ],
+		    not (null ss')
+		  ]
 
 	rctx_sss = [ mk_ss nfa [s]
 		   | Acc _ _ _ (RightContextRExp s) <- accs ]
 
-        outs :: [(CharSet,SNum)]
+        outs :: [(ByteSet,SNum)]
 	outs =  [ out | s <- ss, out <- nst_outs (nfa!s) ]
 
 	accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
-
-dfa_alphabet:: [Char]
-dfa_alphabet = ['\0'..'\255']
 
 -- `sort_accs' sorts a list of accept values into decending order of priority,
 -- eliminating any elements that follow an unconditional accept value.
@@ -198,7 +196,7 @@ mk_int_dfa nfa (DFA start_states mp)
 	cnv :: State StateSet a -> State SNum a
 	cnv (State accs as) = State accs' as'
 		where
-		as'   = Map.mapWithKey (\_ch s -> lookup' s) as
+                as'   = IntMap.mapWithKey (\_ch s -> lookup' s) as
 
 		accs' = map cnv_acc accs
 		cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'
