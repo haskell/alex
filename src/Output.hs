@@ -14,6 +14,7 @@ import AbsSyn
 import CharSet
 import Util
 import qualified Map
+import qualified Data.IntMap as IntMap
 
 import Control.Monad.ST ( ST, runST )
 import Data.Array ( Array )
@@ -22,7 +23,6 @@ import Data.Array.ST ( STUArray, newArray, readArray, writeArray, freeze )
 import Data.Array.Unboxed ( UArray, bounds, assocs, elems, (!), array, listArray )
 import Data.Bits
 import Data.Char ( ord, chr )
--- import Debug.Trace
 import Data.List ( maximumBy, sortBy, groupBy )
 
 -- -----------------------------------------------------------------------------
@@ -49,7 +49,8 @@ outputDFA target _ _ dfa
     outputCheck   = do_array hexChars16 check_nm table_size check
     outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
-    do_array hex_chars nm upper_bound ints = case target of
+    do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $ 
+     case target of
       GhcTarget ->
 	  str nm . str " :: AlexAddr\n"
 	. str nm . str " = AlexA# \""
@@ -94,12 +95,7 @@ outputDFA target _ _ dfa
 	. str " `alexAndPred` "
 	. outputRCtx rctx
 
-    outputLCtx set 
-	= case charSetElems set of
-	    []     -> error "outputLCtx"
-	    [c]    -> str "alexPrevCharIs " . shows c
-	    _other -> str "alexPrevCharIsOneOf " 
-		    . paren (outputArr (charSetToArray set))
+    outputLCtx set = str "alexPrevCharMatches" . str (charSetQuote set)
 
     outputRCtx NoRightContext = id
     outputRCtx (RightContextRExp sn)
@@ -149,8 +145,9 @@ mkTables :: DFA SNum Code
 	      [Int],		-- default
 	      [[Accept Code]]	-- accept
 	    )
-mkTables dfa
- = ( elems base_offs, 
+mkTables dfa = -- trace (show (defaults)) $
+               -- trace (show (fmap (length . snd)  dfa_no_defaults)) $
+  ( elems base_offs, 
      take max_off (elems table),
      take max_off (elems check),
      elems defaults,
@@ -171,8 +168,8 @@ mkTables dfa
 	   [ expand (dfa_arr!state) | state <- [0..top_state] ]
 	 
 	expand (State _ out) = 
-	   [(i, lookup' out i) | i <- ['\0'..'\255']]
-	   where lookup' out' i = case Map.lookup i out' of
+	   [(i, lookup' out i) | i <- [0..0xff]]
+           where lookup' out' i = case IntMap.lookup i out' of
 					Nothing -> -1
 					Just s  -> s
 
@@ -181,7 +178,7 @@ mkTables dfa
 
 	-- find the most common destination state in a given state, and
 	-- make it the default.
-	best_default :: [(Char,SNum)] -> SNum
+        best_default :: [(Int,SNum)] -> SNum
 	best_default prod_list
 	   | null sorted = -1
 	   | otherwise   = snd (head (maximumBy lengths eq))
@@ -191,13 +188,13 @@ mkTables dfa
 		 lengths  a b = length a `compare` length b
 
 	-- remove all the default productions from the DFA
-	dfa_no_defaults =
+        dfa_no_defaults =
 	  [ (s, prods_without_defaults s out)
 	  | (s, out) <- zip [0..] expand_states
 	  ]
 
 	prods_without_defaults s out 
-	  = [ (ord c, dest) | (c,dest) <- out, dest /= defaults!s ]
+	  = [ (fromIntegral c, dest) | (c,dest) <- out, dest /= defaults!s ]
 
 	(base_offs, table, check, max_off)
 	   = runST (genTables n_states 255 dfa_no_defaults)

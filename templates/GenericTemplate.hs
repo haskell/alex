@@ -74,14 +74,14 @@ alexIndexInt32OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
   narrow32Int# i
   where
-   i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
+   !i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
 		     (b2 `uncheckedShiftL#` 16#) `or#`
 		     (b1 `uncheckedShiftL#` 8#) `or#` b0)
-   b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
-   b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
-   b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
-   b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
-   off' = off *# 4#
+   !b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
+   !b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
+   !b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
+   !b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
+   !off' = off *# 4#
 ALEX_ELSE
   indexInt32OffAddr# arr off
 ALEX_ENDIF
@@ -116,7 +116,7 @@ alexScan input IBOX(sc)
 alexScanUser user input IBOX(sc)
   = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
 	(AlexNone, input') ->
-		case alexGetChar input of
+		case alexGetByte input of
 			Nothing -> 
 #ifdef ALEX_DEBUG
 				   trace ("End of input.") $
@@ -147,10 +147,10 @@ alexScanUser user input IBOX(sc)
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
   let 
-	new_acc = check_accs (alex_accept `quickIndex` IBOX(s))
+	new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
   in
   new_acc `seq`
-  case alexGetChar input of
+  case alexGetByte input of
      Nothing -> (new_acc, input)
      Just (c, new_input) -> 
 #ifdef ALEX_DEBUG
@@ -158,7 +158,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 #endif
 	let
 		FAST_INT_BINDING(base) = alexIndexInt32OffAddr alex_base s
-		FAST_INT_BINDING(IBOX(ord_c)) = ord c
+		FAST_INT_BINDING(IBOX(ord_c)) = fromIntegral c
 		FAST_INT_BINDING(offset) = PLUS(base,ord_c)
 		FAST_INT_BINDING(check)  = alexIndexInt16OffAddr alex_check offset
 		
@@ -170,7 +170,8 @@ alex_scan_tkn user orig_input len input s last_acc =
 	    ILIT(-1) -> (new_acc, input)
 		-- on an error, we want to keep the input *before* the
 		-- character that failed, not after.
-    	    _ -> alex_scan_tkn user orig_input PLUS(len,ILIT(1)) 
+    	    _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
+                                                -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
 			new_input new_s new_acc
 
   where
@@ -190,6 +191,11 @@ data AlexLastAcc a
   | AlexLastAcc a !AlexInput !Int
   | AlexLastSkip  !AlexInput !Int
 
+instance Functor AlexLastAcc where
+    fmap f AlexNone = AlexNone
+    fmap f (AlexLastAcc x y z) = AlexLastAcc (f x) y z
+    fmap f (AlexLastSkip x y) = AlexLastSkip x y
+
 data AlexAcc a user
   = AlexAcc a
   | AlexAccSkip
@@ -206,6 +212,8 @@ alexAndPred p1 p2 user in1 len in2
 
 --alexPrevCharIsPred :: Char -> AlexAccPred _ 
 alexPrevCharIs c _ input _ _ = c == alexInputPrevChar input
+
+alexPrevCharMatches f _ input _ _ = f (alexInputPrevChar input)
 
 --alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _ 
 alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input

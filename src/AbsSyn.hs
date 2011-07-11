@@ -23,6 +23,7 @@ module AbsSyn (
 import CharSet ( CharSet )
 import Map ( Map )
 import qualified Map hiding ( Map )
+import Data.IntMap (IntMap)
 import Sort ( nub' )
 import Util ( str, nl )
 
@@ -66,6 +67,7 @@ data RightContext r
   = NoRightContext 
   | RightContextRExp r
   | RightContextCode Code
+  deriving (Eq,Ord)
 
 instance Show RECtx where
   showsPrec _ (RECtx scs _ r rctx code) = 
@@ -95,16 +97,19 @@ data DFA s a = DFA
     dfa_states       :: Map s (State s a)
   }
 
-data State s a = State [Accept a] (Map Char s)
+data State s a = State { state_acc :: [Accept a],
+                         state_out :: IntMap s -- 0..255 only
+                       }
 
 type SNum = Int
 
 data Accept a
   = Acc { accPrio       :: Int,
 	  accAction     :: Maybe a,
-	  accLeftCtx    :: Maybe CharSet,
+	  accLeftCtx    :: Maybe CharSet, -- cannot be converted to byteset at this point.
 	  accRightCtx   :: RightContext SNum
     }
+    deriving (Eq,Ord)
 
 -- debug stuff
 instance Show (Accept a) where

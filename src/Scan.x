@@ -186,7 +186,7 @@ code (p,_,inp) len = do
 
 
 lexError s = do
-  (p,_,input) <- getInput
+  (p,_,_,input) <- getInput
   failP (s ++ (if (not (null input))
 		  then " at " ++ show (head input)
 		  else " at end of file"))
@@ -196,7 +196,7 @@ lexer cont = lexToken >>= cont
 
 lexToken :: P Token
 lexToken = do
-  inp@(p,_,_) <- getInput
+  inp@(p,c,_,s) <- getInput
   sc <- getStartCode
   case alexScan inp sc of
     AlexEOF -> return (T p EOFT)
@@ -206,9 +206,9 @@ lexToken = do
 	lexToken
     AlexToken inp1 len t -> do
 	setInput inp1
-	t inp len
+	t (p,c,s) len
 
-type Action = AlexInput -> Int -> P Token
+type Action = (AlexPosn,Char,String) -> Int -> P Token
 
 skip :: Action
 skip _ _ = lexToken

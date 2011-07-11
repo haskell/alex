@@ -4,6 +4,7 @@
 -- This code is in the PUBLIC DOMAIN; you may copy it freely and use
 -- it for any purpose whatsoever.
 
+import Data.Word (Word8)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
 import qualified Data.ByteString.Lazy.Char8 as ByteString
@@ -14,7 +15,34 @@ import qualified Data.ByteString.Char8    as ByteString
 import qualified Data.ByteString.Internal as ByteString
 import qualified Data.ByteString.Unsafe   as ByteString
 
+#else
+
+import qualified Data.Bits
+
+-- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
+utf8Encode :: Char -> [Word8]
+utf8Encode = map fromIntegral . go . ord
+ where
+  go oc
+   | oc <= 0x7f       = [oc]
+
+   | oc <= 0x7ff      = [ 0xc0 + (oc `Data.Bits.shiftR` 6)
+                        , 0x80 + oc Data.Bits..&. 0x3f
+                        ]
+
+   | oc <= 0xffff     = [ 0xe0 + (oc `Data.Bits.shiftR` 12)
+                        , 0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
+                        , 0x80 + oc Data.Bits..&. 0x3f
+                        ]
+   | otherwise        = [ 0xf0 + (oc `Data.Bits.shiftR` 18)
+                        , 0x80 + ((oc `Data.Bits.shiftR` 12) Data.Bits..&. 0x3f)
+                        , 0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
+                        , 0x80 + oc Data.Bits..&. 0x3f
+                        ]
+
 #endif
+
+type Byte = Word8
 
 -- -----------------------------------------------------------------------------
 -- The input type
@@ -22,15 +50,20 @@ import qualified Data.ByteString.Unsafe   as ByteString
 #if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_GSCAN)
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
+                  [Byte],       -- pending bytes on current char
                   String)       -- current input string
 
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (p,c,s) = c
+ignorePendingBytes (p,c,ps,s) = (p,c,s)
 
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (p,c,[]) = Nothing
-alexGetChar (p,_,(c:s))  = let p' = alexMove p c in p' `seq`
-                                Just (c, (p', c, s))
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (p,c,bs,s) = c
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
+alexGetByte (p,c,[],[]) = Nothing
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
+                                  (b:bs) = utf8Encode c
+                              in p' `seq`  Just (b, (p', c, bs, s))
 #endif
 
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
@@ -80,6 +113,7 @@ data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
         alex_inp :: String,     -- the current input
         alex_chr :: !Char,      -- the character before the input
+        alex_bytes :: [Byte],
         alex_scd :: !Int        -- the current startcode
 #ifdef ALEX_MONAD_USER_STATE
       , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
@@ -93,6 +127,7 @@ runAlex input (Alex f)
    = case f (AlexState {alex_pos = alexStartPos,
                         alex_inp = input,       
                         alex_chr = '\n',
+                        alex_bytes = [],
 #ifdef ALEX_MONAD_USER_STATE
                         alex_ust = alexInitUserState,
 #endif
@@ -109,12 +144,12 @@ instance Monad Alex where
 
 alexGetInput :: Alex AlexInput
 alexGetInput
- = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_inp=inp} -> 
-        Right (s, (pos,c,inp))
+ = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp} -> 
+        Right (s, (pos,c,bs,inp))
 
 alexSetInput :: AlexInput -> Alex ()
-alexSetInput (pos,c,inp)
- = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_inp=inp} of
+alexSetInput (pos,c,bs,inp)
+ = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp} of
                   s@(AlexState{}) -> Right (s, ())
 
 alexError :: String -> Alex a
@@ -137,7 +172,7 @@ alexMonadScan = do
         alexMonadScan
     AlexToken inp' len action -> do
         alexSetInput inp'
-        action inp len
+        action (ignorePendingBytes inp) len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -226,7 +261,7 @@ alexMonadScan = do
         alexMonadScan
     AlexToken inp' len action -> do
         alexSetInput inp'
-        action inp len
+        action (ignorePendingBytes inp) len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -254,21 +289,25 @@ token t input len = return (t input len)
 -- Basic wrapper
 
 #ifdef ALEX_BASIC
-type AlexInput = (Char,String)
+type AlexInput = (Char,[Byte],String)
 
-alexGetChar (_, [])   = Nothing
-alexGetChar (_, c:cs) = Just (c, (c,cs))
 
 alexInputPrevChar (c,_) = c
 
 -- alexScanTokens :: String -> [token]
-alexScanTokens str = go ('\n',str)
-  where go inp@(_,str) =
+alexScanTokens str = go ('\n',[],str)
+  where go inp@(_,_bs,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
                 AlexToken inp' len act -> act (take len str) : go inp'
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
+alexGetByte (c,[],[]) = Nothing
+alexGetByte (_,[],(c:s)) = let (b:bs) = utf8Encode c
+                           in Just (b, (c, bs, s))
 #endif
 
 
@@ -328,8 +367,8 @@ alexScanTokens str = go (AlexInput '\n' str)
 
 #ifdef ALEX_POSN
 --alexScanTokens :: String -> [token]
-alexScanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(pos,_,str) =
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,bs,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError ((AlexPn _ line column),_,_) -> error $ "lexical error at " ++ (show line) ++ " line, " ++ (show column) ++ " column"
@@ -359,14 +398,14 @@ alexScanTokens str = go (alexStartPos,'\n',str)
 -- For compatibility with previous versions of Alex, and because we can.
 
 #ifdef ALEX_GSCAN
-alexGScan stop state inp = alex_gscan stop alexStartPos '\n' inp (0,state)
+alexGScan stop state inp = alex_gscan stop alexStartPos '\n' [] inp (0,state)
 
-alex_gscan stop p c inp (sc,state) =
-  case alexScan (p,c,inp) sc of
+alex_gscan stop p c bs inp (sc,state) =
+  case alexScan (p,c,bs,inp) sc of
         AlexEOF     -> stop p c inp (sc,state)
         AlexError _ -> stop p c inp (sc,state)
-        AlexSkip (p',c',inp') len -> alex_gscan stop p' c' inp' (sc,state)
-        AlexToken (p',c',inp') len k ->
-             k p c inp len (\scs -> alex_gscan stop p' c' inp' scs)
+        AlexSkip (p',c',bs',inp') len -> alex_gscan stop p' c' bs' inp' (sc,state)
+        AlexToken (p',c',bs',inp') len k ->
+             k p c inp len (\scs -> alex_gscan stop p' c' bs' inp' scs)
                 (sc,state)
 #endif

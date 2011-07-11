@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- -----------------------------------------------------------------------------
 -- 
 -- Main.hs, part of Alex
@@ -11,6 +12,8 @@ module Main (main) where
 import AbsSyn
 import CharSet
 import DFA
+import DFAMin
+import NFA
 import Info
 import Map ( Map )
 import qualified Map hiding ( Map )
@@ -37,6 +40,7 @@ import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
 import System.Exit ( ExitCode(..), exitWith )
 import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
+import System.IO ( hSetBuffering, BufferMode(..) )
 #if __GLASGOW_HASKELL__ >= 612
 import System.IO ( hGetContents, hSetEncoding, utf8 )
 #endif
@@ -132,6 +136,10 @@ alex cli file basename script = do
 	| OptGhcTarget `elem` cli = GhcTarget
 	| otherwise               = HaskellTarget
 
+   let encoding
+        | OptLatin1 `elem` cli = Latin1
+        | otherwise            = UTF8
+
    template_dir  <- templateDir getDataDir cli
    let template_name = templateFile template_dir target cli
 		
@@ -158,11 +166,22 @@ alex cli file basename script = do
 	do str <- alexReadFile (fromJust wrapper_name)
 	   hPutStr out_h str
 
-   let dfa = scanner2dfa scanner_final scs
+   let dfa = scanner2dfa encoding scanner_final scs
+       min_dfa = minimizeDFA dfa
        nm  = scannerName scanner_final
 
+   
+   put_info "\nStart codes\n"
+   put_info (show $ scs)
+   put_info "\nScanner\n"
+   put_info (show $ scanner_final)
+   put_info "\nNFA\n"
+   put_info (show $ scanner2nfa encoding scanner_final scs)
+   put_info "\nDFA"
    put_info (infoDFA 1 nm dfa "")
-   hPutStr out_h (outputDFA target 1 nm dfa "")
+   put_info "\nMinimized DFA"
+   put_info (infoDFA 1 nm min_dfa "")
+   hPutStr out_h (outputDFA target 1 nm min_dfa "")
 
    injectCode maybe_footer file out_h
 
@@ -268,8 +287,9 @@ infoStart x_file info_file = do
 
 infoHeader :: Handle -> FilePath -> IO ()
 infoHeader h file = do
+--  hSetBuffering h NoBuffering
   hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++ 
-		", from " ++ file)
+                ", from " ++ file)
   hPutStrLn h hline
   hPutStr h "\n"
 
@@ -278,7 +298,7 @@ initialParserEnv = (initSetEnv, initREEnv)
 
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
-		           ("printable", charSet [chr 32 .. chr 126]),
+		           ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
 		           (".", charSetComplement emptyCharSet 
 			    `charSetMinus` charSetSingleton '\n')]
 
@@ -294,6 +314,7 @@ data CLIFlags
   | OptOutputFile FilePath
   | OptInfoFile (Maybe FilePath)
   | OptTemplateDir FilePath
+  | OptLatin1
   | DumpHelp
   | DumpVersion
   deriving Eq
@@ -308,6 +329,8 @@ argInfo  = [
 	"look in DIR for template files",
    Option ['g'] ["ghc"]    (NoArg OptGhcTarget)
 	"use GHC extensions",
+   Option ['l'] ["latin1"]    (NoArg OptLatin1)
+        "generated lexer will use the Latin-1 encoding instead of UTF-8",
    Option ['d'] ["debug"] (NoArg OptDebugParser)
 	"produce a debugging scanner",
    Option ['?'] ["help"] (NoArg DumpHelp)

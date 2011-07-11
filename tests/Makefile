@@ -9,7 +9,7 @@ else
 HS_PROG_EXT = .bin
 endif
 
-TESTS = simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x
+TESTS = unicode.x simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x
 
 TEST_ALEX_OPTS = --template=..
 
@@ -28,13 +28,16 @@ ALL_TEST_HS = $(shell echo $(TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.
 
 ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 
-HC_OPTS += -package array  -package bytestring
-#-fglasgow-exts
-
 %.run : %$(HS_PROG_EXT)
 	./$<
 
 %$(HS_PROG_EXT) : %.o
-	$(HC) $(HC_OPTS) $($*_LD_OPTS) $< -o $@
+	$(HC) $(HC_OPTS) -package array $($*_LD_OPTS) $< -o $@
 
 all :: $(ALL_TESTS)
+
+
+interact:
+	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception 
+# -args='--template=.. simple.x -o simple.n.hs'
+# :set args --template=.. simple.x -o simple.n.hs

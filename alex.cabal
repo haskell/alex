@@ -10,15 +10,9 @@ stability: stable
 homepage: http://www.haskell.org/alex/
 synopsis: Alex is a tool for generating lexical analysers in Haskell
 category: Development
-cabal-version: >= 1.2
-
--- Later, this isn't compatible with Cabal 1.2:
--- source-repository head
---   type:     darcs
---   location: http://darcs.haskell.org/alex/
-
-
+cabal-version: >= 1.6
 build-type: Custom
+
 extra-source-files:
 	ANNOUNCE
 	README
@@ -58,6 +52,10 @@ extra-source-files:
 	tests/tokens_gscan.x
 	tests/tokens_posn.x
 
+source-repository head
+    type:     git
+    location: http://darcs.haskell.org/alex.git
+
 flag small_base
   description: Choose the new smaller, split-up base package.
 
@@ -71,13 +69,16 @@ executable alex
     build-depends: base >= 1.0
 
   build-depends: base < 5
+  -- build-depends: Ranged-sets
+  build-depends: QuickCheck >=2
 
   extensions: CPP
-  ghc-options: -Wall
+  ghc-options: -Wall -rtsopts
   other-modules:
         AbsSyn
         CharSet
         DFA
+        DFAMin
         DFS
         Info
         Main
@@ -90,3 +91,4 @@ executable alex
         Set
         Sort
         Util
+        UTF8
