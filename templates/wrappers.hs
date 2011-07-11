@@ -7,11 +7,13 @@
 import Data.Word (Word8)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
-import qualified Data.ByteString.Lazy.Char8 as ByteString
+import qualified Data.Char
+import qualified Data.ByteString.Lazy as ByteString
 
 #elif defined(ALEX_STRICT_BYTESTRING)
 
-import qualified Data.ByteString.Char8    as ByteString
+import qualified Data.Char
+import qualified Data.ByteString          as ByteString
 import qualified Data.ByteString.Internal as ByteString
 import qualified Data.ByteString.Unsafe   as ByteString
 
@@ -74,12 +76,13 @@ type AlexInput = (AlexPosn,     -- current position,
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (p,c,s) = c
 
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (p,_,cs) | ByteString.null cs = Nothing
-                     | otherwise = let c   = ByteString.head cs
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (p,_,cs) | ByteString.null cs = Nothing
+                     | otherwise = let b   = ByteString.head cs
                                        cs' = ByteString.tail cs
+                                       c   = Data.Char.chr (fromIntegral b)
                                        p'  = alexMove p c
-                                    in p' `seq` cs' `seq` Just (c, (p', c, cs'))
+                                    in p' `seq` cs' `seq` Just (b, (p', c, cs'))
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -367,8 +370,8 @@ alexScanTokens str = go (AlexInput '\n' str)
 
 #ifdef ALEX_POSN
 --alexScanTokens :: String -> [token]
-alexScanTokens str = go (alexStartPos,'\n',[],str)
-  where go inp@(pos,_,bs,str) =
+alexScanTokens str = go (alexStartPos,'\n',str)
+  where go inp@(pos,_,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError ((AlexPn _ line column),_,_) -> error $ "lexical error at " ++ (show line) ++ " line, " ++ (show column) ++ " column"
