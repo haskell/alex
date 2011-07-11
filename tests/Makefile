@@ -32,7 +32,7 @@ ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 	./$<
 
 %$(HS_PROG_EXT) : %.o
-	$(HC) $(HC_OPTS) -package array $($*_LD_OPTS) $< -o $@
+	$(HC) $(HC_OPTS) -package array -package bytestring $($*_LD_OPTS) $< -o $@
 
 all :: $(ALL_TESTS)
 
