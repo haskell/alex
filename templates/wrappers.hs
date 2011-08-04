@@ -308,9 +308,9 @@ alexScanTokens str = go ('\n',[],str)
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
-alexGetByte (c,[],[]) = Nothing
-alexGetByte (_,[],(c:s)) = let (b:bs) = utf8Encode c
-                           in Just (b, (c, bs, s))
+alexGetByte (c,[],[])    = Nothing
+alexGetByte (_,[],(c:s)) = case utf8Encode c of
+                             (b:bs) -> Just (b, (c, bs, s))
 #endif
 
 
