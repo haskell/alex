@@ -93,3 +93,7 @@ executable alex
         Sort
         Util
         UTF8
+        Data.Ranged
+        Data.Ranged.Boundaries
+        Data.Ranged.RangedSet
+        Data.Ranged.Ranges
