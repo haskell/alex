@@ -370,11 +370,11 @@ alexScanTokens str = go (AlexInput '\n' str)
 
 #ifdef ALEX_POSN
 --alexScanTokens :: String -> [token]
-alexScanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(pos,_,str) =
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,_,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
-                AlexError ((AlexPn _ line column),_,_) -> error $ "lexical error at " ++ (show line) ++ " line, " ++ (show column) ++ " column"
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at " ++ (show line) ++ " line, " ++ (show column) ++ " column"
                 AlexSkip  inp' len     -> go inp'
                 AlexToken inp' len act -> act pos (take len str) : go inp'
 #endif
