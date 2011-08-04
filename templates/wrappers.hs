@@ -320,7 +320,7 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 #ifdef ALEX_BASIC_BYTESTRING
 type AlexInput = (Char,ByteString.ByteString)
 
-alexGetChar (_, cs) | ByteString.null cs = Nothing
+alexGetByte (_, cs) | ByteString.null cs = Nothing
                     | otherwise          = Just (ByteString.head cs, (ByteString.head cs, ByteString.tail cs))
 
 alexInputPrevChar (c,_) = c
@@ -342,7 +342,7 @@ alexScanTokens str = go ('\n',str)
 data AlexInput = AlexInput { alexChar :: {-# UNPACK #-}!Char
                            , alexStr  :: {-# UNPACK #-}!ByteString.ByteString }
 
-alexGetChar (AlexInput _ cs)
+alexGetByte (AlexInput _ cs)
     | ByteString.null cs = Nothing
     | otherwise          = Just $!  (ByteString.head cs, AlexInput c cs')
     where
