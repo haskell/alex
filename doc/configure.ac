@@ -1,5 +1,5 @@
 
-AC_INIT([Haddock docs], [1.0], [simonmar@microsoft.com], [])
+AC_INIT([Alex docs], [1.0], [simonmar@microsoft.com], [])
 
 AC_CONFIG_SRCDIR([Makefile])
 
