@@ -45,6 +45,60 @@
     repository; instructions on accessing that repository are <ulink
     url="http://www.haskell.org/ghc/docs/latest/html/building/sec-cvs.html">here</ulink>.</para>
 
+    <section id="relnotes-30">
+      <title>Release Notes for version 3.0</title>
+
+      <itemizedlist>
+        <listitem>
+          <para>Unicode support (contributed mostly by Jean-Philippe
+            Bernardy, with help from Alan Zimmerman).</para>
+          <itemizedlist>
+            <listitem>
+              <para>
+                An Alex lexer now takes a UTF-8 encoded byte sequence
+                as input (see <xref linkend="encoding" />.  If you are
+                using the "basic" wrapper or one of the other wrappers
+                that takes a Haskell <literal>String</literal> as
+                input, the string is automatically encoded into UTF-8
+                by Alex.  If your input is
+                a <literal>ByteString</literal>, you are responsible
+                for ensuring that the input is UTF-8 encoded.  The old
+                8-bit behaviour is still available via
+                the <option>--latin1</option> option.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                Alex source files are asumed to be in UTF-8, like
+                Haskell source files.  The lexer specification can use
+                Unicode characters and ranges.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                <literal>alexGetChar</literal> is renamed to
+                <literal>alexGetByte</literal> in the generated code.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                There is a new option, <option>--latin1</option>, that
+                restores the old behaviour.
+              </para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+
+        <listitem>
+          <para>
+            Alex now does DFA minimization, which helps to reduce the
+            size of the generated tables, especially for lexers that
+            use Unicode.
+          </para>
+        </listitem>
+      </itemizedlist>
+    </section>
+
     <section id="relnotes-22">
       <title>Release Notes for version 2.2</title>
 
@@ -245,10 +299,8 @@
       <email>simonmar@microsoft.com</email>.  There are no specific
       mailing lists for the discussion of Alex-related matters, but
       such topics should be fine on the <ulink
-      url="http://www.haskell.org/mailman/listinfo/haskell">Haskell</ulink>
-      and <ulink
       url="http://www.haskell.org/mailman/listinfo/haskell-cafe">Haskell
-      Cafe</ulink> mailing lists.</para>
+      Cafe</ulink> mailing list.</para>
     </section>
 
     <section id="license">
@@ -438,10 +490,18 @@ main = do
     <title>Alex Files</title>
 
     <para>In this section we describe the layout of an Alex lexical
-    specification.  We begin with the lexical syntax; elements of the
-    lexical syntax are referred to throughout the rest of this
-    documentation, so you may need to refer back to the following
-    section several times.</para>
+      specification.</para>
+
+    <para>
+
+    </para>
+
+    <para>
+      We begin with the lexical syntax; elements of the lexical syntax
+      are referred to throughout the rest of this documentation, so
+      you may need to refer back to the following section several
+      times.
+    </para>
 
     <section id="lexical">
       <title>Lexical syntax</title>
@@ -476,8 +536,13 @@ $graphic    = $printable # $white
       single quotes.</para>
 
       <para>An Alex lexical specification is normally placed in a file
-      with a <literal>.x</literal> extension.  The overall layout of
-      an Alex file is:</para>
+        with a <literal>.x</literal> extension.  Alex source files are
+        encoded in UTF-8, just like Haskell source
+        files<footnote><para>Strictly speaking, GHC source
+        files.</para></footnote>.
+      </para>
+
+      <para>The overall layout of an Alex file is:</para>
 
 <programlisting>alex := [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]</programlisting>
 
@@ -856,7 +921,7 @@ set0    := @char [ '-' @char ]
 	<varlistentry>
 	  <term><literal><replaceable>char</replaceable></literal></term>
 	  <listitem>
-	    <para>The simplest character set is a single character.
+            <para>The simplest character set is a single Unicode character.
             Note that special characters such as <literal>[</literal>
             and <literal>.</literal> must be escaped by prefixing them
             with <literal>\</literal> (see the lexical syntax, <xref
@@ -897,7 +962,7 @@ set0    := @char [ '-' @char ]
             (<literal>\n</literal>).</para>
 
 	    <para>Equivalent to the set
-	    <literal>[\x00-\xff]&nbsp;#&nbsp;\n</literal>.</para>
+            <literal>[\x00-\x10ffff]&nbsp;#&nbsp;\n</literal>.</para>
 	  </listitem>
 	</varlistentry>
 
@@ -954,10 +1019,12 @@ set0    := @char [ '-' @char ]
 	<varlistentry>
 	  <term><literal>$printable</literal></term>
 	  <listitem>
-	    <para>Matches all printable characters (characters 32 to
-	    126 in ASCII).  Equivalent to the set
-	    <literal>[\32-\126]</literal>.</para>
-	  </listitem>
+            <para>Matches all "printable characters".  Currently this
+            corresponds to Unicode code points 32 to 0x10ffff,
+            although strictly speaking there are many non-printable
+            code points in this region.  In the future Alex may use a
+              more precise definition of <literal>$printable</literal>.</para>
+          </listitem>
 	</varlistentry>
       </variablelist>
       
@@ -1001,6 +1068,32 @@ $del      = \127                  -- ASCII DEL</programlisting>
     abstraction over the basic interface; Alex comes with several
     wrappers.</para>
 
+    <section id="encoding">
+      <title>Unicode and UTF-8</title>
+
+      <para>Lexer specifications are written in terms of Unicode
+        characters, but Alex works internally on a UTF-8 encoded byte
+        sequence.</para>
+
+      <para>
+        Depending on how you use Alex, the fact that Alex uses UTF-8
+        encoding internally may or may not affect you.  If you use one
+        of the wrappers (below) that takes input from a
+        Haskell <literal>String</literal>, then the UTF-8 encoding is
+        handled automatically.  However, if you take input from
+        a <literal>ByteString</literal>, then it is your
+        responsibility to ensure that the input is properly UTF-8
+        encoded.
+      </para>
+
+      <para>
+        None of this applies if you used the <option>--latin1</option>
+        option to Alex.  In that case, the input is just a sequence of
+        8-bit bytes, interpreted as characters in the Latin-1
+        character set.
+      </para>
+    </section>
+
     <section id="basic-api">
       <title>Basic interface</title>
 
@@ -1011,7 +1104,7 @@ $del      = \127                  -- ASCII DEL</programlisting>
       another module:</para>
 
 <programlisting>type AlexInput
-alexGetChar       :: AlexInput -> Maybe (Char,AlexInput)
+alexGetByte       :: AlexInput -> Maybe (Word8,AlexInput)
 alexInputPrevChar :: AlexInput -> Char</programlisting>
 
       <para>The generated lexer is independent of the input type,
@@ -1145,7 +1238,7 @@ data AlexReturn action
 	specification, with little fuss.</para>
 
 	<para>It provides definitions for
-	<literal>AlexInput</literal>, <literal>alexGetChar</literal>
+        <literal>AlexInput</literal>, <literal>alexGetByte</literal>
 	and <literal>alexInputPrevChar</literal> that are suitable for
 	lexing a <literal>String</literal> input.  It also provides a
 	function <literal>alexScanTokens</literal> which takes a
@@ -1159,24 +1252,29 @@ data AlexReturn action
 	<para>Here is the actual code included in the lexer when the
 	basic wrapper is selected:</para>
 
-<programlisting>type AlexInput = (Char,     -- previous char
-                  String)   -- current input string
+<programlisting>
+type AlexInput = (Char,      -- previous char
+                  [Byte],    -- rest of the bytes for the current char
+                  String)    -- rest of the input string
 
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (_, [])   = Nothing
-alexGetChar (_, c:cs) = Just (c, (c,cs))
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
+alexGetByte (c,[],[])    = Nothing
+alexGetByte (_,[],(c:s)) = case utf8Encode c of
+                             (b:bs) -> Just (b, (c, bs, s))
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (c,_) = c
 
 -- alexScanTokens :: String -> [token]
-alexScanTokens str = go ('\n',str)
-  where go inp@(_,str) =
+alexScanTokens str = go ('\n',[],str)
+  where go inp@(_,_bs,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act (take len str) : go inp'</programlisting>
+                AlexToken inp' len act -> act (take len str) : go inp'
+</programlisting>
 
 	<para>The type signature for <literal>alexScanTokens</literal>
         is commented out, because the <literal>token</literal> type is
@@ -1188,7 +1286,7 @@ alexScanTokens str = go ('\n',str)
         <para>for some type <literal>token</literal>.</para>
 
 	<para>For an example of the use of the basic wrapper, see the
-	file <literal>examples/Tokens_basic.x</literal> in the Alex
+        file <literal>examples/Tokens.x</literal> in the Alex
 	distribution.</para>
       </section>
 
@@ -1201,25 +1299,28 @@ alexScanTokens str = go ('\n',str)
 
 	<para>The posn wrapper provides the following, in addition to
 	the straightforward definitions of
-	<literal>alexGetChar</literal> and
+	<literal>alexGetByte</literal> and
 	<literal>alexInputPrevChar</literal>:</para>
 
-<programlisting>data AlexPosn = AlexPn !Int  -- absolute character offset
+<programlisting>
+data AlexPosn = AlexPn !Int  -- absolute character offset
                        !Int  -- line number
                        !Int  -- column number
 
-type AlexInput = (AlexPosn, -- current position,
-                  Char,     -- previous char
-                  String)   -- current input string
+type AlexInput = (AlexPosn,     -- current position,
+                  Char,         -- previous char
+                  [Byte],       -- rest of the bytes for the current char
+                  String)       -- current input string
 
 --alexScanTokens :: String -> [token]
-alexScanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(pos,_,str) =
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp@(pos,_,_,str) =
           case alexScan inp 0 of
                 AlexEOF -> []
-                AlexError _ -> error "lexical error"
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at " ++ (show line) ++ " line, " ++ (show column) ++ " column"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act pos (take len str) : go inp'</programlisting>
+                AlexToken inp' len act -> act pos (take len str) : go inp'
+</programlisting>
 
 	<para>The types of the token actions should be:</para>
 
@@ -1246,6 +1347,7 @@ alexScanTokens str = go (alexStartPos,'\n',str)
         alex_pos :: !AlexPosn,  -- position at current input location
         alex_inp :: String,     -- the current input
         alex_chr :: !Char,      -- the character before the input
+        alex_bytes :: [Byte],   -- rest of the bytes for the current char
         alex_scd :: !Int        -- the current startcode
     }
 
@@ -1305,23 +1407,27 @@ token t input len = return (t input len)</programlisting>
     <para>1) The definition of the general state, which now refers to a
     type (<literal>AlexUserState</literal>) that must be defined in the Alex file.</para>
 
-<programlisting>data AlexState = AlexState {
+<programlisting>
+data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
         alex_inp :: String,     -- the current input
         alex_chr :: !Char,      -- the character before the input
-        alex_scd :: !Int        -- the current startcode
-      , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
+        alex_bytes :: [Byte],   -- rest of the bytes for the current char
+        alex_scd :: !Int,       -- the current startcode
+        alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
     }
 </programlisting>
 
     <para>2) The initialization code, where a user-specified routine (<literal>alexInitUserState</literal>) will be 
     called.</para>
 
-<programlisting>runAlex :: String -> Alex a -> Either String a
-runAlex input (Alex f)
+<programlisting>
+runAlex :: String -> Alex a -> Either String a
+runAlex input (Alex f) 
    = case f (AlexState {alex_pos = alexStartPos,
-                        alex_inp = input,
+                        alex_inp = input,       
                         alex_chr = '\n',
+                        alex_bytes = [],
                         alex_ust = alexInitUserState,
                         alex_scd = 0}) of Left msg -> Left msg
                                           Right ( _, a ) -> Right a
@@ -1398,13 +1504,20 @@ type StopAction state result
 	<para>The point of using these wrappers is that
 	<literal>ByteString</literal>s provide a more memory efficient
 	representaion of an input stream. They can also be somewhat faster to
-	process. Note however that they only treat the input string as 8-bit
-	ASCII characters. Note also that using these wrappers adds a dependency
+        process. Note that using these wrappers adds a dependency
 	on the <literal>ByteString</literal> modules, which live in the
 	<literal>bytestring</literal> package (or in the
 	<literal>base</literal> package in <literal>ghc-6.6</literal>)</para>
 	
-	<para>Do note that <literal>token</literal> provides a
+        <para>
+          As mentioned earlier (<xref linkend="encoding" />), Alex
+          lexers internally process a UTF-8 encoded string of bytes.
+          This means that the <literal>ByteString</literal> supplied
+          as input when using one of the ByteString wrappers should be
+          UTF-8 encoded (or use the <option>--latin1</option> option).
+        </para>
+
+        <para>Do note that <literal>token</literal> provides a
 	<emphasis>lazy</emphasis> <literal>ByteString</literal> which is not
 	the most compact representation for short strings. You may want to
 	convert to a strict <literal>ByteString</literal> or perhaps something
@@ -1423,12 +1536,12 @@ type StopAction state result
 	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
 
 <programlisting>
-import qualified Data.ByteString.Lazy.Char8 as ByteString
+import qualified Data.ByteString.Lazy as ByteString
 
 type AlexInput = (Char,       -- previous char
-                  ByteString) -- current input string
+                  ByteString.ByteString) -- current input string
 
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
+alexGetByte :: AlexInput -> Maybe (Char,AlexInput)
 
 alexInputPrevChar :: AlexInput -> Char
 
@@ -1438,7 +1551,7 @@ alexInputPrevChar :: AlexInput -> Char
 	<para>All of the actions in your lexical specification
         should have type:</para>
 
-<programlisting>{ ... } :: ByteString -> token</programlisting>
+<programlisting>{ ... } :: ByteString.ByteString -> token</programlisting>
 
         <para>for some type <literal>token</literal>.</para>
 	</section>
@@ -1450,19 +1563,19 @@ alexInputPrevChar :: AlexInput -> Char
 	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
 
 <programlisting>
-import qualified Data.ByteString.Lazy.Char8 as ByteString
+import qualified Data.ByteString.Lazy as ByteString
 
 type AlexInput = (AlexPosn,   -- current position,
                   Char,       -- previous char
-                  ByteString) -- current input string
+                  ByteString.ByteString) -- current input string
 
--- alexScanTokens :: ByteString -> [token]
+-- alexScanTokens :: ByteString.ByteString -> [token]
 </programlisting>
 
 	<para>All of the actions in your lexical specification
         should have type:</para>
 
-<programlisting>{ ... } :: AlexPosn -> ByteString -> token</programlisting>
+<programlisting>{ ... } :: AlexPosn -> ByteString.ByteString -> token</programlisting>
 
         <para>for some type <literal>token</literal>.</para>
 	</section>
@@ -1474,11 +1587,11 @@ type AlexInput = (AlexPosn,   -- current position,
 	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
 
 <programlisting>
-import qualified Data.ByteString.Lazy.Char8 as ByteString
+import qualified Data.ByteString.Lazy as ByteString
 
 ata AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
-        alex_inp :: ByteString, -- the current input
+        alex_inp :: ByteString.ByteString, -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
     }
@@ -1486,9 +1599,9 @@ ata AlexState = AlexState {
 newtype Alex a = Alex { unAlex :: AlexState
                                -> Either String (AlexState, a) }
 
-runAlex          :: ByteString -> Alex a -> Either String a
+runAlex          :: ByteString.ByteString -> Alex a -> Either String a
 
--- token :: (ByteString -> Int -> token) -> AlexAction token
+-- token :: (ByteString.ByteString -> Int -> token) -> AlexAction token
 </programlisting>
 
 	<para>All of the actions in your lexical specification
@@ -1504,11 +1617,11 @@ runAlex          :: ByteString -> Alex a -> Either String a
 	<literal>ByteString</literal> instead of <literal>String</literal>:</para>
 
 <programlisting>
-import qualified Data.ByteString.Lazy.Char8 as ByteString
+import qualified Data.ByteString.Lazy as ByteString
 
 ata AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
-        alex_inp :: ByteString, -- the current input
+        alex_inp :: ByteString.ByteString, -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
       , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
@@ -1517,9 +1630,9 @@ ata AlexState = AlexState {
 newtype Alex a = Alex { unAlex :: AlexState
                                -> Either String (AlexState, a) }
 
-runAlex          :: ByteString -> Alex a -> Either String a
+runAlex          :: ByteString.ByteString -> Alex a -> Either String a
 
--- token :: (ByteString -> Int -> token) -> AlexAction token
+-- token :: (ByteString.ByteString -> Int -> token) -> AlexAction token
 </programlisting>
 
 	<para>All of the actions in your lexical specification
@@ -1601,6 +1714,39 @@ runAlex          :: ByteString -> Alex a -> Either String a
 	  <para>Causes Alex to produce a lexer which will output
 	  debugging messsages as it runs.</para>
 	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-l</option></term>
+        <term><option>--latin1</option></term>
+	<listitem>
+          <para>Disables the use of UTF-8 encoding in the generated
+          lexer.  This has two consequences:
+          <itemizedlist>
+            <listitem>
+              <para>
+                The Alex source file is still assumed to be UTF-8
+                encoded, but any Unicode characters outside the range
+                0-255 are mapped to Latin-1 characters by taking the
+                code point modulo 256.
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+                The built-in macros <literal>$printable</literal>
+                and '<literal>.</literal>' range over the Latin-1
+                character set, not the Unicode character set.
+              </para>
+            </listitem>
+          </itemizedlist>
+
+          Note that this currently does not disable the UTF-8 encoding
+          that happens in the "basic" wrappers,
+          so <option>--latin1</option> does not make sense in
+          conjunction with these wrappers (not that you would want to
+          do that, anyway).
+          </para>
+        </listitem>
       </varlistentry>
 
       <varlistentry>
