@@ -9,5 +9,5 @@ FP_DIR_DOCBOOK_XSL([/usr/share/xml/docbook/stylesheet/nwalsh/current /usr/share/
 
 AC_PATH_PROG(DbLatexCmd,dblatex)
 
-AC_CONFIG_FILES([config.mk])
+AC_CONFIG_FILES([config.mk alex.1])
 AC_OUTPUT
