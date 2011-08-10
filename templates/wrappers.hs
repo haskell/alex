@@ -81,9 +81,38 @@ alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,_,cs) | ByteString.null cs = Nothing
                      | otherwise = let b   = ByteString.head cs
                                        cs' = ByteString.tail cs
-                                       c   = Data.Char.chr (fromIntegral b)
+                                       c   = ByteString.w2c b
                                        p'  = alexMove p c
                                     in p' `seq` cs' `seq` Just (b, (p', c, cs'))
+#endif
+
+#ifdef ALEX_BASIC_BYTESTRING
+type AlexInput = (Char,
+                  ByteString.ByteString)
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c,_) = c
+
+alexGetByte (_, cs)
+   | ByteString.null cs = Nothing
+   | otherwise          = Just (ByteString.head cs,
+                                (ByteString.w2c $ ByteString.head cs,
+                                 ByteString.tail cs))
+#endif
+
+#ifdef ALEX_STRICT_BYTESTRING
+data AlexInput = AlexInput { alexChar :: {-# UNPACK #-}!Char
+                           , alexStr  :: {-# UNPACK #-}!ByteString.ByteString }
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar = alexChar
+
+alexGetByte (AlexInput _ cs)
+    | ByteString.null cs = Nothing
+    | otherwise          = Just $!  (ByteString.head cs, AlexInput c cs')
+    where
+        (c,cs') = (ByteString.w2c (ByteString.unsafeHead cs)
+                  , ByteString.unsafeTail cs)
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -319,15 +348,6 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 -- Basic wrapper, ByteString version
 
 #ifdef ALEX_BASIC_BYTESTRING
-type AlexInput = (Char,ByteString.ByteString)
-
-alexGetByte (_, cs)
-   | ByteString.null cs = Nothing
-   | otherwise          = Just (ByteString.head cs,
-                                (ByteString.w2c $ ByteString.head cs,
-                                 ByteString.tail cs))
-
-alexInputPrevChar (c,_) = c
 
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',str)
@@ -342,18 +362,6 @@ alexScanTokens str = go ('\n',str)
 #endif
 
 #ifdef ALEX_STRICT_BYTESTRING
-
-data AlexInput = AlexInput { alexChar :: {-# UNPACK #-}!Char
-                           , alexStr  :: {-# UNPACK #-}!ByteString.ByteString }
-
-alexGetByte (AlexInput _ cs)
-    | ByteString.null cs = Nothing
-    | otherwise          = Just $!  (ByteString.head cs, AlexInput c cs')
-    where
-        (c,cs') = (ByteString.w2c (ByteString.unsafeHead cs)
-                  , ByteString.unsafeTail cs)
-
-alexInputPrevChar = alexChar
 
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go (AlexInput '\n' str)
