@@ -8,7 +8,8 @@ import Data.Word (Word8)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
 import qualified Data.Char
-import qualified Data.ByteString.Lazy as ByteString
+import qualified Data.ByteString.Lazy     as ByteString
+import qualified Data.ByteString.Internal as ByteString (w2c)
 
 #elif defined(ALEX_STRICT_BYTESTRING)
 
@@ -320,8 +321,11 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 #ifdef ALEX_BASIC_BYTESTRING
 type AlexInput = (Char,ByteString.ByteString)
 
-alexGetByte (_, cs) | ByteString.null cs = Nothing
-                    | otherwise          = Just (ByteString.head cs, (ByteString.head cs, ByteString.tail cs))
+alexGetByte (_, cs)
+   | ByteString.null cs = Nothing
+   | otherwise          = Just (ByteString.head cs,
+                                (ByteString.w2c $ ByteString.head cs,
+                                 ByteString.tail cs))
 
 alexInputPrevChar (c,_) = c
 
