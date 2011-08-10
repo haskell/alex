@@ -52,6 +52,8 @@ extra-source-files:
 	tests/tokens_gscan.x
 	tests/tokens_posn.x
         tests/tokens_bytestring.x
+        tests/tokens_posn_bytestring.x
+        tests/tokens_strict_bytestring.x
         tests/unicode.x
 
 source-repository head
