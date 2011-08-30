@@ -41,9 +41,9 @@
 
     <para>Alex can always be obtained from its <ulink
     url="http://www.haskell.org/alex">home page</ulink>.  The latest
-    source code lives in the <literal>fptools</literal> CVS
-    repository; instructions on accessing that repository are <ulink
-    url="http://www.haskell.org/ghc/docs/latest/html/building/sec-cvs.html">here</ulink>.</para>
+    source code lives in the <ulink url="https://github.com/simonmar/alex">git
+    repository</ulink> on <literal>GitHub</literal>.
+    </para>
 
     <section id="relnotes-30">
       <title>Release Notes for version 3.0</title>
