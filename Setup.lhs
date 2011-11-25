@@ -14,24 +14,37 @@ import System.IO.Error ( try )
 import System.Directory (removeFile)
 
 main :: IO ()
-main = defaultMainWithHooks defaultUserHooks{ hookedPrograms = [perlProgram],
-					      postBuild = myPostBuild,
+main = defaultMainWithHooks defaultUserHooks{ postBuild = myPostBuild,
 					      postClean = myPostClean,
 					      copyHook  = myCopy,
 					      instHook  = myInstall }
 
-perlProgram = simpleProgram "perl"
-
 -- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
 -- '{-# LINE 27 "GenericTemplate.hs" #-}'.
-crazy_perl_regexp =
- "s/^#\\s+(\\d+)\\s+(\"[^\"]*\")/{-# LINE \\1 \\2 #-}/g;s/\\$(Id:.*)\\$/\\1/g"
+mungeLinePragma line = case symbols line of
+ ["#", number, string] | length string >= 2
+                      && head string == '"'
+                      && last string == '"'
+   -> case reads number of
+        [(n, "")] -> "{-# LINE " ++ show (n :: Int) ++ " " ++ string ++ " #-}"
+        _         -> line
+ -- Also convert old-style CVS lines, no idea why we do this...
+ ("--":"$":"Id":":":_) -> filter (/='$') line
+ (     "$":"Id":":":_) -> filter (/='$') line
+ _ -> line
+
+symbols :: String -> [String]
+symbols cs = case lex cs of
+              (sym, cs'):_ | not (null sym) -> sym : symbols cs'
+              _ -> []
 
 myPostBuild _ flags _ lbi = do
   let runProgram p = rawSystemProgramConf (buildVerbose flags) p (withPrograms lbi)
       cpp_template src dst opts = do
-        runProgram ghcProgram (["-o", dst, "-E", "-cpp", "templates" </> src] ++ opts)
-	runProgram perlProgram ["-i.bak", "-pe", crazy_perl_regexp, dst]
+        let tmp = dst ++ ".tmp"
+        runProgram ghcProgram (["-o", tmp, "-E", "-cpp", "templates" </> src] ++ opts)
+        writeFile dst . unlines . map mungeLinePragma . lines =<< readFile tmp
+        removeFile tmp
 
   sequence_ ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
   	     [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
