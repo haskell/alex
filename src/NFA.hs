@@ -163,7 +163,7 @@ type MapNFA = Map SNum NState
 newtype NFAM a = N {unN :: SNum -> MapNFA -> Encoding -> (SNum, MapNFA, a)}
 
 instance Monad NFAM where
-  return a = N $ \s n e -> (s,n,a)
+  return a = N $ \s n _ -> (s,n,a)
 
   m >>= k  = N $ \s n e -> case unN m s n e of
                                  (s', n', a) -> unN (k a) s' n' e
@@ -181,7 +181,7 @@ e_close ar = listArray bds
 	bds@(_,hi) = bounds ar
 
 newState :: NFAM SNum
-newState = N $ \s n e -> (s+1,n,s)
+newState = N $ \s n _ -> (s+1,n,s)
 
 getEncoding :: NFAM Encoding
 getEncoding = N $ \s n e -> (s,n,e)
@@ -214,6 +214,7 @@ bytesEdge from (x:xs) (y:ys) to
            u <- newState
            byteEdge from (byteSetRange (x+1) (y-1)) u
            anyBytes u (length xs) to
+bytesEdge _ _ _ _ = undefined -- hide compiler warning
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
 charEdge from charset to = do
@@ -225,7 +226,7 @@ charEdge from charset to = do
 
 
 byteEdge :: SNum -> ByteSet -> SNum -> NFAM ()
-byteEdge from charset to = N $ \s n e -> (s, addEdge n, ())
+byteEdge from charset to = N $ \s n _ -> (s, addEdge n, ())
  where
    addEdge n =
      case Map.lookup from n of
@@ -237,7 +238,7 @@ byteEdge from charset to = N $ \s n e -> (s, addEdge n, ())
 epsilonEdge :: SNum -> SNum -> NFAM ()
 epsilonEdge from to 
  | from == to = return ()
- | otherwise  = N $ \s n e -> (s, addEdge n, ())
+ | otherwise  = N $ \s n _ -> (s, addEdge n, ())
  where
    addEdge n =
      case Map.lookup from n of
@@ -245,7 +246,7 @@ epsilonEdge from to
        Just (NSt acc eps trans) -> Map.insert from (NSt acc (to:eps) trans) n
 
 accept :: SNum -> Accept Code -> NFAM ()
-accept state new_acc = N $ \s n e -> (s, addAccept n, ())
+accept state new_acc = N $ \s n _ -> (s, addAccept n, ())
  where
    addAccept n = 
      case Map.lookup state n of

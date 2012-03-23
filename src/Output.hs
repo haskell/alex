@@ -103,9 +103,9 @@ outputDFA target _ _ dfa
     outputRCtx (RightContextCode code)
 	= str code
 
-    outputArr arr
-	= str "array " . shows (bounds arr) . space
-	. shows (assocs arr)
+    -- outputArr arr
+	-- = str "array " . shows (bounds arr) . space
+	-- . shows (assocs arr)
 
 -- -----------------------------------------------------------------------------
 -- Generating arrays.

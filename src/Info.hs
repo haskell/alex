@@ -60,6 +60,6 @@ infoDFA _ func_nm dfa
     outputLCtx (Just set)
 	  = paren (show set ++) . char '^'
 
-    outputArr arr
-	  = str "Array.array " . shows (bounds arr) . space
-	  . shows (assocs arr)
+    -- outputArr arr
+	  -- = str "Array.array " . shows (bounds arr) . space
+	  -- . shows (assocs arr)
