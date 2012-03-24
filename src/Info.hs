@@ -15,8 +15,6 @@ import qualified Map
 import qualified Data.IntMap as IntMap
 import Util
 
-import Data.Array
-
 -- -----------------------------------------------------------------------------
 -- Generate a human readable dump of the state machine
 
