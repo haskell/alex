@@ -51,7 +51,7 @@ documentation.
 
 .TP
 .BR \-d ", " \-\-debug
-Instructs Alex to generate a lexer which will output debugging messsages
+Instructs Alex to generate a lexer which will output debugging messages
 as it runs.
 
 .TP
