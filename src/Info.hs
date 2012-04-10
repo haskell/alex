@@ -15,8 +15,6 @@ import qualified Map
 import qualified Data.IntMap as IntMap
 import Util
 
-import Data.Array
-
 -- -----------------------------------------------------------------------------
 -- Generate a human readable dump of the state machine
 
@@ -60,6 +58,6 @@ infoDFA _ func_nm dfa
     outputLCtx (Just set)
 	  = paren (show set ++) . char '^'
 
-    outputArr arr
-	  = str "Array.array " . shows (bounds arr) . space
-	  . shows (assocs arr)
+    -- outputArr arr
+	  -- = str "Array.array " . shows (bounds arr) . space
+	  -- . shows (assocs arr)
