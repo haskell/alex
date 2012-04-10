@@ -40,7 +40,6 @@ import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
 import System.Exit ( ExitCode(..), exitWith )
 import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
-import System.IO ( hSetBuffering, BufferMode(..) )
 #if __GLASGOW_HASKELL__ >= 612
 import System.IO ( hGetContents, hSetEncoding, utf8 )
 #endif

@@ -3,21 +3,22 @@
 \begin{code}
 module Main where
 
+import Distribution.Verbosity
 import Distribution.PackageDescription (PackageDescription(..))
-import Distribution.Simple.Setup ( BuildFlags(..), buildVerbose )
-import Distribution.Simple ( defaultMainWithHooks, defaultUserHooks, UserHooks(..) )
+import Distribution.Simple.Setup ( BuildFlags(..), buildVerbosity, fromFlagOrDefault )
+import Distribution.Simple ( defaultMainWithHooks, simpleUserHooks, UserHooks(..) )
 import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..) )
 import Distribution.Simple.Program
 
 import System.FilePath ((</>))
-import System.IO.Error ( try )
+import Control.Exception ( IOException, try )
 import System.Directory (removeFile)
 
 main :: IO ()
-main = defaultMainWithHooks defaultUserHooks{ postBuild = myPostBuild,
-					      postClean = myPostClean,
-					      copyHook  = myCopy,
-					      instHook  = myInstall }
+main = defaultMainWithHooks simpleUserHooks{ postBuild = myPostBuild,
+                                             postClean = myPostClean,
+                                             copyHook  = myCopy,
+                                             instHook  = myInstall }
 
 -- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
 -- '{-# LINE 27 "GenericTemplate.hs" #-}'.
@@ -39,7 +40,8 @@ symbols cs = case lex cs of
               _ -> []
 
 myPostBuild _ flags _ lbi = do
-  let runProgram p = rawSystemProgramConf (buildVerbose flags) p (withPrograms lbi)
+  let verbosity = fromFlagOrDefault normal (buildVerbosity flags)
+      runProgram p = rawSystemProgramConf verbosity p (withPrograms lbi)
       cpp_template src dst opts = do
         let tmp = dst ++ ".tmp"
         runProgram ghcProgram (["-o", tmp, "-E", "-cpp", "templates" </> src] ++ opts)
@@ -49,16 +51,17 @@ myPostBuild _ flags _ lbi = do
   sequence_ ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
   	     [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
 
-myPostClean _ _ _ _ = mapM_ (try . removeFile) all_template_files
+myPostClean _ _ _ _ = let try' = try :: IO a -> IO (Either IOException a)
+                      in mapM_ (try' . removeFile) all_template_files
 
 myInstall pkg_descr lbi hooks flags =
-  instHook defaultUserHooks pkg_descr' lbi hooks flags
+  instHook simpleUserHooks pkg_descr' lbi hooks flags
   where pkg_descr' = pkg_descr {
           dataFiles = dataFiles pkg_descr ++ all_template_files
 	}
 
 myCopy pkg_descr lbi hooks copy_flags =
-  copyHook defaultUserHooks pkg_descr' lbi hooks copy_flags
+  copyHook simpleUserHooks pkg_descr' lbi hooks copy_flags
   where pkg_descr' = pkg_descr {
           dataFiles = dataFiles pkg_descr ++ all_template_files
 	}

@@ -20,7 +20,7 @@ import Control.Monad.ST ( ST, runST )
 import Data.Array ( Array )
 import Data.Array.Base ( unsafeRead )
 import Data.Array.ST ( STUArray, newArray, readArray, writeArray, freeze )
-import Data.Array.Unboxed ( UArray, bounds, assocs, elems, (!), array, listArray )
+import Data.Array.Unboxed ( UArray, elems, (!), array, listArray )
 import Data.Bits
 import Data.Char ( ord, chr )
 import Data.List ( maximumBy, sortBy, groupBy )
@@ -103,9 +103,9 @@ outputDFA target _ _ dfa
     outputRCtx (RightContextCode code)
 	= str code
 
-    outputArr arr
-	= str "array " . shows (bounds arr) . space
-	. shows (assocs arr)
+    -- outputArr arr
+	-- = str "array " . shows (bounds arr) . space
+	-- . shows (assocs arr)
 
 -- -----------------------------------------------------------------------------
 -- Generating arrays.

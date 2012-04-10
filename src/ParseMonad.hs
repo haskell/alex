@@ -39,6 +39,7 @@ alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
 alexGetChar (_,_,[],[]) = Nothing
 alexGetChar (p,_,[],(c:s))  = let p' = alexMove p c in p' `seq`
 				Just (c, (p', c, [], s))
+alexGetChar (_, _ ,_ : _, _) = undefined -- hide compiler warning
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
