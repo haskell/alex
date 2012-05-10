@@ -23,11 +23,11 @@ tokens :-
 
 
 {
-string (p,_,input) len = return "string!"
+string (p,_,_,input) len = return "string!"
 
-other (p,_,input) len = return (take len input)
+other (p,_,_,input) len = return (take len input)
 
-character (p,_,input) len = return "PING!"
+character (p,_,_,input) len = return "PING!"
 
 alexEOF = return "stopped."
 

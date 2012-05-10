@@ -30,17 +30,17 @@ $white+			;
 
 {
 {- we can now have comments in source code? -}
-word (p,_,input) len = return (take len input)
+word (p,_,_,input) len = return (take len input)
 
-both (p,_,input) len = return ("BOTH:"++ take len input)
+both (p,_,_,input) len = return ("BOTH:"++ take len input)
 
-eol (p,_,input) len = return ("EOL:"++ take len input)
+eol (p,_,_,input) len = return ("EOL:"++ take len input)
 
-bol (p,_,input) len = return ("BOL:"++ take len input)
+bol (p,_,_,input) len = return ("BOL:"++ take len input)
 
-parenword (p,_,input) len = return (map toUpper (take len input))
+parenword (p,_,_,input) len = return (map toUpper (take len input))
 
-magic (p,_,input) len = return "PING!"
+magic (p,_,_,input) len = return "PING!"
 
 alexEOF = return "stopped."
 

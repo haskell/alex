@@ -56,7 +56,8 @@ type AlexInput = (AlexPosn,     -- current position,
                   [Byte],       -- pending bytes on current char
                   String)       -- current input string
 
-ignorePendingBytes (p,c,ps,s) = (p,c,s)
+ignorePendingBytes :: AlexInput -> AlexInput
+ignorePendingBytes (p,c,ps,s) = (p,c,[],s)
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (p,c,bs,s) = c
