@@ -1,7 +1,7 @@
 ALEX=../dist/build/alex/alex
 HC=ghc -Wall -fno-warn-unused-binds -fno-warn-missing-signatures -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
-.PRECIOUS: .hs .o .exe .bin
+.PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 
 ifeq "$(TARGETPLATFORM)" "i386-unknown-mingw32"
 HS_PROG_EXT = .exe
