@@ -38,7 +38,7 @@ all :: $(ALL_TESTS)
 
 .PHONY: clean
 clean:
-	rm -f *.o *.hi *.bin
+	rm -f $(CLEAN_FILES)
 
 interact:
 	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception 
