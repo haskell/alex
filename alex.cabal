@@ -100,3 +100,8 @@ executable alex
         Data.Ranged.Boundaries
         Data.Ranged.RangedSet
         Data.Ranged.Ranges
+
+test-suite tests
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  build-depends: process
