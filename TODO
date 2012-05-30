@@ -1,10 +1,12 @@
 - Option for pure Haskell 98 output?
+	- maybe Haskell 2010 at this point?
+	- how about an option to use Data.Array.Unboxed?
 
 - Put in {-# LINE #-} pragmas for token actions
 
 - Prune states that aren't reachable?
 
-- Issues a warning for tokens that can't be generated?
+- Issue a warning for tokens that can't be generated?
 
 - Info file?
 	- start codes
