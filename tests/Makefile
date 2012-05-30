@@ -22,7 +22,7 @@ TEST_ALEX_OPTS = --template=..
 %.o : %.hs
 	$(HC) $(HC_OPTS) -c -o $@ $<
 
-CLEAN_FILES += *.n.hs *.g.hs *.info *.hi *.bin *.exe
+CLEAN_FILES += *.n.hs *.g.hs *.info *.hi *.o *.bin *.exe
 
 ALL_TEST_HS = $(shell echo $(TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs/g')
 
