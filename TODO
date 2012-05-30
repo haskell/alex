@@ -1,7 +1,5 @@
 - Option for pure Haskell 98 output?
 
-- Extend to Unicode (32-bit Char)
-
 - Put in {-# LINE #-} pragmas for token actions
 
 - bug: we throw away the first character of code
