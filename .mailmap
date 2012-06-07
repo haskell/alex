@@ -1,0 +1,18 @@
+# Fill-in/fix authorship information for migrated commits.  See
+# git-shortlog(1) for details.
+
+Alain Cremieux <alcremi@pobox.com>	alcremi@pobox.com <unknown>
+
+<duncan@haskell.org>			Duncan Coutts	<duncan.coutts@worc.ox.ac.uk>
+
+Gwern <gwern0@gmail.com>		gwern0@gmail.com <unknown>
+
+Mike Thomas <mthomas@gil.com.au>	mthomas		<unknown>
+
+Ross Paterson <ross@soi.city.ac.uk>	ross		<unknown>
+
+Simon Marlow <marlowsd@gmail.com>	simonmar	<unknown>
+      	     <marlowsd@gmail.com>			<simonmar@microsoft.com>
+
+Sven Panne <sven.panne@aedion.de>	panne		<unknown>
+Sven Panne <sven.panne@aedion.de>	sven.panne@aedion.de <unknown>
