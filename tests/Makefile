@@ -1,7 +1,7 @@
 ALEX=../dist/build/alex/alex
 HC=ghc -Wall -fno-warn-unused-binds -fno-warn-missing-signatures -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
-.PRECIOUS: .hs .o .exe .bin
+.PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 
 ifeq "$(TARGETPLATFORM)" "i386-unknown-mingw32"
 HS_PROG_EXT = .exe
@@ -22,7 +22,7 @@ TEST_ALEX_OPTS = --template=..
 %.o : %.hs
 	$(HC) $(HC_OPTS) -c -o $@ $<
 
-CLEAN_FILES += *.n.hs *.g.hs *.info *.hi *.bin *.exe
+CLEAN_FILES += *.n.hs *.g.hs *.info *.hi *.o *.bin *.exe
 
 ALL_TEST_HS = $(shell echo $(TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs/g')
 
@@ -38,7 +38,7 @@ all :: $(ALL_TESTS)
 
 .PHONY: clean
 clean:
-	rm -f *.o *.hi *.bin
+	rm -f $(CLEAN_FILES)
 
 interact:
 	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception 

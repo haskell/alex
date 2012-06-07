@@ -14,23 +14,27 @@ import System.IO
 
 tokens :-
 
-<0> {
-   
-   "αω"		        { string } 
-   [AΓ]    		{ character } 
-   .		        { other }
+<0> {   
+   "αω"        { string }
+   [AΓ]        { character }
+   .           { other }
 }
 
 
 {
+string :: AlexInput -> Int -> Alex String
 string (p,_,_,input) len = return "string!"
 
+other :: AlexInput -> Int -> Alex String
 other (p,_,_,input) len = return (take len input)
 
+character :: AlexInput -> Int -> Alex String
 character (p,_,_,input) len = return "PING!"
 
+alexEOF :: Alex String
 alexEOF = return "stopped."
 
+scanner :: String -> Either String [String]
 scanner str = runAlex str $ do
   let loop = do tok <- alexMonadScan
 		if tok == "stopped." || tok == "error." 
@@ -39,6 +43,7 @@ scanner str = runAlex str $ do
 				return (tok:toks)
   loop  
 
+main :: IO ()
 main = do
   let test1 = scanner str1
   when (test1 /= out1) $ 
