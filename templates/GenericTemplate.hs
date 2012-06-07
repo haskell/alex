@@ -74,14 +74,14 @@ alexIndexInt32OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
   narrow32Int# i
   where
-   !i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
+   i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
 		     (b2 `uncheckedShiftL#` 16#) `or#`
 		     (b1 `uncheckedShiftL#` 8#) `or#` b0)
-   !b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
-   !b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
-   !b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
-   !b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
-   !off' = off *# 4#
+   b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
+   b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
+   b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
+   b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
+   off' = off *# 4#
 ALEX_ELSE
   indexInt32OffAddr# arr off
 ALEX_ENDIF
