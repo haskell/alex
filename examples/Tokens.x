@@ -1,5 +1,5 @@
 {
-module Tokens (Token(..), alexScanTokens) where
+module Main where
 }
 
 %wrapper "basic"
@@ -31,4 +31,8 @@ data Token =
 	Int Int		|
 	Err 
 	deriving (Eq,Show)
+
+main = do
+  s <- getContents
+  print (alexScanTokens s)
 }

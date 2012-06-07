@@ -1,4 +1,5 @@
 {
+{-# LANGUAGE NPlusKPatterns #-}
 module Main (main) where
 }
 
