@@ -202,7 +202,7 @@ injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl code
 
 optsToInject :: Target -> [CLIFlags] -> String
-optsToInject GhcTarget _ = "{-# LANGUAGE CPP,MagicHash #-}\n"
+optsToInject GhcTarget _ = "{-# LANGUAGE CPP,MagicHash,BangPatterns #-}\n"
 optsToInject _         _ = "{-# LANGUAGE CPP #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String

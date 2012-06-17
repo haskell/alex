@@ -11,6 +11,7 @@
 #define ILIT(n) n#
 #define FAST_INT_BINDING(n) (n)
 #define IBOX(n) (I# (n))
+#define IBOXBIND(n) !(I# (n))
 #define FAST_INT Int#
 #define LT(n,m) (n <# m)
 #define GTE(n,m) (n >=# m)
@@ -24,6 +25,7 @@
 #define ILIT(n) (n)
 #define FAST_INT_BINDING(n) (n)
 #define IBOX(n) (n)
+#define IBOXBIND(n) (n)
 #define FAST_INT Int
 #define LT(n,m) (n < m)
 #define GTE(n,m) (n >= m)
@@ -158,7 +160,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 #endif
 	let
 		FAST_INT_BINDING(base) = alexIndexInt32OffAddr alex_base s
-		FAST_INT_BINDING(IBOX(ord_c)) = fromIntegral c
+		FAST_INT_BINDING(IBOXBIND(ord_c)) = fromIntegral c
 		FAST_INT_BINDING(offset) = PLUS(base,ord_c)
 		FAST_INT_BINDING(check)  = alexIndexInt16OffAddr alex_check offset
 		
