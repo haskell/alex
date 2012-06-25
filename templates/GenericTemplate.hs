@@ -9,7 +9,6 @@
 
 #ifdef ALEX_GHC
 #define ILIT(n) n#
-#define FAST_INT_BINDING(n) (n)
 #define IBOX(n) (I# (n))
 #define FAST_INT Int#
 #define LT(n,m) (n <# m)
@@ -22,7 +21,6 @@
 #define IF_GHC(x) (x)
 #else
 #define ILIT(n) (n)
-#define FAST_INT_BINDING(n) (n)
 #define IBOX(n) (n)
 #define FAST_INT Int
 #define LT(n,m) (n < m)
@@ -154,26 +152,26 @@ alex_scan_tkn user orig_input len input s last_acc =
      Nothing -> (new_acc, input)
      Just (c, new_input) -> 
 #ifdef ALEX_DEBUG
-        trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
+      trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
 #endif
-	let
-		FAST_INT_BINDING(base) = alexIndexInt32OffAddr alex_base s
-		FAST_INT_BINDING(IBOX(ord_c)) = fromIntegral c
-		FAST_INT_BINDING(offset) = PLUS(base,ord_c)
-		FAST_INT_BINDING(check)  = alexIndexInt16OffAddr alex_check offset
+      case fromIntegral c of { IBOX(ord_c) ->
+        let
+                base   = alexIndexInt32OffAddr alex_base s
+                offset = PLUS(base,ord_c)
+                check  = alexIndexInt16OffAddr alex_check offset
 		
-		FAST_INT_BINDING(new_s) = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
+                new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
 			  then alexIndexInt16OffAddr alex_table offset
 			  else alexIndexInt16OffAddr alex_deflt s
 	in
-	case new_s of 
+        case new_s of
 	    ILIT(-1) -> (new_acc, input)
 		-- on an error, we want to keep the input *before* the
 		-- character that failed, not after.
     	    _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
                                                 -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
 			new_input new_s new_acc
-
+      }
   where
 	check_accs [] = last_acc
 	check_accs (AlexAcc a : _) = AlexLastAcc a input IBOX(len)
