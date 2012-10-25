@@ -330,18 +330,19 @@ alexInputPrevChar (c,_) = c
 
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',[],str)
-  where go inp@(_,_bs,str) =
+  where go inp@(_,_bs,s) =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act (take len str) : go inp'
+                AlexToken inp' len act -> act (take len s) : go inp'
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
 alexGetByte (c,[],[])    = Nothing
 alexGetByte (_,[],(c:s)) = case utf8Encode c of
                              (b:bs) -> Just (b, (c, bs, s))
+                             [] -> Nothing
 #endif
 
 
