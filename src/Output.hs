@@ -71,20 +71,21 @@ outputDFA target _ _ dfa
 	. str "]\n"
 
     outputAccs :: [Accept Code] -> ShowS
-    outputAccs accs
-	= brack (interleave_shows (char ',') (map (paren.outputAcc) accs))
-
-    outputAcc (Acc _ Nothing Nothing NoRightContext)
+    outputAccs []
+	= str "AlexAccNone"
+    outputAccs (Acc _ Nothing Nothing NoRightContext : [])
 	= str "AlexAccSkip"
-    outputAcc (Acc _ (Just act) Nothing NoRightContext)
+    outputAccs (Acc _ (Just act) Nothing NoRightContext : [])
 	= str "AlexAcc " . paren (str act)
-    outputAcc (Acc _ Nothing lctx rctx)
+    outputAccs (Acc _ Nothing lctx rctx : rest)
 	= str "AlexAccSkipPred " . space
 	. paren (outputPred lctx rctx)
-    outputAcc (Acc _ (Just act) lctx rctx)
+        . paren (outputAccs rest)
+    outputAccs (Acc _ (Just act) lctx rctx : rest)
 	= str "AlexAccPred " . space
 	. paren (str act) . space
 	. paren (outputPred lctx rctx)
+        . paren (outputAccs rest)
 
     outputPred (Just set) NoRightContext
 	= outputLCtx set

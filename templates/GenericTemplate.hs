@@ -173,16 +173,19 @@ alex_scan_tkn user orig_input len input s last_acc =
 			new_input new_s new_acc
       }
   where
-	check_accs [] = last_acc
-	check_accs (AlexAcc a : _) = AlexLastAcc a input IBOX(len)
-	check_accs (AlexAccSkip : _)  = AlexLastSkip  input IBOX(len)
-	check_accs (AlexAccPred a predx : rest)
+	check_accs (AlexAccNone) = last_acc
+	check_accs (AlexAcc a  ) = AlexLastAcc a input IBOX(len)
+	check_accs (AlexAccSkip) = AlexLastSkip  input IBOX(len)
+	check_accs (AlexAccPred a predx rest)
 	   | predx user orig_input IBOX(len) input
 	   = AlexLastAcc a input IBOX(len)
-	check_accs (AlexAccSkipPred predx : rest)
+	   | otherwise
+	   = check_accs rest
+	check_accs (AlexAccSkipPred predx rest)
 	   | predx user orig_input IBOX(len) input
 	   = AlexLastSkip input IBOX(len)
-	check_accs (_ : rest) = check_accs rest
+	   | otherwise
+	   = check_accs rest
 
 data AlexLastAcc a
   = AlexNone
@@ -195,10 +198,11 @@ instance Functor AlexLastAcc where
     fmap f (AlexLastSkip x y) = AlexLastSkip x y
 
 data AlexAcc a user
-  = AlexAcc a
+  = AlexAccNone
+  | AlexAcc a
   | AlexAccSkip
-  | AlexAccPred a (AlexAccPred user)
-  | AlexAccSkipPred (AlexAccPred user)
+  | AlexAccPred a   (AlexAccPred user) (AlexAcc a user)
+  | AlexAccSkipPred (AlexAccPred user) (AlexAcc a user)
 
 type AlexAccPred user = user -> AlexInput -> Int -> AlexInput -> Bool
 
