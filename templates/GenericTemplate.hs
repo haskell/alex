@@ -176,6 +176,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 	check_accs (AlexAccNone) = last_acc
 	check_accs (AlexAcc a  ) = AlexLastAcc a input IBOX(len)
 	check_accs (AlexAccSkip) = AlexLastSkip  input IBOX(len)
+#ifndef ALEX_NOPRED
 	check_accs (AlexAccPred a predx rest)
 	   | predx user orig_input IBOX(len) input
 	   = AlexLastAcc a input IBOX(len)
@@ -186,6 +187,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 	   = AlexLastSkip input IBOX(len)
 	   | otherwise
 	   = check_accs rest
+#endif
 
 data AlexLastAcc a
   = AlexNone
@@ -201,6 +203,7 @@ data AlexAcc a user
   = AlexAccNone
   | AlexAcc a
   | AlexAccSkip
+#ifndef ALEX_NOPRED
   | AlexAccPred a   (AlexAccPred user) (AlexAcc a user)
   | AlexAccSkipPred (AlexAccPred user) (AlexAcc a user)
 
@@ -228,6 +231,7 @@ alexRightContext IBOX(sc) user _ _ input =
 	-- TODO: there's no need to find the longest
 	-- match when checking the right context, just
 	-- the first match will do.
+#endif
 
 -- used by wrappers
 iUnbox IBOX(i) = i

@@ -73,6 +73,7 @@ templates :: [(FilePath,[String])]
 templates = [
   ("AlexTemplate",           []),
   ("AlexTemplate-ghc",       ["-DALEX_GHC"]),
+  ("AlexTemplate-ghc-nopred",["-DALEX_GHC", "-DALEX_NOPRED"]),
   ("AlexTemplate-ghc-debug", ["-DALEX_GHC","-DALEX_DEBUG"]),
   ("AlexTemplate-debug",     ["-DALEX_DEBUG"])
  ]

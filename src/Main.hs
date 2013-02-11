@@ -140,7 +140,6 @@ alex cli file basename script = do
         | otherwise            = UTF8
 
    template_dir  <- templateDir getDataDir cli
-   let template_name = templateFile template_dir target cli
 		
    -- open the output file; remove it if we encounter an error
    bracketOnError 
@@ -168,6 +167,7 @@ alex cli file basename script = do
    let dfa = scanner2dfa encoding scanner_final scs
        min_dfa = minimizeDFA dfa
        nm  = scannerName scanner_final
+       usespreds = usesPreds min_dfa
 
    
    put_info "\nStart codes\n"
@@ -188,6 +188,7 @@ alex cli file basename script = do
    hPutStr out_h (actions "")
 
    -- add the template
+   let template_name = templateFile template_dir target usespreds cli
    tmplt <- alexReadFile template_name
    hPutStr out_h tmplt
 
@@ -256,9 +257,9 @@ templateDir def cli
       [] -> def
       ds -> return (last ds)
 
-templateFile :: FilePath -> Target -> [CLIFlags] -> FilePath
-templateFile dir target cli
-  = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug
+templateFile :: FilePath -> Target -> UsesPreds -> [CLIFlags] -> FilePath
+templateFile dir target usespreds cli
+  = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug ++ maybe_nopred
   where 
 	maybe_ghc = case target of
                       GhcTarget -> "-ghc"
@@ -267,6 +268,12 @@ templateFile dir target cli
 	maybe_debug
 	  | OptDebugParser `elem` cli  = "-debug"
 	  | otherwise		       = ""
+
+	maybe_nopred =
+	  case usespreds of
+	    DoesntUsePreds | not (null maybe_ghc)
+	                  && null maybe_debug -> "-nopred"
+	    _                                 -> ""
 
 wrapperFile :: FilePath -> [Directive] -> IO (Maybe FilePath)
 wrapperFile dir directives =
