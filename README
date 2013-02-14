@@ -4,7 +4,7 @@ Alex is a Lex-like tool for generating Haskell scanners.  For complete
 documentation, see the doc directory.
 
    http://www.haskell.org/alex/
-   http://hackage.haskell.org/cgi-bin/hackage-scripts/package/alex
+   http://hackage.haskell.org/package/alex
 
 Alex is built using Cabal.  First install GHC, then:
  
