@@ -1,5 +1,6 @@
 ALEX=../dist/build/alex/alex
-HC=ghc -Wall -fno-warn-unused-binds -fno-warn-missing-signatures -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
+HC=ghc
+HC_OPTS=-Wall -fno-warn-unused-binds -fno-warn-missing-signatures -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports
 
 .PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 
