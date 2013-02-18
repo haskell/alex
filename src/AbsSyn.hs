@@ -17,7 +17,8 @@ module AbsSyn (
   DFA(..), State(..), SNum, StartCode, Accept(..),
   RightContext(..), showRCtx,
   encodeStartCodes, extractActions,
-  Target(..)
+  Target(..),
+  UsesPreds(..), usesPreds
   ) where
 
 import CharSet ( CharSet )
@@ -116,6 +117,25 @@ instance Show (Accept a) where
   showsPrec _ (Acc p _act _lctx _rctx) = shows p --TODO
 
 type StartCode = Int
+
+-- -----------------------------------------------------------------------------
+-- Predicates / contexts
+
+-- we can generate somewhat faster code in the case that
+-- the lexer doesn't use predicates
+data UsesPreds = UsesPreds | DoesntUsePreds
+
+usesPreds :: DFA s a -> UsesPreds
+usesPreds dfa
+    | any acceptHasCtx [ acc | st  <- Map.elems (dfa_states dfa)
+                             , acc <- state_acc st ]
+    = UsesPreds
+    | otherwise
+    = DoesntUsePreds
+  where
+    acceptHasCtx Acc { accLeftCtx  = Nothing
+                     , accRightCtx = NoRightContext } = False
+    acceptHasCtx _                                    = True
 
 -- -----------------------------------------------------------------------------
 -- Regular expressions

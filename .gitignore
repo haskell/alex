@@ -20,6 +20,7 @@
 /AlexTemplate
 /AlexTemplate-debug
 /AlexTemplate-ghc
+/AlexTemplate-ghc-nopred
 /AlexTemplate-ghc-debug
 /AlexWrapper-basic
 /AlexWrapper-basic-bytestring
