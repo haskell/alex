@@ -49,8 +49,7 @@ extra-source-files:
 	src/Scan.hs
 	src/ghc_hooks.c
 	templates/GenericTemplate.hs
-	templates/Makefile
-	templates/wrappers.hs
+        templates/wrappers.hs
 	tests/Makefile
 	tests/simple.x
 	tests/tokens.x
