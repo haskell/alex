@@ -325,8 +325,8 @@ token t input len = return (t input len)
 #ifdef ALEX_BASIC
 type AlexInput = (Char,[Byte],String)
 
-
-alexInputPrevChar (c,_) = c
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c,_,_) = c
 
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',[],str)
