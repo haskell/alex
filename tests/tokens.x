@@ -18,6 +18,9 @@ tokens :-
   [\=\+\-\*\/\(\)]			{ \s -> Sym (head s) }
   $alpha [$alpha $digit \_ \']*		{ \s -> Var s }
 
+  -- a left-context pattern for testing
+  ^ \#                                  ;
+
 {
 -- Each right-hand side has type :: String -> Token
 
