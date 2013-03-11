@@ -108,4 +108,4 @@ executable alex
 test-suite tests
   type: exitcode-stdio-1.0
   main-is: test.hs
-  build-depends: process
+  build-depends: base, process
