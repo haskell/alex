@@ -1374,6 +1374,12 @@ alexSetStartCode :: Int -> Alex ()</programlisting>
 <programlisting>type AlexAction result = AlexInput -> Int -> Alex result
 { ... }  :: AlexAction result</programlisting>
 
+        <para>The Alex file must also define a function
+        <literal>alexEOF</literal>, which will be executed on when the
+        end-of-file is scanned:</para>
+
+<programlisting>alexEOF :: Alex result</programlisting>
+
 	<para>The <literal>monad</literal> wrapper also provides some
 	useful combinators for constructing token actions:</para>
 
