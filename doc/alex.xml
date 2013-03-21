@@ -1409,7 +1409,7 @@ token t input len = return (t input len)</programlisting>
     it during the whole lexing phase.</para>
 
     <para>The generated code is the same as in the <literal>monad</literal> 
-    wrapper, except in 2 places:</para>
+    wrapper, except in 3 places:</para>
     <para>1) The definition of the general state, which now refers to a
     type (<literal>AlexUserState</literal>) that must be defined in the Alex file.</para>
 
@@ -1439,6 +1439,13 @@ runAlex input (Alex f)
                                           Right ( _, a ) -> Right a
 </programlisting>
 
+    <para>3) Two helper functions (<literal>alexGetUserState</literal>
+    and <literal>alexSetUserState</literal>) are defined.</para>
+
+<programlisting>
+alexGetUserState :: Alex AlexUserState
+alexSetUserState :: AlexUserState -> Alex ()
+</programlisting>
     <para>Here is an example of code in the user's Alex file defining
     the type and function:</para>
 
@@ -1456,19 +1463,19 @@ alexInitUserState = AlexUserState
                    }
 
 getLexerCommentDepth :: Alex Int
-getLexerCommentDepth = Alex $ \s@AlexState{alex_ust=ust} -> Right (s, lexerCommentDepth ust)
+getLexerCommentDepth = do ust &lt;- alexGetUserState; return (lexerCommentDepth ust)
 
 setLexerCommentDepth :: Int -> Alex ()
-setLexerCommentDepth ss = Alex $ \s -> Right (s{alex_ust=(alex_ust s){lexerCommentDepth=ss}}, ())
+setLexerCommentDepth ss = do ust &lt;- alexGetUserState; alexSetUserState ust{lexerCommentDepth=ss}
 
 getLexerStringValue :: Alex String
-getLexerStringValue = Alex $ \s@AlexState{alex_ust=ust} -> Right (s, lexerStringValue ust)
+getLexerStringValue = do ust &lt;- alexGetUserState; return (lexerStringValue ust)
 
 setLexerStringValue :: String -> Alex ()
-setLexerStringValue ss = Alex $ \s -> Right (s{alex_ust=(alex_ust s){lexerStringValue=ss}}, ())
+setLexerStringValue ss = do ust &lt;- alexGetUserState; alexSetUserState ust{lexerStringValue=ss}
 
 addCharToLexerStringValue :: Char -> Alex ()
-addCharToLexerStringValue c = Alex $ \s -> Right (s{alex_ust=(alex_ust s){lexerStringValue=c:lexerStringValue (alex_ust s)}}, ())
+addCharToLexerStringValue c = do ust &lt;- alexGetUserState; alexSetUserState ust{lexerStringValue=c:(lexerStringValue ust)}
 </programlisting>
       </section>
 
