@@ -69,5 +69,5 @@ str1 = "a b c (d e f) magic (magic) eol\nbol \nboth\n"
 out1 = Right ["BOL:a","b","c","D","E","F","PING!","MAGIC","EOL:eol", "BOL:bol", "BOTH:both", "stopped."]
 
 str2 = "."
-out2 = Left "lexical error"
+out2 = Left "lexical error at 1 line, 1 column"
 }
