@@ -75,7 +75,7 @@ str1 = "A."
 out1 = Right ["PING!",".","stopped."]
 
 str2 = "\n"
-out2 = Left "lexical error at 1 line, 1 column"
+out2 = Left "lexical error at line 1, column 1"
 
 
 str3 = "αω --"
