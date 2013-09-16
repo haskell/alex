@@ -8,12 +8,28 @@
 -- INTERNALS and main scanner engine
 
 #ifdef ALEX_GHC
+#undef __GLASGOW_HASKELL__
+#define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
+#define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
+#define ALEX_IF_GHC_GT_706 #if __GLASGOW_HASKELL__ > 706
+#define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
+#define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
+#define ALEX_ELSE #else
+#define ALEX_ENDIF #endif
+#define ALEX_DEFINE #define
+#endif
+
+#ifdef ALEX_GHC
 #define ILIT(n) n#
 #define IBOX(n) (I# (n))
 #define FAST_INT Int#
-#define LT(n,m) (n <# m)
-#define GTE(n,m) (n >=# m)
-#define EQ(n,m) (n ==# m)
+ALEX_IF_GHC_GT_706
+ALEX_DEFINE GTE(n,m) (tagToEnum# (n >=# m))
+ALEX_DEFINE EQ(n,m) (tagToEnum# (n ==# m))
+ALEX_ELSE
+ALEX_DEFINE GTE(n,m) (n >=# m)
+ALEX_DEFINE EQ(n,m) (n ==# m)
+ALEX_ENDIF
 #define PLUS(n,m) (n +# m)
 #define MINUS(n,m) (n -# m)
 #define TIMES(n,m) (n *# m)
@@ -23,7 +39,6 @@
 #define ILIT(n) (n)
 #define IBOX(n) (n)
 #define FAST_INT Int
-#define LT(n,m) (n < m)
 #define GTE(n,m) (n >= m)
 #define EQ(n,m) (n == m)
 #define PLUS(n,m) (n + m)
@@ -31,16 +46,6 @@
 #define TIMES(n,m) (n * m)
 #define NEGATE(n) (negate (n))
 #define IF_GHC(x)
-#endif
-
-#ifdef ALEX_GHC
-#undef __GLASGOW_HASKELL__
-#define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
-#define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
-#define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
-#define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
-#define ALEX_ELSE #else
-#define ALEX_ENDIF #endif
 #endif
 
 #ifdef ALEX_GHC
