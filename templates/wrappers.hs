@@ -303,7 +303,7 @@ alexMonadScan = do
         alexMonadScan
     AlexToken inp' len action -> do
         alexSetInput inp'
-        action (ignorePendingBytes inp) len
+        action inp len
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
