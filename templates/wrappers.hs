@@ -295,7 +295,7 @@ alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 alexMonadScan = do
   inp <- alexGetInput
   sc <- alexGetStartCode
-  case alexScan inp sc of
+  case alexScanB inp sc of
     AlexEOF -> alexEOF
     AlexError ((AlexPn _ line column),_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
     AlexSkip  inp' len -> do
@@ -362,7 +362,7 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',str)
   where go inp@(_,str) =
-          case alexScan inp 0 of
+          case alexScanB inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
@@ -376,7 +376,7 @@ alexScanTokens str = go ('\n',str)
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go (AlexInput '\n' str)
   where go inp@(AlexInput _ str) =
-          case alexScan inp 0 of
+          case alexScanB inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
@@ -409,7 +409,7 @@ alexScanTokens str = go (alexStartPos,'\n',[],str)
 --alexScanTokens :: ByteString -> [token]
 alexScanTokens str = go (alexStartPos,'\n',str)
   where go inp@(pos,_,str) =
-          case alexScan inp 0 of
+          case alexScanB inp 0 of
                 AlexEOF -> []
                 AlexError ((AlexPn _ line column),_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
                 AlexSkip  inp' len     -> go inp'

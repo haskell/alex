@@ -1216,6 +1216,11 @@ data AlexReturn action
 
       <para>The extra argument, of some type <literal>user</literal>,
       is passed to each predicate.</para>
+
+      <para>There are also <literal>alexScanB</literal> and
+      <literal>alexScanUserB</literal> which calculate token length in
+      bytes instead of characters. Consider using them if you are
+      using ByteString input.</para>
     </section>
 
     <section id="wrappers">

@@ -116,8 +116,14 @@ data AlexReturn a
 alexScan input IBOX(sc)
   = alexScanUser undefined input IBOX(sc)
 
-alexScanUser user input IBOX(sc)
-  = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
+alexScanB input IBOX(sc)
+  = alexScanUserB undefined input IBOX(sc)
+
+alexScanUser = alexScanUser1 False
+alexScanUserB = alexScanUser1 True
+
+alexScanUser1 lenb user input IBOX(sc)
+  = case alex_scan_tkn lenb user input ILIT(0) input sc AlexNone of
 	(AlexNone, input') ->
 		case alexGetByte input of
 			Nothing -> 
@@ -143,11 +149,10 @@ alexScanUser user input IBOX(sc)
 #endif
 		AlexToken input''' len k
 
-
 -- Push the input through the DFA, remembering the most recent accepting
 -- state it encountered.
 
-alex_scan_tkn user orig_input len input s last_acc =
+alex_scan_tkn lenb user orig_input len input s last_acc =
   input `seq` -- strict in the input
   let 
 	new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
@@ -173,8 +178,9 @@ alex_scan_tkn user orig_input len input s last_acc =
 	    ILIT(-1) -> (new_acc, input)
 		-- on an error, we want to keep the input *before* the
 		-- character that failed, not after.
-    	    _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
-                                                -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
+    	    _ -> alex_scan_tkn lenb user orig_input (if lenb || c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
+                                                -- note that the length is increased ONLY if this is the 1st byte in a char encoding
+                                                -- unless every byte should be counted
 			new_input new_s new_acc
       }
   where
@@ -230,7 +236,7 @@ alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
 
 --alexRightContext :: Int -> AlexAccPred _
 alexRightContext IBOX(sc) user _ _ input = 
-     case alex_scan_tkn user input ILIT(0) input sc AlexNone of
+     case alex_scan_tkn True user input ILIT(0) input sc AlexNone of
 	  (AlexNone, _) -> False
 	  _ -> True
 	-- TODO: there's no need to find the longest
