@@ -126,7 +126,9 @@ instance Functor Span where
 
 charRangeToCharSpan :: Bool -> Range Char -> Maybe (Span Char)
 charRangeToCharSpan _ (Range BoundaryAboveAll _) = Nothing
+charRangeToCharSpan _ (Range (BoundaryAbove c) _) | c == maxBound = Nothing
 charRangeToCharSpan _ (Range _ BoundaryBelowAll) = Nothing
+charRangeToCharSpan _ (Range _ (BoundaryBelow c)) | c == minBound = Nothing
 charRangeToCharSpan uni (Range x y) = Just (Span (l x) (h y))
     where l b = case b of
             BoundaryBelowAll -> '\0'
