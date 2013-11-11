@@ -7,7 +7,7 @@
 -- ----------------------------------------------------------------------------}
 
 module ParseMonad (
-  	AlexInput, alexInputPrevChar, alexGetChar, alexGetByte,
+        AlexInput, alexInputPrevChar, alexGetChar, alexGetByte, alexIncLen,
   	AlexPosn(..), alexStartPos,
  
 	P, runP, StartCode, failP, lookupSMac, lookupRMac, newSMac, newRMac,
@@ -47,6 +47,9 @@ alexGetByte (_,_,[],[]) = Nothing
 alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
                                   (b:bs) = UTF8.encode c
                               in p' `seq`  Just (b, (p', c, bs, s))
+
+alexIncLen :: Byte -> Int -> Int
+alexIncLen c len = if c < 0x80 || c >= 0xC0 then len + 1 else len
 
 -- -----------------------------------------------------------------------------
 -- Token positions

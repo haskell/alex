@@ -173,7 +173,7 @@ alex_scan_tkn user orig_input len input s last_acc =
 	    ILIT(-1) -> (new_acc, input)
 		-- on an error, we want to keep the input *before* the
 		-- character that failed, not after.
-            _ -> alex_scan_tkn user orig_input (case incrLen c IBOX(len) of { IBOX(len_) -> len_ })
+            _ -> alex_scan_tkn user orig_input (case alexIncLen c IBOX(len) of { IBOX(len_) -> len_ })
 			new_input new_s new_acc
       }
   where
