@@ -10,7 +10,7 @@ else
 HS_PROG_EXT = .bin
 endif
 
-TESTS = unicode.x simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x tokens_posn_bytestring.x tokens_strict_bytestring.x
+TESTS = unicode.x simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x tokens_posn_bytestring.x tokens_strict_bytestring.x null.x
 
 TEST_ALEX_OPTS = --template=..
 
@@ -19,9 +19,6 @@ TEST_ALEX_OPTS = --template=..
 
 %.g.hs : %.x
 	$(ALEX) $(TEST_ALEX_OPTS) -g $< -o $@
-
-%.o : %.hs
-	$(HC) $(HC_OPTS) -c -o $@ $<
 
 CLEAN_FILES += *.n.hs *.g.hs *.info *.hi *.o *.bin *.exe
 
@@ -32,7 +29,7 @@ ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 %.run : %$(HS_PROG_EXT)
 	./$<
 
-%$(HS_PROG_EXT) : %.o
+%$(HS_PROG_EXT) : %.hs
 	$(HC) $(HC_OPTS) -package array -package bytestring $($*_LD_OPTS) $< -o $@
 
 all :: $(ALL_TESTS)
