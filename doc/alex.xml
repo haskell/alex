@@ -1602,7 +1602,7 @@ type AlexInput = (AlexPosn,   -- current position,
 <programlisting>
 import qualified Data.ByteString.Lazy as ByteString
 
-ata AlexState = AlexState {
+data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
         alex_inp :: ByteString.ByteString, -- the current input
         alex_chr :: !Char,      -- the character before the input
