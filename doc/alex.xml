@@ -1105,8 +1105,7 @@ $del      = \127                  -- ASCII DEL</programlisting>
 
 <programlisting>type AlexInput
 alexGetByte       :: AlexInput -> Maybe (Word8,AlexInput)
-alexInputPrevChar :: AlexInput -> Char
-alexIncLen        :: Byte -> Int -> Int</programlisting>
+alexInputPrevChar :: AlexInput -> Char</programlisting>
 
       <para>The generated lexer is independent of the input type,
       which is why you have to provide a definition for the input type
@@ -1121,21 +1120,7 @@ alexIncLen        :: Byte -> Int -> Int</programlisting>
       <literal>alexInputPrevChar</literal> return
       <literal>undefined</literal>.</para>
 
-      <para>The <literal>alexIncLen</literal> function determines how
-      the token length in the <literal>AlexReturn</literal> type
-      (below) is calculated.  It is called once for each byte consumed
-      by the lexer, and is passed the byte and the current token
-      length.  It should return the new token length after the byte is
-      consumed.  The two most common choices are to either increment
-      the length for every byte, giving a token length of the number
-      of bytes, or to incrememt the token length only for bytes that
-      represent the beginning of a new character in the UTF-8
-      encoding, resulting in a token length of the number of
-      characters.  The latter is implemented as follows:</para>
-
-<programlisting>alexIncLen c len = if c &lt; 0x80 || c >= 0xC0 then len + 1 else len</programlisting>
-
-      <para>Alex provides the following function:</para>
+      <para>Alex will provide the following function:</para>
 
 <programlisting>alexScan :: AlexInput             -- The current input
          -> Int                   -- The "start code"
