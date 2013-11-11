@@ -119,6 +119,18 @@ alexGetByte (AlexInput _ cs)
                   , ByteString.unsafeTail cs)
 #endif
 
+{-# INLINE incrLen #-}
+incrLen :: Byte -> Int -> Int
+#if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_STRICT_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
+incrLen c len = len + 1
+  -- token length for the ByteString wrappers is the number of bytes
+#else
+incrLen c len = if c < 0x80 || c >= 0xC0 then len + 1 else len
+  -- token length for the [Char] wrappers is the number of Chars,
+  -- hence the length is increased ONLY if this is the 1st byte in a
+  -- UTF-8 char.
+#endif
+
 -- -----------------------------------------------------------------------------
 -- Token positions
 
