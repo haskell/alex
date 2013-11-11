@@ -75,6 +75,9 @@ type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
                   ByteString.ByteString)        -- current input string
 
+ignorePendingBytes :: AlexInput -> AlexInput
+ignorePendingBytes i = i   -- no pending bytes when lexing bytestrings
+
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (p,c,s) = c
 
