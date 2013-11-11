@@ -1208,11 +1208,7 @@ data AlexReturn action
          :: user             -- predicate state
          -> AlexInput        -- The current input
          -> Int              -- The "start code"
-         -> Maybe (          -- Nothing on error or EOF
-                 AlexInput,  -- The remaining input
-                 Int,        -- Length of this token
-                 action      -- The action (an unknown type)
-              )</programlisting>
+         -> AlexReturn action</programlisting>
 
       <para>The extra argument, of some type <literal>user</literal>,
       is passed to each predicate.</para>
