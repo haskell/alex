@@ -57,13 +57,16 @@ extra-source-files:
 	templates/GenericTemplate.hs
         templates/wrappers.hs
 	tests/Makefile
-	tests/simple.x
-	tests/tokens.x
+        tests/simple.x
+        tests/null.x
+        tests/tokens.x
 	tests/tokens_gscan.x
 	tests/tokens_posn.x
         tests/tokens_bytestring.x
         tests/tokens_posn_bytestring.x
         tests/tokens_strict_bytestring.x
+        tests/tokens_monad_bytestring.x
+        tests/tokens_monadUserState_bytestring.x
         tests/unicode.x
 
 source-repository head
