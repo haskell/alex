@@ -5,7 +5,7 @@ license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
 author: Chris Dornan and Simon Marlow
 maintainer: Simon Marlow <marlowsd@gmail.com>
-bug-reports: mailto:marlowsd@gmail.com
+bug-reports: https://github.com/simonmar/alex/issues
 stability: stable
 homepage: http://www.haskell.org/alex/
 synopsis: Alex is a tool for generating lexical analysers in Haskell
