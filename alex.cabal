@@ -1,5 +1,5 @@
 name: alex
-version: 3.1.1
+version: 3.1.2
 license: BSD3
 license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
@@ -15,6 +15,10 @@ description:
   expressions and generates a Haskell module containing code
   for scanning text efficiently. It is similar to the tool
   lex or flex for C/C++.
+  .
+  Changes in 3.1.2:
+  .
+  * Add missing file to extra-source-files
   .
   Changes in 3.1.1:
   .
@@ -71,6 +75,7 @@ extra-source-files:
         tests/tokens_strict_bytestring.x
         tests/tokens_monad_bytestring.x
         tests/tokens_monadUserState_bytestring.x
+        tests/tokens_bytestring_unicode.x
         tests/unicode.x
 
 source-repository head
