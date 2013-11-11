@@ -1,5 +1,5 @@
 name: alex
-version: 3.1.1
+version: 3.2
 license: BSD3
 license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
@@ -16,9 +16,10 @@ description:
   for scanning text efficiently. It is similar to the tool
   lex or flex for C/C++.
   .
-  Changes in 3.1.1:
+  Changes in 3.2:
   .
   * Bug fixes (#24, #30, #31, #32)
+  * Clients not using a wrapper must now define alexIncLen, see the docs for details.
   .
   Changes in 3.1.0:
   .
