@@ -296,7 +296,7 @@ alexSetStartCode :: Int -> Alex ()
 alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 
 alexMonadScan = do
-  inp <- alexGetInput
+  inp@(_,_,str) <- alexGetInput
   sc <- alexGetStartCode
   case alexScan inp sc of
     AlexEOF -> alexEOF
@@ -304,9 +304,11 @@ alexMonadScan = do
     AlexSkip  inp' len -> do
         alexSetInput inp'
         alexMonadScan
-    AlexToken inp' len action -> do
+    AlexToken inp'@(_,_,str') len action -> do
         alexSetInput inp'
         action (ignorePendingBytes inp) len
+      where
+        len = ByteString.length str - ByteString.length str'
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -369,8 +371,8 @@ alexScanTokens str = go ('\n',str)
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act (ByteString.take (fromIntegral len) str) : go inp'
-
+                AlexToken inp'@(_,str') _ act -> act (ByteString.take len str) : go inp'
+                 where len = ByteString.length str - ByteString.length str'
 
 #endif
 
@@ -383,7 +385,8 @@ alexScanTokens str = go (AlexInput '\n' str)
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act (ByteString.unsafeTake len str) : go inp'
+                AlexToken inp'@(AlexInput _ str') _ act -> act (ByteString.unsafeTake len str) : go inp'
+                 where len = ByteString.length str - ByteString.length str'
 
 #endif
 

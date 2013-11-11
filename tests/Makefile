@@ -10,7 +10,7 @@ else
 HS_PROG_EXT = .bin
 endif
 
-TESTS = unicode.x simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x tokens_posn_bytestring.x tokens_strict_bytestring.x tokens_monad_bytestring.x tokens_monadUserState_bytestring.x null.x
+TESTS = unicode.x simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x tokens_posn_bytestring.x tokens_strict_bytestring.x tokens_monad_bytestring.x tokens_monadUserState_bytestring.x null.x tokens_bytestring_unicode.x
 
 TEST_ALEX_OPTS = --template=..
 
