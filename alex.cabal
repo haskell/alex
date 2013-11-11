@@ -19,7 +19,6 @@ description:
   Changes in 3.1.1:
   .
   * Bug fixes (#24, #30, #31, #32)
-  * Clients not using a wrapper must now define alexIncLen, see the docs for details.
   .
   Changes in 3.1.0:
   .
