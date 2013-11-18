@@ -23,6 +23,7 @@
 #define ILIT(n) n#
 #define IBOX(n) (I# (n))
 #define FAST_INT Int#
+
 ALEX_IF_GHC_GT_706
 ALEX_DEFINE GTE(n,m) (tagToEnum# (n >=# m))
 ALEX_DEFINE EQ(n,m) (tagToEnum# (n ==# m))
@@ -93,6 +94,7 @@ alexIndexInt32OffAddr arr off = arr ! off
 #endif
 
 #ifdef ALEX_GHC
+
 ALEX_IF_GHC_LT_503
 quickIndex arr i = arr ! i
 ALEX_ELSE
