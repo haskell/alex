@@ -23,7 +23,7 @@
 #define ILIT(n) n#
 #define IBOX(n) (I# (n))
 #define FAST_INT Int#
-
+-- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
 ALEX_IF_GHC_GT_706
 ALEX_DEFINE GTE(n,m) (tagToEnum# (n >=# m))
 ALEX_DEFINE EQ(n,m) (tagToEnum# (n ==# m))
@@ -51,7 +51,7 @@ ALEX_ENDIF
 
 #ifdef ALEX_GHC
 data AlexAddr = AlexA# Addr#
-
+-- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
 ALEX_IF_GHC_LT_503
 uncheckedShiftL# = shiftL#
 ALEX_ENDIF
