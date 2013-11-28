@@ -13,6 +13,7 @@ import Distribution.Simple.Program
 import System.FilePath ((</>))
 import Control.Exception ( IOException, try )
 import System.Directory (removeFile)
+import Data.Char
 
 main :: IO ()
 main = defaultMainWithHooks simpleUserHooks{ postBuild = myPostBuild,
@@ -23,23 +24,19 @@ main = defaultMainWithHooks simpleUserHooks{ postBuild = myPostBuild,
 -- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
 -- '{-# LINE 27 "GenericTemplate.hs" #-}'.
 mungeLinePragma line = case symbols line of
- ["#", number, string] | length string >= 2
-                      && head string == '"'
-                      && last string == '"'
-   -> case reads number of
-        [(n, "")] -> "{-# LINE " ++ show (n :: Int) ++ " " ++ string ++ " #-}"
-        _         -> line
- -- For clang
- ["#", number, string, _] | length string >= 2
-                      && head string == '"'
-                      && last string == '"'
-   -> case reads number of
-        [(n, "")] -> "{-# LINE " ++ show (n :: Int) ++ " " ++ string ++ " #-}"
-        _         -> line
+ syms | Just prag <- getLinePrag syms  -> prag
  -- Also convert old-style CVS lines, no idea why we do this...
  ("--":"$":"Id":":":_) -> filter (/='$') line
  (     "$":"Id":":":_) -> filter (/='$') line
  _ -> line
+
+getLinePrag :: [String] -> Maybe String
+getLinePrag ("#" : n : string : rest)
+  | length rest <= 1   -- clang puts an extra field
+  , length string >= 2 && head string == '"' && last string == '"'
+  , all isDigit n
+  = Just $ "{-# LINE " ++ n ++ " " ++ string ++ " #-}"
+getLinePrag other = Nothing
 
 symbols :: String -> [String]
 symbols cs = case lex cs of
