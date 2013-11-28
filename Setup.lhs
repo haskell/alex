@@ -29,6 +29,13 @@ mungeLinePragma line = case symbols line of
    -> case reads number of
         [(n, "")] -> "{-# LINE " ++ show (n :: Int) ++ " " ++ string ++ " #-}"
         _         -> line
+ -- For clang
+ ["#", number, string, _] | length string >= 2
+                      && head string == '"'
+                      && last string == '"'
+   -> case reads number of
+        [(n, "")] -> "{-# LINE " ++ show (n :: Int) ++ " " ++ string ++ " #-}"
+        _         -> line
  -- Also convert old-style CVS lines, no idea why we do this...
  ("--":"$":"Id":":":_) -> filter (/='$') line
  (     "$":"Id":":":_) -> filter (/='$') line
