@@ -41,6 +41,8 @@ extra-source-files:
 	README
 	TODO
 	alex.spec
+	artifacts/alex/alex-tmp/Parser.hs
+	artifacts/alex/alex-tmp/Scan.hs
 	doc/Makefile
 	doc/aclocal.m4
 	doc/alex.1.in
