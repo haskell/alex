@@ -1,4 +1,15 @@
-# Put the Happy-generated .hs files in the right place in the source dist.
+#!/bin/sh
+# Produce an sdist tarball with Alex- and Happy-generated .hs files in
+# the right place.
+set -e
+cabal sandbox init
+cabal install
+cabal sdist
+
+
+# XXX [2014-07-01]: The below seems outdated, but as it seems to
+# possibly contain important information I'm leaving it here.  (It was
+# all commented out before anyway.)
 
 # Not necessary any more, Cabal does this:
 
