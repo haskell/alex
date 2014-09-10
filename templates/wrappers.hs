@@ -4,6 +4,7 @@
 -- This code is in the PUBLIC DOMAIN; you may copy it freely and use
 -- it for any purpose whatsoever.
 
+import Control.Applicative (Applicative (..))
 import Data.Word (Word8)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
@@ -172,6 +173,19 @@ runAlex input (Alex f)
                                           Right ( _, a ) -> Right a
 
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
+
+instance Functor Alex where
+  fmap f a = Alex $ \s -> case unAlex a s of
+                            Left msg -> Left msg
+                            Right (s', a') -> Right (s', f a')
+
+instance Applicative Alex where
+  pure a   = Alex $ \s -> Right (s, a)
+  fa <*> a = Alex $ \s -> case unAlex fa s of
+                            Left msg -> Left msg
+                            Right (s', f) -> case unAlex a s' of
+                                               Left msg -> Left msg
+                                               Right (s'', b) -> Right (s'', f b)
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
