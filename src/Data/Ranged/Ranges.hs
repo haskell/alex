@@ -51,7 +51,7 @@ import Data.Maybe
 import Test.QuickCheck
 
 -- | A Range has upper and lower boundaries.
-data Ord v => Range v = Range {rangeLower, rangeUpper :: Boundary v}
+data Range v = Range {rangeLower, rangeUpper :: Boundary v}
 
 instance (DiscreteOrdered a) => Eq (Range a) where
    r1 == r2   = (rangeIsEmpty r1 && rangeIsEmpty r2) ||

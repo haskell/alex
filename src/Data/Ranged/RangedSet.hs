@@ -69,7 +69,7 @@ infixl 5 -<=-, -<-, -?-
 
 -- | An RSet (for Ranged Set) is a list of ranges.  The ranges must be sorted
 -- and not overlap.
-newtype DiscreteOrdered v => RSet v = RSet {rSetRanges :: [Range v]}
+newtype RSet v = RSet {rSetRanges :: [Range v]}
    deriving (Eq, Show, Ord)
 
 instance DiscreteOrdered a => Monoid (RSet a) where
