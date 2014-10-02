@@ -19,6 +19,9 @@ import CharSet ( CharSet )
 import Map ( Map )
 import qualified Map hiding ( Map )
 import UTF8
+
+import Control.Applicative ( Applicative(..) )
+import Control.Monad ( liftM, ap )
 import Data.Word (Word8)
 -- -----------------------------------------------------------------------------
 -- The input type
@@ -83,6 +86,13 @@ data PState = PState {
 	     }
 
 newtype P a = P { unP :: PState -> Either ParseError (PState,a) }
+
+instance Functor P where
+  fmap = liftM
+
+instance Applicative P where
+  pure  = return
+  (<*>) = ap
 
 instance Monad P where
  (P m) >>= k = P $ \env -> case m env of

@@ -23,7 +23,8 @@ import Map ( Map )
 import qualified Map hiding ( Map )
 import Util ( str, space )
 
-import Control.Monad ( forM_, zipWithM, zipWithM_, when )
+import Control.Applicative ( Applicative(..) )
+import Control.Monad ( forM_, zipWithM, zipWithM_, when, liftM, ap )
 import Data.Array ( Array, (!), array, listArray, assocs, bounds )
 
 -- Each state of a nondeterministic automaton contains a list of `Accept'
@@ -161,6 +162,13 @@ rexp2nfa b e (Ques re) = do
 type MapNFA = Map SNum NState
 
 newtype NFAM a = N {unN :: SNum -> MapNFA -> Encoding -> (SNum, MapNFA, a)}
+
+instance Functor NFAM where
+  fmap = liftM
+
+instance Applicative NFAM where
+  pure  = return
+  (<*>) = ap
 
 instance Monad NFAM where
   return a = N $ \s n _ -> (s,n,a)
