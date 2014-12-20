@@ -24,7 +24,7 @@ tokens :-
 -- Each right-hand side has type :: AlexPosn -> String -> Token
 
 -- Some action helpers:
-tok f (p,_,input) len = return (f p (B.take (fromIntegral len) input))
+tok f (p,_,input,_) len = return (f p (B.take (fromIntegral len) input))
 
 -- The token type:
 data Token =
