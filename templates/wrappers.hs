@@ -6,6 +6,7 @@
 
 import Control.Applicative (Applicative (..))
 import Data.Word (Word8)
+import Data.Int (Int64)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
 import qualified Data.Char
@@ -74,50 +75,59 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
-                  ByteString.ByteString)        -- current input string
+                  ByteString.ByteString,        -- current input string
+                  Int64)           -- bytes consumed so far
 
 ignorePendingBytes :: AlexInput -> AlexInput
 ignorePendingBytes i = i   -- no pending bytes when lexing bytestrings
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (p,c,s) = c
+alexInputPrevChar (_,c,_,_) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (p,_,cs) | ByteString.null cs = Nothing
-                     | otherwise = let b   = ByteString.head cs
-                                       cs' = ByteString.tail cs
-                                       c   = ByteString.w2c b
-                                       p'  = alexMove p c
-                                    in p' `seq` cs' `seq` Just (b, (p', c, cs'))
+alexGetByte (p,_,cs,n) | ByteString.null cs = Nothing
+                       | otherwise = let b   = ByteString.head cs
+                                         cs' = ByteString.tail cs
+                                         c   = ByteString.w2c b
+                                         p'  = alexMove p c
+                                         n'  = n+1
+                                     in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs',n'))
 #endif
 
 #ifdef ALEX_BASIC_BYTESTRING
-type AlexInput = (Char,
-                  ByteString.ByteString)
-
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (c,_) = c
-
-alexGetByte (_, cs)
-   | ByteString.null cs = Nothing
-   | otherwise          = Just (ByteString.head cs,
-                                (ByteString.w2c $ ByteString.head cs,
-                                 ByteString.tail cs))
-#endif
-
-#ifdef ALEX_STRICT_BYTESTRING
-data AlexInput = AlexInput { alexChar :: {-# UNPACK #-}!Char
-                           , alexStr  :: {-# UNPACK #-}!ByteString.ByteString }
+data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,
+                             alexStr ::  !ByteString.ByteString,
+                             alexBytePos :: {-# UNPACK #-} !Int64}
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexChar
 
-alexGetByte (AlexInput _ cs)
-    | ByteString.null cs = Nothing
-    | otherwise          = Just $!  (ByteString.head cs, AlexInput c cs')
-    where
-        (c,cs') = (ByteString.w2c (ByteString.unsafeHead cs)
-                  , ByteString.unsafeTail cs)
+alexGetByte (AlexInput {alexStr=cs,alexBytePos=n})
+   | ByteString.null cs = Nothing
+   | otherwise          =
+     Just (ByteString.head cs,
+           AlexInput {
+             alexChar = ByteString.w2c $ ByteString.head cs,
+             alexStr =  ByteString.tail cs,
+             alexBytePos = n+1})
+#endif
+
+#ifdef ALEX_STRICT_BYTESTRING
+data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,
+                             alexStr :: {-# UNPACK #-} !ByteString.ByteString,
+                             alexBytePos :: {-# UNPACK #-} !Int}
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar = alexChar
+
+alexGetByte (AlexInput {alexStr=cs,alexBytePos=n})
+   | ByteString.null cs = Nothing
+   | otherwise          =
+     Just $! (ByteString.head cs,
+           AlexInput {
+             alexChar = ByteString.w2c $ ByteString.unsafeHead cs,
+             alexStr =  ByteString.unsafeTail cs,
+             alexBytePos = n+1})
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -261,6 +271,7 @@ token t input len = return (t input len)
 #ifdef ALEX_MONAD_BYTESTRING
 data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
+        alex_bpos:: !Int64,     -- bytes consumed so far
         alex_inp :: ByteString.ByteString,      -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
@@ -274,6 +285,7 @@ data AlexState = AlexState {
 runAlex :: ByteString.ByteString -> Alex a -> Either String a
 runAlex input (Alex f) 
    = case f (AlexState {alex_pos = alexStartPos,
+                        alex_bpos = 0,
                         alex_inp = input,       
                         alex_chr = '\n',
 #ifdef ALEX_MONAD_USER_STATE
@@ -292,12 +304,15 @@ instance Monad Alex where
 
 alexGetInput :: Alex AlexInput
 alexGetInput
- = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_inp=inp} -> 
-        Right (s, (pos,c,inp))
+ = Alex $ \s@AlexState{alex_pos=pos,alex_bpos=bpos,alex_chr=c,alex_inp=inp} -> 
+        Right (s, (pos,c,inp,bpos))
 
 alexSetInput :: AlexInput -> Alex ()
-alexSetInput (pos,c,inp)
- = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_inp=inp} of
+alexSetInput (pos,c,inp,bpos)
+ = Alex $ \s -> case s{alex_pos=pos,
+                       alex_bpos=bpos,
+                       alex_chr=c,
+                       alex_inp=inp} of
                   s@(AlexState{}) -> Right (s, ())
 
 alexError :: String -> Alex a
@@ -310,19 +325,19 @@ alexSetStartCode :: Int -> Alex ()
 alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 
 alexMonadScan = do
-  inp@(_,_,str) <- alexGetInput
+  inp@(_,_,str,n) <- alexGetInput
   sc <- alexGetStartCode
   case alexScan inp sc of
     AlexEOF -> alexEOF
-    AlexError ((AlexPn _ line column),_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+    AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
     AlexSkip  inp' len -> do
         alexSetInput inp'
         alexMonadScan
-    AlexToken inp'@(_,_,str') len action -> do
+    AlexToken inp'@(_,_,_,n') _ action -> do
         alexSetInput inp'
         action (ignorePendingBytes inp) len
       where
-        len = ByteString.length str - ByteString.length str'
+        len = n'-n
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
@@ -379,28 +394,32 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 #ifdef ALEX_BASIC_BYTESTRING
 
 -- alexScanTokens :: String -> [token]
-alexScanTokens str = go ('\n',str)
-  where go inp@(_,str) =
+alexScanTokens str = go (AlexInput '\n' str 0)
+  where go inp =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp'@(_,str') _ act -> act (ByteString.take len str) : go inp'
-                 where len = ByteString.length str - ByteString.length str'
+                AlexToken inp' _ act -> 
+                  let str = alexStr inp
+                      len = alexBytePos inp' - alexBytePos inp in
+                  act (ByteString.take len str) : go inp'
 
 #endif
 
 #ifdef ALEX_STRICT_BYTESTRING
 
 -- alexScanTokens :: String -> [token]
-alexScanTokens str = go (AlexInput '\n' str)
-  where go inp@(AlexInput _ str) =
+alexScanTokens str = go (AlexInput '\n' str 0)
+  where go inp =
           case alexScan inp 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp'@(AlexInput _ str') _ act -> act (ByteString.unsafeTake len str) : go inp'
-                 where len = ByteString.length str - ByteString.length str'
+                AlexToken inp' _ act -> 
+                  let str = alexStr inp
+                      len = alexBytePos inp' - alexBytePos inp in
+                  act (ByteString.take len str) : go inp'
 
 #endif
 
@@ -427,13 +446,14 @@ alexScanTokens str = go (alexStartPos,'\n',[],str)
 
 #ifdef ALEX_POSN_BYTESTRING
 --alexScanTokens :: ByteString -> [token]
-alexScanTokens str = go (alexStartPos,'\n',str)
-  where go inp@(pos,_,str) =
+alexScanTokens str = go (alexStartPos,'\n',str,0)
+  where go inp@(pos,_,str,n) =
           case alexScan inp 0 of
                 AlexEOF -> []
-                AlexError ((AlexPn _ line column),_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
                 AlexSkip  inp' len     -> go inp'
-                AlexToken inp' len act -> act pos (ByteString.take (fromIntegral len) str) : go inp'
+                AlexToken inp'@(_,_,_,n') _ act ->
+                  act pos (ByteString.take (n'-n) str) : go inp'
 #endif
 
 
