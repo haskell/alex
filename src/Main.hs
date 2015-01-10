@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Main.hs, part of Alex
 --
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
@@ -67,7 +67,7 @@ alexOpenFile file mode = do
 alexOpenFile = openFile
 #endif
 
--- `main' decodes the command line arguments and calls `alex'.  
+-- `main' decodes the command line arguments and calls `alex'.
 
 main:: IO ()
 main =	do
@@ -78,7 +78,7 @@ main =	do
         bye (usageInfo (usageHeader prog) argInfo)
     (cli,_,[]) | DumpVersion `elem` cli ->
 	bye copyright
-    (cli,[file],[]) -> 
+    (cli,[file],[]) ->
 	runAlex cli file
     (_,_,errors) -> do
 	prog <- getProgramName
@@ -98,7 +98,7 @@ runAlex cli file = do
   basename <- case (reverse file) of
 		'x':'.':r -> return (reverse r)
 		_         -> die (file ++ ": filename must end in \'.x\'\n")
-  
+
   prg <- alexReadFile file
   script <- parseScript file prg
   alex cli file basename script
@@ -107,7 +107,7 @@ parseScript :: FilePath -> String
   -> IO (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code))
 parseScript file prg =
   case runP prg initialParserEnv parse of
-	Left (Just (AlexPn _ line col),err) -> 
+	Left (Just (AlexPn _ line col),err) ->
 		die (file ++ ":" ++ show line ++ ":" ++ show col
 				 ++ ": " ++ err ++ "\n")
 	Left (Nothing, err) ->
@@ -119,19 +119,19 @@ alex :: [CLIFlags] -> FilePath -> FilePath
      -> (Maybe (AlexPosn, Code), [Directive], Scanner, Maybe (AlexPosn, Code))
      -> IO ()
 alex cli file basename script = do
-   (put_info, finish_info) <- 
+   (put_info, finish_info) <-
       case [ f | OptInfoFile f <- cli ] of
  	   []  -> return (\_ -> return (), return ())
  	   [Nothing] -> infoStart file (basename ++ ".info")
  	   [Just f]  -> infoStart file f
  	   _   -> dieAlex "multiple -i/--info options"
-   
+
    o_file <- case [ f | OptOutputFile f <- cli ] of
 		[]  -> return (basename ++ ".hs")
 		[f] -> return f
 		_   -> dieAlex "multiple -o/--outfile options"
-  
-   let target 
+
+   let target
 	| OptGhcTarget `elem` cli = GhcTarget
 	| otherwise               = HaskellTarget
 
@@ -140,9 +140,9 @@ alex cli file basename script = do
         | otherwise            = UTF8
 
    template_dir  <- templateDir getDataDir cli
-		
+
    -- open the output file; remove it if we encounter an error
-   bracketOnError 
+   bracketOnError
         (alexOpenFile o_file WriteMode)
 	(\h -> do hClose h; removeFile o_file)
 	$ \out_h -> do
@@ -151,7 +151,7 @@ alex cli file basename script = do
 	 (maybe_header, directives, scanner1, maybe_footer) = script
  	 (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
 	 (scanner_final, actions) = extractActions scanner2
- 
+
    wrapper_name <- wrapperFile template_dir directives
 
    hPutStr out_h (optsToInject target cli)
@@ -169,7 +169,7 @@ alex cli file basename script = do
        nm  = scannerName scanner_final
        usespreds = usesPreds min_dfa
 
-   
+
    put_info "\nStart codes\n"
    put_info (show $ scs)
    put_info "\nScanner\n"
@@ -203,8 +203,11 @@ injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl code
 
 optsToInject :: Target -> [CLIFlags] -> String
-optsToInject GhcTarget _ = "{-# LANGUAGE CPP,MagicHash #-}\n"
-optsToInject _         _ = "{-# LANGUAGE CPP #-}\n"
+optsToInject GhcTarget _ = optNoWarnings ++ "{-# LANGUAGE CPP,MagicHash #-}\n"
+optsToInject _         _ = optNoWarnings ++ "{-# LANGUAGE CPP #-}\n"
+
+optNoWarnings :: String
+optNoWarnings = "{-# OPTIONS_GHC -w #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
@@ -260,7 +263,7 @@ templateDir def cli
 templateFile :: FilePath -> Target -> UsesPreds -> [CLIFlags] -> FilePath
 templateFile dir target usespreds cli
   = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug ++ maybe_nopred
-  where 
+  where
 	maybe_ghc = case target of
                       GhcTarget -> "-ghc"
                       _         -> ""
@@ -294,7 +297,7 @@ infoStart x_file info_file = do
 infoHeader :: Handle -> FilePath -> IO ()
 infoHeader h file = do
 --  hSetBuffering h NoBuffering
-  hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++ 
+  hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++
                 ", from " ++ file)
   hPutStrLn h hline
   hPutStr h "\n"
@@ -305,7 +308,7 @@ initialParserEnv = (initSetEnv, initREEnv)
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
 		           ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
-		           (".", charSetComplement emptyCharSet 
+		           (".", charSetComplement emptyCharSet
 			    `charSetMinus` charSetSingleton '\n')]
 
 initREEnv :: Map String RExp
@@ -314,7 +317,7 @@ initREEnv = Map.empty
 -- -----------------------------------------------------------------------------
 -- Command-line flags
 
-data CLIFlags 
+data CLIFlags
   = OptDebugParser
   | OptGhcTarget
   | OptOutputFile FilePath
@@ -371,8 +374,8 @@ bracketOnError
 	-> IO c		-- returns the value from the in-between computation
 bracketOnError before after thing =
   block (do
-    a <- before 
-    r <- Exception.catch 
+    a <- before
+    r <- Exception.catch
 	   (unblock (thing a))
 	   (\e -> do { after a; throw e })
     return r
