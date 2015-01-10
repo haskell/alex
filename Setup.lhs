@@ -1,27 +1,34 @@
-#!/usr/bin/runhaskell
+#!/usr/bin/env runhaskell
 
 \begin{code}
+{-# OPTIONS -fwarn-unused-imports #-}
 module Main where
 
-import Distribution.Verbosity
 import Distribution.PackageDescription (PackageDescription(..))
-import Distribution.Simple.Setup ( BuildFlags(..), buildVerbosity, fromFlagOrDefault )
-import Distribution.Simple ( defaultMainWithHooks, simpleUserHooks, UserHooks(..) )
-import Distribution.Simple.LocalBuildInfo ( LocalBuildInfo(..) )
+import Distribution.Simple.Setup (BuildFlags(..), buildVerbosity, fromFlagOrDefault)
+import Distribution.Simple (defaultMainWithHooks, simpleUserHooks, UserHooks(..))
+import Distribution.Simple.LocalBuildInfo (LocalBuildInfo(..))
 import Distribution.Simple.Program
+import Distribution.Simple.Utils (notice)
+import Distribution.Verbosity (normal)
 
-import System.FilePath ((</>))
 import Control.Exception ( IOException, try )
-import System.Directory (removeFile)
+import Control.Monad (unless, when)
 import Data.Char
+import Data.Maybe (isJust)
+import System.Directory (removeFile, createDirectoryIfMissing, copyFile)
+import System.FilePath (splitFileName, (</>))
 
 main :: IO ()
-main = defaultMainWithHooks simpleUserHooks{ postBuild = myPostBuild,
-                                             postClean = myPostClean,
-                                             copyHook  = myCopy,
-                                             instHook  = myInstall }
+main = defaultMainWithHooks simpleUserHooks {
+    buildHook      = myBuild
+  , postBuild      = myPostBuild
+  , postClean      = myPostClean
+  , copyHook       = myCopy
+  , instHook       = myInstall
+  }
 
--- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
+-- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into
 -- '{-# LINE 27 "GenericTemplate.hs" #-}'.
 mungeLinePragma line = case symbols line of
  syms | Just prag <- getLinePrag syms  -> prag
@@ -42,6 +49,48 @@ symbols :: String -> [String]
 symbols cs = case lex cs of
               (sym, cs'):_ | not (null sym) -> sym : symbols cs'
               _ -> []
+
+{-|
+  Alex contains .x and .y files in its source code which need to be
+  lexed by Alex and parsed by Happy, respectively.  In order to get
+  Alex to compile on systems which don't already have Alex + Happy,
+  we must break this circular dependency by putting build artifacts
+  into the distribution tarball.  This hook looks for preparsed .hs
+  files in the artifacts/ directory if Alex and Happy are not found
+  on the system, and copies them to the right place before building
+  so that Alex and Happy will not be called.  If Alex and Happy are
+  found, then we will produce the build artifacts as usual and then
+  copy them to the artifacts/ directory, in anticipation of a later
+  run of cabal sdist by the maintainer to prepare a source tarball.
+ -}
+shippedArtifacts :: [FilePath]
+shippedArtifacts =
+  [ "alex" </> "alex-tmp" </> "Parser.hs"
+  , "alex" </> "alex-tmp" </> "Scan.hs"
+  ]
+
+copyArtifact :: FilePath -> FilePath -> FilePath -> IO ()
+copyArtifact src dst f = do
+  createDirectoryIfMissing True $ dst </> (fst $ splitFileName f)
+  copyFile (src </> f) (dst </> f)
+
+myBuild pkg_descr lbi hooks flags = do
+  let verbosity = fromFlagOrDefault normal $ buildVerbosity flags
+      path      = getProgramSearchPath (withPrograms lbi)
+  happyExistence <- programFindLocation happyProgram verbosity path
+  alexExistence  <- programFindLocation  alexProgram verbosity path
+  let happyAlexExistence = happyExistence >> alexExistence
+
+  unless (isJust happyAlexExistence) $ do
+    notice verbosity ("No existing happy parser and/or alex lexer; " ++
+                      "using saved artifacts...")
+    mapM_ (copyArtifact "artifacts" (buildDir lbi)) shippedArtifacts
+
+  buildHook simpleUserHooks pkg_descr lbi hooks flags
+
+  when (isJust happyAlexExistence) $ do
+    notice verbosity "Saving build artifacts for future generations..."
+    mapM_ (copyArtifact (buildDir lbi) "artifacts") shippedArtifacts
 
 myPostBuild _ flags _ lbi = do
   let verbosity = fromFlagOrDefault normal (buildVerbosity flags)
