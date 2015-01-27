@@ -10,7 +10,7 @@ else
 exeext=
 endif
 
-PROGS = lit Tokens Tokens_gscan words words_posn words_monad tiny haskell
+PROGS = lit Tokens Tokens_gscan words words_posn words_monad tiny haskell tiger
 
 ALEX_OPTS = --template=.. -g
 # ALEX_OPTS = --template=..
@@ -51,6 +51,9 @@ words_monad$(exeext) : words_monad.hs
 
 haskell$(exeext) : haskell.hs
 	$(HC) $(HC_OPTS) -o $@ $^
+
+tiger$(exeext) : tiger.hs
+	$(HC) $(HC_OPTS) -main-is TigerLexer -o $@ $^
 
 .PHONY: clean
 clean:
