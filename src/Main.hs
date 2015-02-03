@@ -33,8 +33,11 @@ import Control.Exception ( bracketOnError )
 import Control.Monad ( when, liftM )
 import Data.Char ( chr )
 import Data.List ( isSuffixOf )
-import Data.Maybe ( isJust, fromJust )
+import Data.Maybe ( isJust, fromJust, fromMaybe )
 import Data.Version ( showVersion )
+#if __GLASGOW_HASKELL__ >= 707
+import Text.Read ( readMaybe )
+#endif
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
 import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
@@ -130,6 +133,14 @@ alex cli file basename script = do
 		[]  -> return (basename ++ ".hs")
 		[f] -> return f
 		_   -> dieAlex "multiple -o/--outfile options"
+
+   tab_size <- case [ f | OptTabSize f <- cli ] of
+        []  -> return 8
+        [s] -> if s > 0 
+                then return s
+                else dieAlex "tab size must be greater than 0"
+        _   -> dieAlex "multiple -s/--tab-size options"
+
   
    let target 
 	| OptGhcTarget `elem` cli = GhcTarget
@@ -164,6 +175,9 @@ alex cli file basename script = do
 	do str <- alexReadFile (fromJust wrapper_name)
 	   hPutStr out_h str
 
+   -- Inject the tab size
+   hPutStrLn out_h $ "tab_size = " ++ show tab_size
+   
    let dfa = scanner2dfa encoding scanner_final scs
        min_dfa = minimizeDFA dfa
        nm  = scannerName scanner_final
@@ -322,6 +336,7 @@ data CLIFlags
   | OptGhcTarget
   | OptOutputFile FilePath
   | OptInfoFile (Maybe FilePath)
+  | OptTabSize Int
   | OptTemplateDir FilePath
   | OptLatin1
   | DumpHelp
@@ -340,6 +355,8 @@ argInfo  = [
 	"use GHC extensions",
    Option ['l'] ["latin1"]    (NoArg OptLatin1)
         "generated lexer will use the Latin-1 encoding instead of UTF-8",
+   Option ['s'] ["tab-size"]    (ReqArg (OptTabSize . readInt) "NUMBER")
+        "set tab size to be reported form the generated lexer (default: 8)",
    Option ['d'] ["debug"] (NoArg OptDebugParser)
 	"produce a debugging scanner",
    Option ['?'] ["help"] (NoArg DumpHelp)
@@ -347,6 +364,17 @@ argInfo  = [
    Option ['V','v'] ["version"] (NoArg DumpVersion)  -- ToDo: -v is deprecated!
 	"output version information and exit"
   ]
+
+  where
+        -- If a --tab-size flag is passed without a number
+        -- it will fail with size 0
+        readInt = fromMaybe 0 . readMaybe
+#if __GLASGOW_HASKELL__ < 707
+        readMaybe :: Read a => String -> Maybe a
+        readMaybe s = case reads s of
+            [(x, "")] -> Just x
+            _         -> Nothing
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Utils
