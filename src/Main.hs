@@ -35,9 +35,6 @@ import Data.Char ( chr )
 import Data.List ( isSuffixOf )
 import Data.Maybe ( isJust, fromJust, fromMaybe )
 import Data.Version ( showVersion )
-#if __GLASGOW_HASKELL__ >= 707
-import Text.Read ( readMaybe )
-#endif
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
 import System.Directory ( removeFile )
 import System.Environment ( getProgName, getArgs )
@@ -369,12 +366,10 @@ argInfo  = [
         -- If a --tab-size flag is passed without a number
         -- it will fail with size 0
         readInt = fromMaybe 0 . readMaybe
-#if __GLASGOW_HASKELL__ < 707
         readMaybe :: Read a => String -> Maybe a
         readMaybe s = case reads s of
             [(x, "")] -> Just x
             _         -> Nothing
-#endif
 
 -- -----------------------------------------------------------------------------
 -- Utils
