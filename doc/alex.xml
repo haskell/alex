@@ -69,7 +69,7 @@
             </listitem>
             <listitem>
               <para>
-                Alex source files are asumed to be in UTF-8, like
+                Alex source files are assumed to be in UTF-8, like
                 Haskell source files.  The lexer specification can use
                 Unicode characters and ranges.
               </para>
