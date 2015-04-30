@@ -5,6 +5,7 @@
 -- it for any purpose whatsoever.
 
 import Control.Applicative (Applicative (..))
+import qualified Control.Monad (ap)
 import Data.Word (Word8)
 import Data.Int (Int64)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
@@ -295,6 +296,13 @@ runAlex input (Alex f)
                                           Right ( _, a ) -> Right a
 
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
+
+instance Functor Alex where
+  fmap f m = do x <- m; return (f x)
+
+instance Applicative Alex where
+  pure = return
+  (<*>) = Control.Monad.ap
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
