@@ -15,7 +15,7 @@ Changes in Alex 3.0 vs. 2.3.5:
         old 8-bit behaviour is still available via the --latin1
         option.
 
-      * Alex source files are asumed to be in UTF-8, like Haskell
+      * Alex source files are assumed to be in UTF-8, like Haskell
         source files. The lexer specification can use Unicode
         characters and ranges.
 
