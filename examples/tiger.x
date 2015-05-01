@@ -179,7 +179,7 @@ data LexemeClass =
       deriving (Show, Eq)
 
 mkL :: LexemeClass -> AlexInput -> Int -> Alex Lexeme
-mkL c (p, _, str) len = return (Lexeme p c (Just (take len str)))
+mkL c (p, _, _, str) len = return (Lexeme p c (Just (take len str)))
 
 -- states
 
@@ -217,14 +217,14 @@ addCharToString c _     _   =
     do addCharToLexerStringValue c
        alexMonadScan
 
-addCurrentToString i@(_, _, input) len = addCharToString c i len
+addCurrentToString i@(_, _, _, input) len = addCharToString c i len
   where
     c = if (len == 1)
            then head input
            else error "Invalid call to addCurrentToString''"
 
 -- if we are given the special form '\nnn'
-addAsciiToString i@(_, _, input) len = if (v < 256)
+addAsciiToString i@(_, _, _, input) len = if (v < 256)
                                           then addCharToString c i len
                                           else lexerError ("Invalid ascii value : " ++ input)
   where
@@ -238,7 +238,7 @@ addAsciiToString i@(_, _, input) len = if (v < 256)
     c = chr v
 
 -- if we are given the special form '\^A'
-addControlToString i@(_, _, input) len = addCharToString c' i len
+addControlToString i@(_, _, _, input) len = addCharToString c' i len
   where
     c = if (len == 1)
            then head input
@@ -248,12 +248,12 @@ addControlToString i@(_, _, input) len = addCharToString c' i len
             then chr (v - 64)
             else error "Invalid call to 'addControlToString'"
 
-leaveString (p, _, input) len =
+leaveString (p, _, _, input) len =
     do s <- getLexerStringValue
        setLexerStringState False
        return (Lexeme p (STRING (reverse s)) (Just (take len input)))
 
-getInteger (p, _, input) len = if (length r == 1)
+getInteger (p, _, _, input) len = if (length r == 1)
                                   then return (Lexeme p (INT (fst (head r))) (Just s))
                                   else lexerError "Invalid number"
   where
@@ -261,7 +261,7 @@ getInteger (p, _, input) len = if (length r == 1)
     r = readDec s
 
 -- a sequence of letters is an identifier, except for reserved words, which are tested for beforehand
-getVariable (p, _, input) len = return (Lexeme p (ID s) (Just s))
+getVariable (p, _, _, input) len = return (Lexeme p (ID s) (Just s))
   where
     s = take len input
 
@@ -346,16 +346,6 @@ line_number (Just (AlexPn _ lig col)) = (lig, col)
 alexEOF :: Alex Lexeme
 alexEOF = return (Lexeme undefined EOF Nothing)
 
--- type signatures
-
-skip          :: Action
-begin         :: Int -> a -> b -> Alex Lexeme
-andBegin      :: Action -> Int -> Action
-alexMonadScan :: Alex Lexeme
-alexScan      :: AlexInput -> Int -> AlexReturn Action
-token         :: (Monad m) => (t -> t1 -> a) -> t -> t1 -> m a
-alex_accept   :: Array Int [AlexAcc Action a]
-
 -- Execution
 
 scanner :: String -> Either String [Lexeme]
@@ -403,7 +393,7 @@ lexToken =
 
 lexerError :: String -> Alex a
 lexerError msg =
-    do (p, c, inp) <- alexGetInput
+    do (p, c, _, inp) <- alexGetInput
        let inp1 = filter (/= '\r') (takeWhile (/='\n') inp)
        let inp2 = if (length inp1 > 30)
                      then trim (take 30 inp1)
