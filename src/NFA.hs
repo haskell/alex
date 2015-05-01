@@ -23,7 +23,9 @@ import Map ( Map )
 import qualified Map hiding ( Map )
 import Util ( str, space )
 
+#if __GLASGOW_HASKELL__ < 710
 import Control.Applicative ( Applicative(..) )
+#endif
 import Control.Monad ( forM_, zipWithM, zipWithM_, when, liftM, ap )
 import Data.Array ( Array, (!), array, listArray, assocs, bounds )
 
@@ -49,9 +51,9 @@ data NState = NSt {
 instance Show NState where
   showsPrec _ (NSt accs cl outs) =
     str "NSt " . shows accs . space . shows cl . space .
-	shows [ (c, s) | (c,s) <- outs ]
+        shows [ (c, s) | (c,s) <- outs ]
 
-{- 			     From the Scan Module
+{-                           From the Scan Module
 
 -- The `Accept' structure contains the priority of the token being accepted
 -- (lower numbers => higher priorities), the name of the token, a place holder
@@ -79,47 +81,47 @@ scanner2nfa:: Encoding -> Scanner -> [StartCode] -> NFA
 scanner2nfa enc Scanner{scannerTokens = toks} startcodes
    = runNFA enc $
         do
-	  -- make a start state for each start code (these will be
-	  -- numbered from zero).
-	  start_states <- sequence (replicate (length startcodes) newState)
-	  
-	  -- construct the NFA for each token
-	  tok_states <- zipWithM do_token toks [0..]
+          -- make a start state for each start code (these will be
+          -- numbered from zero).
+          start_states <- sequence (replicate (length startcodes) newState)
+          
+          -- construct the NFA for each token
+          tok_states <- zipWithM do_token toks [0..]
 
-	  -- make an epsilon edge from each state state to each
-	  -- token that is acceptable in that state
-	  zipWithM_ (tok_transitions (zip toks tok_states)) 
-		startcodes start_states
+          -- make an epsilon edge from each state state to each
+          -- token that is acceptable in that state
+          zipWithM_ (tok_transitions (zip toks tok_states)) 
+                startcodes start_states
 
-	where
-	  do_token (RECtx _scs lctx re rctx code) prio = do
-		b <- newState
-		e <- newState
-		rexp2nfa b e re
+        where
+          do_token (RECtx _scs lctx re rctx code) prio = do
+                b <- newState
+                e <- newState
+                rexp2nfa b e re
 
-		rctx_e <- case rctx of
-				  NoRightContext ->
-					return NoRightContext
-				  RightContextCode code' ->
-					return (RightContextCode code')
-				  RightContextRExp re' -> do 
-					r_b <- newState
-					r_e <- newState
-		 			rexp2nfa r_b r_e re'
-					accept r_e rctxt_accept
-					return (RightContextRExp r_b)
+                rctx_e <- case rctx of
+                                  NoRightContext ->
+                                        return NoRightContext
+                                  RightContextCode code' ->
+                                        return (RightContextCode code')
+                                  RightContextRExp re' -> do 
+                                        r_b <- newState
+                                        r_e <- newState
+                                        rexp2nfa r_b r_e re'
+                                        accept r_e rctxt_accept
+                                        return (RightContextRExp r_b)
 
-		let lctx' = case lctx of
+                let lctx' = case lctx of
                                   Nothing -> Nothing
-				  Just st -> Just st
+                                  Just st -> Just st
 
-		accept e (Acc prio code lctx' rctx_e)
-		return b
+                accept e (Acc prio code lctx' rctx_e)
+                return b
 
-	  tok_transitions toks_with_states start_code start_state = do
-		let states = [ s | (RECtx scs _ _ _ _, s) <- toks_with_states,
-			           null scs || start_code `elem` map snd scs ]
-		mapM_ (epsilonEdge start_state) states
+          tok_transitions toks_with_states start_code start_state = do
+                let states = [ s | (RECtx scs _ _ _ _, s) <- toks_with_states,
+                                   null scs || start_code `elem` map snd scs ]
+                mapM_ (epsilonEdge start_state) states
 
 -- -----------------------------------------------------------------------------
 -- NFA creation from a regular expression
@@ -178,15 +180,15 @@ instance Monad NFAM where
 
 runNFA :: Encoding -> NFAM () -> NFA
 runNFA e m = case unN m 0 Map.empty e of
-		(s, nfa_map, ()) -> -- trace ("runNfa.." ++ show (Map.toAscList nfa_map)) $ 
-				    e_close (array (0,s-1) (Map.toAscList nfa_map))
+                (s, nfa_map, ()) -> -- trace ("runNfa.." ++ show (Map.toAscList nfa_map)) $ 
+                                    e_close (array (0,s-1) (Map.toAscList nfa_map))
 
 e_close:: Array Int NState -> NFA
 e_close ar = listArray bds
-		[NSt accs (out gr v) outs|(v,NSt accs _ outs)<-assocs ar]
-	where
-	gr = t_close (hi+1,\v->nst_cl (ar!v))
-	bds@(_,hi) = bounds ar
+                [NSt accs (out gr v) outs|(v,NSt accs _ outs)<-assocs ar]
+        where
+        gr = t_close (hi+1,\v->nst_cl (ar!v))
+        bds@(_,hi) = bounds ar
 
 newState :: NFAM SNum
 newState = N $ \s n _ -> (s+1,n,s)
@@ -239,9 +241,9 @@ byteEdge from charset to = N $ \s n _ -> (s, addEdge n, ())
    addEdge n =
      case Map.lookup from n of
        Nothing -> 
-	   Map.insert from (NSt [] [] [(charset,to)]) n
+           Map.insert from (NSt [] [] [(charset,to)]) n
        Just (NSt acc eps trans) ->
-	   Map.insert from (NSt acc eps ((charset,to):trans)) n
+           Map.insert from (NSt acc eps ((charset,to):trans)) n
 
 epsilonEdge :: SNum -> SNum -> NFAM ()
 epsilonEdge from to 
@@ -250,7 +252,7 @@ epsilonEdge from to
  where
    addEdge n =
      case Map.lookup from n of
-       Nothing 			-> Map.insert from (NSt [] [to] []) n
+       Nothing                  -> Map.insert from (NSt [] [to] []) n
        Just (NSt acc eps trans) -> Map.insert from (NSt acc (to:eps) trans) n
 
 accept :: SNum -> Accept Code -> NFAM ()
@@ -259,9 +261,9 @@ accept state new_acc = N $ \s n _ -> (s, addAccept n, ())
    addAccept n = 
      case Map.lookup state n of
        Nothing ->
-	   Map.insert state (NSt [new_acc] [] []) n
+           Map.insert state (NSt [new_acc] [] []) n
        Just (NSt acc eps trans) ->
-	   Map.insert state (NSt (new_acc:acc) eps trans) n
+           Map.insert state (NSt (new_acc:acc) eps trans) n
 
 
 rctxt_accept :: Accept Code

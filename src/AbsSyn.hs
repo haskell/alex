@@ -39,7 +39,7 @@ infixl 5 :%%
 type Code = String
 
 data Directive
-   = WrapperDirective String		-- use this wrapper
+   = WrapperDirective String            -- use this wrapper
 
 -- TODO: update this comment
 --
@@ -54,15 +54,15 @@ data Directive
 -- converted to DFAs; see the DFA section of the Scan module for details.
 
 data Scanner = Scanner { scannerName   :: String,
-			 scannerTokens :: [RECtx] }
+                         scannerTokens :: [RECtx] }
   deriving Show
 
 data RECtx = RECtx { reCtxStartCodes :: [(String,StartCode)],
-		     reCtxPreCtx     :: Maybe CharSet,
-		     reCtxRE	     :: RExp,
-		     reCtxPostCtx    :: RightContext RExp,
-		     reCtxCode	     :: Maybe Code
-		   }
+                     reCtxPreCtx     :: Maybe CharSet,
+                     reCtxRE         :: RExp,
+                     reCtxPostCtx    :: RightContext RExp,
+                     reCtxCode       :: Maybe Code
+                   }
 
 data RightContext r
   = NoRightContext 
@@ -72,7 +72,7 @@ data RightContext r
 
 instance Show RECtx where
   showsPrec _ (RECtx scs _ r rctx code) = 
-	showStarts scs . shows r . showRCtx rctx . showMaybeCode code
+        showStarts scs . shows r . showRCtx rctx . showMaybeCode code
 
 showMaybeCode :: Maybe String -> String -> String
 showMaybeCode Nothing = id
@@ -106,9 +106,9 @@ type SNum = Int
 
 data Accept a
   = Acc { accPrio       :: Int,
-	  accAction     :: Maybe a,
-	  accLeftCtx    :: Maybe CharSet, -- cannot be converted to byteset at this point.
-	  accRightCtx   :: RightContext SNum
+          accAction     :: Maybe a,
+          accLeftCtx    :: Maybe CharSet, -- cannot be converted to byteset at this point.
+          accRightCtx   :: RightContext SNum
     }
     deriving (Eq,Ord)
 
@@ -155,7 +155,7 @@ data RExp
   | RExp :| RExp
   | Star RExp
   | Plus RExp
-  | Ques RExp	
+  | Ques RExp   
 
 instance Show RExp where
   showsPrec _ Eps = showString "()"
@@ -167,7 +167,7 @@ instance Show RExp where
   showsPrec _ (Ques r) = shows r . ('?':)
 
 {------------------------------------------------------------------------------
-			  Abstract Regular Expression
+                          Abstract Regular Expression
 ------------------------------------------------------------------------------}
 
 
@@ -179,8 +179,8 @@ instance Show RExp where
 
 recognise:: RExp -> String -> Bool
 recognise re inp = any (==len) (ap_ar (arexp re) inp)
-	where
-	len = length inp
+        where
+        len = length inp
 
 
 -- `ARexp' provides an regular expressions in abstract format.  Here regular
@@ -215,7 +215,7 @@ ques_ar sc = eps_ar `bar_ar` sc
 -- Hugs abstract type definition -- not for GHC.
 
 type ARexp = String -> [Int]
---	in ap_ar, eps_ar, ch_ar, seq_ar, bar_ar
+--      in ap_ar, eps_ar, ch_ar, seq_ar, bar_ar
 
 ap_ar:: ARexp -> String -> [Int]
 ap_ar sc = sc
@@ -241,31 +241,31 @@ bar_ar sc sc' inp = sc inp ++ sc' inp
 
 encodeStartCodes:: Scanner -> (Scanner,[StartCode],ShowS)
 encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
-	where
-	scan' = scan{ scannerTokens = map mk_re_ctx (scannerTokens scan) }
+        where
+        scan' = scan{ scannerTokens = map mk_re_ctx (scannerTokens scan) }
 
-	mk_re_ctx (RECtx scs lc re rc code)
-	  = RECtx (map mk_sc scs) lc re rc code
+        mk_re_ctx (RECtx scs lc re rc code)
+          = RECtx (map mk_sc scs) lc re rc code
 
-	mk_sc (nm,_) = (nm, if nm=="0" then 0 
-				       else fromJust (Map.lookup nm code_map))
+        mk_sc (nm,_) = (nm, if nm=="0" then 0 
+                                       else fromJust (Map.lookup nm code_map))
 
-	sc_hdr tl =
-		case name_code_pairs of
-		  [] -> tl
-		  (nm,_):rst -> "\n" ++ nm ++ foldr f t rst
-			where
-			f (nm', _) t' = "," ++ nm' ++ t'
-			t = " :: Int\n" ++ foldr fmt_sc tl name_code_pairs
-		where
-		fmt_sc (nm,sc) t = nm ++ " = " ++ show sc ++ "\n" ++ t
+        sc_hdr tl =
+                case name_code_pairs of
+                  [] -> tl
+                  (nm,_):rst -> "\n" ++ nm ++ foldr f t rst
+                        where
+                        f (nm', _) t' = "," ++ nm' ++ t'
+                        t = " :: Int\n" ++ foldr fmt_sc tl name_code_pairs
+                where
+                fmt_sc (nm,sc) t = nm ++ " = " ++ show sc ++ "\n" ++ t
 
-	code_map = Map.fromList name_code_pairs
+        code_map = Map.fromList name_code_pairs
 
-	name_code_pairs = zip (nub' (<=) nms) [1..]
+        name_code_pairs = zip (nub' (<=) nms) [1..]
 
-	nms = [nm | RECtx{reCtxStartCodes = scs} <- scannerTokens scan,
-		    (nm,_) <- scs, nm /= "0"]
+        nms = [nm | RECtx{reCtxStartCodes = scs} <- scannerTokens scan,
+                    (nm,_) <- scs, nm /= "0"]
 
 
 -- Grab the code fragments for the token actions, and replace them
@@ -279,9 +279,9 @@ extractActions scanner = (scanner{scannerTokens = new_tokens}, decl_str)
   (new_tokens, decls) = unzip (zipWith f (scannerTokens scanner) act_names)
 
   f r@RECtx{ reCtxCode = Just code } name
-	= (r{reCtxCode = Just name}, Just (mkDecl name code))
+        = (r{reCtxCode = Just name}, Just (mkDecl name code))
   f r@RECtx{ reCtxCode = Nothing } _
-	= (r{reCtxCode = Nothing}, Nothing)
+        = (r{reCtxCode = Nothing}, Nothing)
 
   mkDecl fun code = str fun . str " = " . str code . nl
 

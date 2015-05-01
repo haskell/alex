@@ -1,5 +1,5 @@
 {------------------------------------------------------------------------------
-				      DFS
+                                      DFS
 
 This module is a portable version of the ghc-specific `DFS.g.hs', which is
 itself a straightforward encoding of the Launchbury/King paper on linear graph
@@ -36,15 +36,15 @@ data GTree    = GNode Int GForrest
 
 postorder:: GForrest -> [Int]
 postorder ts = po ts []
-	where
-	po ts' l = foldr po_tree l ts'
+        where
+        po ts' l = foldr po_tree l ts'
 
-	po_tree (GNode a ts') l = po ts' (a:l)
+        po_tree (GNode a ts') l = po ts' (a:l)
 
 list_tree:: GTree -> [Int]
 list_tree t = l_t t []
-	where
-	l_t (GNode x ts) l = foldr l_t (x:l) ts
+        where
+        l_t (GNode x ts) l = foldr l_t (x:l) ts
 
 
 -- Graphs are represented by a pair of an integer, giving the number of nodes
@@ -57,8 +57,8 @@ type Edge = (Int,Int)
 
 mk_graph:: Int -> [Edge] -> Graph
 mk_graph sz es = (sz,\v->ar!v)
-	where
-	ar = accumArray (flip (:)) [] (0,sz-1) [(v,v')| (v,v')<-es]
+        where
+        ar = accumArray (flip (:)) [] (0,sz-1) [(v,v')| (v,v')<-es]
 
 vertices:: Graph -> [Int]
 vertices (sz,_) = [0..sz-1]
@@ -83,9 +83,9 @@ reverse_graph g@(sz,_) = mk_graph sz (rev_edges g)
 
 t_close:: Graph -> Graph
 t_close g@(sz,_) = (sz,\v->ar!v)
-	where
-	ar = listArray (0,sz) ([postorder(dff' [v] g)| v<-vertices g]++[und])
-	und = error "t_close"
+        where
+        ar = listArray (0,sz) ([postorder(dff' [v] g)| v<-vertices g]++[und])
+        und = error "t_close"
 
 scc:: Graph -> GForrest
 scc g = dff' (reverse (top_sort (reverse_graph g))) g
@@ -109,28 +109,28 @@ generate_g f v = GNode v (map (generate_g f) (f v))
 
 prune:: GForrest -> GForrest
 prune ts = snd(chop(empty_int,ts))
-	where
-	empty_int:: Set Int
-	empty_int = Set.empty
+        where
+        empty_int:: Set Int
+        empty_int = Set.empty
 
 chop:: (Set Int,GForrest) -> (Set Int,GForrest)
 chop p@(_, []) = p
 chop (vstd,GNode v ts:us) =
-	if v `Set.member` vstd
-	   then chop (vstd,us)
-	   else let vstd1 = Set.insert v vstd
-		    (vstd2,ts') = chop (vstd1,ts)
-		    (vstd3,us') = chop (vstd2,us)
-		in
-		(vstd3,GNode v ts' : us')
+        if v `Set.member` vstd
+           then chop (vstd,us)
+           else let vstd1 = Set.insert v vstd
+                    (vstd2,ts') = chop (vstd1,ts)
+                    (vstd3,us') = chop (vstd2,us)
+                in
+                (vstd3,GNode v ts' : us')
 
 
 {-- Some simple test functions
 
 test:: Graph Char
 test = mk_graph (char_bds ('a','h')) (mk_pairs "eefggfgegdhfhged")
-	where
-	mk_pairs [] = []
-	mk_pairs (a:b:l) = (a,b):mk_pairs l
+        where
+        mk_pairs [] = []
+        mk_pairs (a:b:l) = (a,b):mk_pairs l
 
 -}

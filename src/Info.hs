@@ -33,10 +33,10 @@ infoDFA _ func_nm dfa
     infoState :: State SNum Code -> ShowS
     infoState (State accs out)
         = foldr (.) id (map infoAccept accs)
-	. infoArr out . nl
+        . infoArr out . nl
 
     infoArr out
-	= char '\t' . interleave_shows (str "\n\t")
+        = char '\t' . interleave_shows (str "\n\t")
                         (map infoTransition (IntMap.toAscList out))
 
     infoAccept (Acc p act lctx rctx)
@@ -49,15 +49,15 @@ infoDFA _ func_nm dfa
         . nl
         
     infoTransition (char',state)
-	= str (ljustify 8 (show char'))
-	. str " -> "
-	. shows state
+        = str (ljustify 8 (show char'))
+        . str " -> "
+        . shows state
 
     outputLCtx Nothing
-	  = id
+          = id
     outputLCtx (Just set)
-	  = paren (show set ++) . char '^'
+          = paren (show set ++) . char '^'
 
     -- outputArr arr
-	  -- = str "Array.array " . shows (bounds arr) . space
-	  -- . shows (assocs arr)
+          -- = str "Array.array " . shows (bounds arr) . space
+          -- . shows (assocs arr)

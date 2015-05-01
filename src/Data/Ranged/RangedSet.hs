@@ -58,7 +58,9 @@ module Data.Ranged.RangedSet (
 
 import Data.Ranged.Boundaries
 import Data.Ranged.Ranges
+#if __GLASGOW_HASKELL__ < 710
 import Data.Monoid
+#endif
 
 import Data.List
 import Test.QuickCheck

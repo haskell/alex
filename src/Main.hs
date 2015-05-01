@@ -70,18 +70,18 @@ alexOpenFile = openFile
 -- `main' decodes the command line arguments and calls `alex'.  
 
 main:: IO ()
-main =	do
+main =  do
  args <- getArgs
  case getOpt Permute argInfo args of
     (cli,_,[]) | DumpHelp `elem` cli -> do
-	prog <- getProgramName
+        prog <- getProgramName
         bye (usageInfo (usageHeader prog) argInfo)
     (cli,_,[]) | DumpVersion `elem` cli ->
-	bye copyright
+        bye copyright
     (cli,[file],[]) -> 
-	runAlex cli file
+        runAlex cli file
     (_,_,errors) -> do
-	prog <- getProgramName
+        prog <- getProgramName
         die (concat errors ++ usageInfo (usageHeader prog) argInfo)
 
 projectVersion :: String
@@ -96,8 +96,8 @@ usageHeader prog = "Usage: " ++ prog ++ " [OPTION...] file\n"
 runAlex :: [CLIFlags] -> FilePath -> IO ()
 runAlex cli file = do
   basename <- case (reverse file) of
-		'x':'.':r -> return (reverse r)
-		_         -> die (file ++ ": filename must end in \'.x\'\n")
+                'x':'.':r -> return (reverse r)
+                _         -> die (file ++ ": filename must end in \'.x\'\n")
   
   prg <- alexReadFile file
   script <- parseScript file prg
@@ -107,13 +107,13 @@ parseScript :: FilePath -> String
   -> IO (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code))
 parseScript file prg =
   case runP prg initialParserEnv parse of
-	Left (Just (AlexPn _ line col),err) -> 
-		die (file ++ ":" ++ show line ++ ":" ++ show col
-				 ++ ": " ++ err ++ "\n")
-	Left (Nothing, err) ->
-		die (file ++ ": " ++ err ++ "\n")
+        Left (Just (AlexPn _ line col),err) -> 
+                die (file ++ ":" ++ show line ++ ":" ++ show col
+                                 ++ ": " ++ err ++ "\n")
+        Left (Nothing, err) ->
+                die (file ++ ": " ++ err ++ "\n")
 
-	Right script -> return script
+        Right script -> return script
 
 alex :: [CLIFlags] -> FilePath -> FilePath
      -> (Maybe (AlexPosn, Code), [Directive], Scanner, Maybe (AlexPosn, Code))
@@ -121,36 +121,36 @@ alex :: [CLIFlags] -> FilePath -> FilePath
 alex cli file basename script = do
    (put_info, finish_info) <- 
       case [ f | OptInfoFile f <- cli ] of
- 	   []  -> return (\_ -> return (), return ())
- 	   [Nothing] -> infoStart file (basename ++ ".info")
- 	   [Just f]  -> infoStart file f
- 	   _   -> dieAlex "multiple -i/--info options"
+           []  -> return (\_ -> return (), return ())
+           [Nothing] -> infoStart file (basename ++ ".info")
+           [Just f]  -> infoStart file f
+           _   -> dieAlex "multiple -i/--info options"
    
    o_file <- case [ f | OptOutputFile f <- cli ] of
-		[]  -> return (basename ++ ".hs")
-		[f] -> return f
-		_   -> dieAlex "multiple -o/--outfile options"
+                []  -> return (basename ++ ".hs")
+                [f] -> return f
+                _   -> dieAlex "multiple -o/--outfile options"
   
    let target 
-	| OptGhcTarget `elem` cli = GhcTarget
-	| otherwise               = HaskellTarget
+        | OptGhcTarget `elem` cli = GhcTarget
+        | otherwise               = HaskellTarget
 
    let encoding
         | OptLatin1 `elem` cli = Latin1
         | otherwise            = UTF8
 
    template_dir  <- templateDir getDataDir cli
-		
+                
    -- open the output file; remove it if we encounter an error
    bracketOnError 
         (alexOpenFile o_file WriteMode)
-	(\h -> do hClose h; removeFile o_file)
-	$ \out_h -> do
+        (\h -> do hClose h; removeFile o_file)
+        $ \out_h -> do
 
    let
-	 (maybe_header, directives, scanner1, maybe_footer) = script
- 	 (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
-	 (scanner_final, actions) = extractActions scanner2
+         (maybe_header, directives, scanner1, maybe_footer) = script
+         (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
+         (scanner_final, actions) = extractActions scanner2
  
    wrapper_name <- wrapperFile template_dir directives
 
@@ -161,8 +161,8 @@ alex cli file basename script = do
 
    -- add the wrapper, if necessary
    when (isJust wrapper_name) $
-	do str <- alexReadFile (fromJust wrapper_name)
-	   hPutStr out_h str
+        do str <- alexReadFile (fromJust wrapper_name)
+           hPutStr out_h str
 
    let dfa = scanner2dfa encoding scanner_final scs
        min_dfa = minimizeDFA dfa
@@ -212,11 +212,11 @@ optNoWarnings = "{-# OPTIONS_GHC -w #-}\n"
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
   where
-	glaexts_import | OptGhcTarget `elem` cli    = import_glaexts
-		       | otherwise                  = ""
+        glaexts_import | OptGhcTarget `elem` cli    = import_glaexts
+                       | otherwise                  = ""
 
-	debug_imports  | OptDebugParser `elem` cli = import_debug
-		       | otherwise		   = ""
+        debug_imports  | OptDebugParser `elem` cli = import_debug
+                       | otherwise                 = ""
 
 -- CPP is turned on for -fglasogw-exts, so we can use conditional
 -- compilation.  We need to #include "config.h" to get hold of
@@ -224,35 +224,35 @@ importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
 
 always_imports :: String
 always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
-		 "#include \"ghcconfig.h\"\n" ++
-		 "#elif defined(__GLASGOW_HASKELL__)\n" ++
-		 "#include \"config.h\"\n" ++
-		 "#endif\n" ++
-		 "#if __GLASGOW_HASKELL__ >= 503\n" ++
-		 "import Data.Array\n" ++
-		 "import Data.Char (ord)\n" ++
-		 "import Data.Array.Base (unsafeAt)\n" ++
-		 "#else\n" ++
-		 "import Array\n" ++
-		 "import Char (ord)\n" ++
-		 "#endif\n"
+                 "#include \"ghcconfig.h\"\n" ++
+                 "#elif defined(__GLASGOW_HASKELL__)\n" ++
+                 "#include \"config.h\"\n" ++
+                 "#endif\n" ++
+                 "#if __GLASGOW_HASKELL__ >= 503\n" ++
+                 "import Data.Array\n" ++
+                 "import Data.Char (ord)\n" ++
+                 "import Data.Array.Base (unsafeAt)\n" ++
+                 "#else\n" ++
+                 "import Array\n" ++
+                 "import Char (ord)\n" ++
+                 "#endif\n"
 
 import_glaexts :: String
 import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
-		 "import GHC.Exts\n" ++
-		 "#else\n" ++
-		 "import GlaExts\n" ++
-		 "#endif\n"
+                 "import GHC.Exts\n" ++
+                 "#else\n" ++
+                 "import GlaExts\n" ++
+                 "#endif\n"
 
 import_debug :: String
 import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
-		 "import System.IO\n" ++
-		 "import System.IO.Unsafe\n" ++
-		 "import Debug.Trace\n" ++
-		 "#else\n" ++
-		 "import IO\n" ++
-		 "import IOExts\n" ++
-		 "#endif\n"
+                 "import System.IO\n" ++
+                 "import System.IO.Unsafe\n" ++
+                 "import Debug.Trace\n" ++
+                 "#else\n" ++
+                 "import IO\n" ++
+                 "import IOExts\n" ++
+                 "#endif\n"
 
 templateDir :: IO FilePath -> [CLIFlags] -> IO FilePath
 templateDir def cli
@@ -264,35 +264,35 @@ templateFile :: FilePath -> Target -> UsesPreds -> [CLIFlags] -> FilePath
 templateFile dir target usespreds cli
   = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug ++ maybe_nopred
   where 
-	maybe_ghc = case target of
+        maybe_ghc = case target of
                       GhcTarget -> "-ghc"
                       _         -> ""
 
-	maybe_debug
-	  | OptDebugParser `elem` cli  = "-debug"
-	  | otherwise		       = ""
+        maybe_debug
+          | OptDebugParser `elem` cli  = "-debug"
+          | otherwise                  = ""
 
-	maybe_nopred =
-	  case usespreds of
-	    DoesntUsePreds | not (null maybe_ghc)
-	                  && null maybe_debug -> "-nopred"
-	    _                                 -> ""
+        maybe_nopred =
+          case usespreds of
+            DoesntUsePreds | not (null maybe_ghc)
+                          && null maybe_debug -> "-nopred"
+            _                                 -> ""
 
 wrapperFile :: FilePath -> [Directive] -> IO (Maybe FilePath)
 wrapperFile dir directives =
   case [ f | WrapperDirective f <- directives ] of
-	[]  -> return Nothing
-	[f] -> return (Just (dir ++ "/AlexWrapper-" ++ f))
-	_many -> dieAlex "multiple %wrapper directives"
+        []  -> return Nothing
+        [f] -> return (Just (dir ++ "/AlexWrapper-" ++ f))
+        _many -> dieAlex "multiple %wrapper directives"
 
 infoStart :: FilePath -> FilePath -> IO (String -> IO (), IO ())
 infoStart x_file info_file = do
   bracketOnError
-	(alexOpenFile info_file WriteMode)
-	(\h -> do hClose h; removeFile info_file)
-	(\h -> do infoHeader h x_file
-  		  return (hPutStr h, hClose h)
-	)
+        (alexOpenFile info_file WriteMode)
+        (\h -> do hClose h; removeFile info_file)
+        (\h -> do infoHeader h x_file
+                  return (hPutStr h, hClose h)
+        )
 
 infoHeader :: Handle -> FilePath -> IO ()
 infoHeader h file = do
@@ -307,9 +307,9 @@ initialParserEnv = (initSetEnv, initREEnv)
 
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
-		           ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
-		           (".", charSetComplement emptyCharSet 
-			    `charSetMinus` charSetSingleton '\n')]
+                           ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
+                           (".", charSetComplement emptyCharSet 
+                            `charSetMinus` charSetSingleton '\n')]
 
 initREEnv :: Map String RExp
 initREEnv = Map.empty
@@ -331,21 +331,21 @@ data CLIFlags
 argInfo :: [OptDescr CLIFlags]
 argInfo  = [
    Option ['o'] ["outfile"] (ReqArg OptOutputFile "FILE")
-	"write the output to FILE (default: file.hs)",
+        "write the output to FILE (default: file.hs)",
    Option ['i'] ["info"] (OptArg OptInfoFile "FILE")
-	"put detailed state-machine info in FILE (or file.info)",
+        "put detailed state-machine info in FILE (or file.info)",
    Option ['t'] ["template"] (ReqArg OptTemplateDir "DIR")
-	"look in DIR for template files",
+        "look in DIR for template files",
    Option ['g'] ["ghc"]    (NoArg OptGhcTarget)
-	"use GHC extensions",
+        "use GHC extensions",
    Option ['l'] ["latin1"]    (NoArg OptLatin1)
         "generated lexer will use the Latin-1 encoding instead of UTF-8",
    Option ['d'] ["debug"] (NoArg OptDebugParser)
-	"produce a debugging scanner",
+        "produce a debugging scanner",
    Option ['?'] ["help"] (NoArg DumpHelp)
-	"display this help and exit",
+        "display this help and exit",
    Option ['V','v'] ["version"] (NoArg DumpVersion)  -- ToDo: -v is deprecated!
-	"output version information and exit"
+        "output version information and exit"
   ]
 
 -- -----------------------------------------------------------------------------
@@ -368,16 +368,16 @@ dieAlex s = getProgramName >>= \prog -> die (prog ++ ": " ++ s)
 
 #if __GLASGOW_HASKELL__ < 610
 bracketOnError
-	:: IO a		-- ^ computation to run first (\"acquire resource\")
-	-> (a -> IO b)  -- ^ computation to run last (\"release resource\")
-	-> (a -> IO c)	-- ^ computation to run in-between
-	-> IO c		-- returns the value from the in-between computation
+        :: IO a         -- ^ computation to run first (\"acquire resource\")
+        -> (a -> IO b)  -- ^ computation to run last (\"release resource\")
+        -> (a -> IO c)  -- ^ computation to run in-between
+        -> IO c         -- returns the value from the in-between computation
 bracketOnError before after thing =
   block (do
     a <- before 
     r <- Exception.catch 
-	   (unblock (thing a))
-	   (\e -> do { after a; throw e })
+           (unblock (thing a))
+           (\e -> do { after a; throw e })
     return r
  )
 #endif

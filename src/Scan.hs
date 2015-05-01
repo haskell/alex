@@ -63,7 +63,7 @@ data Tkn
  | RMacT String  
  | SMacDefT String
  | RMacDefT String  
- | NumT Int	
+ | NumT Int     
  | WrapperT
  | EOFT
  deriving Show
@@ -90,7 +90,7 @@ wrapper   (p,_,str) ln = return $ T p WrapperT
 isIdChar c = isAlphaNum c || c `elem` "_'"
 
 extract ln str = take (ln-2) (tail str)
-		
+                
 do_ech radix ln str = chr (parseInt radix str)
 
 mac ln (_ : str) = take (ln-1) str
@@ -125,40 +125,40 @@ code (p,_,inp) len = do
     return (T p (CodeT (reverse (tail cs))))
   go inp n cs = do
     case alexGetChar inp of
-	Nothing  -> err inp
-	Just (c,inp)   -> 
-	  case c of
-		'{'  -> go inp (n+1) (c:cs) 
-		'}'  -> go inp (n-1) (c:cs)
-		'\'' -> go_char inp n (c:cs)
-		'\"' -> go_str inp n (c:cs) '\"'
-		c    -> go inp n (c:cs)
+        Nothing  -> err inp
+        Just (c,inp)   -> 
+          case c of
+                '{'  -> go inp (n+1) (c:cs) 
+                '}'  -> go inp (n-1) (c:cs)
+                '\'' -> go_char inp n (c:cs)
+                '\"' -> go_str inp n (c:cs) '\"'
+                c    -> go inp n (c:cs)
 
-	-- try to catch occurrences of ' within an identifier
+        -- try to catch occurrences of ' within an identifier
   go_char inp n (c1:c2:cs) | isAlphaNum c2 = go inp n (c1:c2:cs)
   go_char inp n cs = go_str inp n cs '\''
 
   go_str inp n cs end = do
     case alexGetChar inp of
-	Nothing -> err inp
-	Just (c,inp)
-	  | c == end  -> go inp n (c:cs)
-	  | otherwise -> 
-		case c of
-		   '\\' -> case alexGetChar inp of
-			     Nothing -> err inp
-			     Just (d,inp)  -> go_str inp n (d:c:cs) end
-		   c -> go_str inp n (c:cs) end
+        Nothing -> err inp
+        Just (c,inp)
+          | c == end  -> go inp n (c:cs)
+          | otherwise -> 
+                case c of
+                   '\\' -> case alexGetChar inp of
+                             Nothing -> err inp
+                             Just (d,inp)  -> go_str inp n (d:c:cs) end
+                   c -> go_str inp n (c:cs) end
 
   err inp = do setInput inp; lexError "lexical error in code fragment"
-				  
+                                  
 
 
 lexError s = do
   (p,_,_,input) <- getInput
   failP (s ++ (if (not (null input))
-		  then " at " ++ show (head input)
-		  else " at end of file"))
+                  then " at " ++ show (head input)
+                  else " at end of file"))
 
 lexer :: (Token -> P a) -> P a
 lexer cont = lexToken >>= cont
@@ -171,11 +171,11 @@ lexToken = do
     AlexEOF -> return (T p EOFT)
     AlexError _ -> lexError "lexical error"
     AlexSkip inp1 len -> do
-	setInput inp1
-	lexToken
+        setInput inp1
+        lexToken
     AlexToken inp1 len t -> do
-	setInput inp1
-	t (p,c,s) len
+        setInput inp1
+        t (p,c,s) len
 
 type Action = (AlexPosn,Char,String) -> Int -> P Token
 
@@ -259,8 +259,8 @@ alexIndexInt32OffAddr (AlexA# arr) off =
   narrow32Int# i
   where
    !i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
-		     (b2 `uncheckedShiftL#` 16#) `or#`
-		     (b1 `uncheckedShiftL#` 8#) `or#` b0)
+                     (b2 `uncheckedShiftL#` 16#) `or#`
+                     (b1 `uncheckedShiftL#` 8#) `or#` b0)
    !b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
    !b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
    !b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
@@ -299,30 +299,30 @@ alexScan input (I# (sc))
 
 alexScanUser user input (I# (sc))
   = case alex_scan_tkn user input 0# input sc AlexNone of
-	(AlexNone, input') ->
-		case alexGetByte input of
-			Nothing -> 
+        (AlexNone, input') ->
+                case alexGetByte input of
+                        Nothing -> 
 
 
 
-				   AlexEOF
-			Just _ ->
+                                   AlexEOF
+                        Just _ ->
 
 
 
-				   AlexError input'
+                                   AlexError input'
 
-	(AlexLastSkip input'' len, _) ->
-
-
-
-		AlexSkip input'' len
-
-	(AlexLastAcc k input''' len, _) ->
+        (AlexLastSkip input'' len, _) ->
 
 
 
-		AlexToken input''' len k
+                AlexSkip input'' len
+
+        (AlexLastAcc k input''' len, _) ->
+
+
+
+                AlexToken input''' len k
 
 
 -- Push the input through the DFA, remembering the most recent accepting
@@ -331,7 +331,7 @@ alexScanUser user input (I# (sc))
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
   let 
-	new_acc = (check_accs (alex_accept `quickIndex` (I# (s))))
+        new_acc = (check_accs (alex_accept `quickIndex` (I# (s))))
   in
   new_acc `seq`
   case alexGetByte input of
@@ -340,35 +340,35 @@ alex_scan_tkn user orig_input len input s last_acc =
 
 
 
-	let
-		(base) = alexIndexInt32OffAddr alex_base s
-		((I# (ord_c))) = fromIntegral c
-		(offset) = (base +# ord_c)
-		(check)  = alexIndexInt16OffAddr alex_check offset
-		
-		(new_s) = if (offset >=# 0#) && (check ==# ord_c)
-			  then alexIndexInt16OffAddr alex_table offset
-			  else alexIndexInt16OffAddr alex_deflt s
-	in
-	case new_s of 
-	    -1# -> (new_acc, input)
-		-- on an error, we want to keep the input *before* the
-		-- character that failed, not after.
-    	    _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then (len +# 1#) else len)
+        let
+                (base) = alexIndexInt32OffAddr alex_base s
+                ((I# (ord_c))) = fromIntegral c
+                (offset) = (base +# ord_c)
+                (check)  = alexIndexInt16OffAddr alex_check offset
+                
+                (new_s) = if (offset >=# 0#) && (check ==# ord_c)
+                          then alexIndexInt16OffAddr alex_table offset
+                          else alexIndexInt16OffAddr alex_deflt s
+        in
+        case new_s of 
+            -1# -> (new_acc, input)
+                -- on an error, we want to keep the input *before* the
+                -- character that failed, not after.
+            _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then (len +# 1#) else len)
                                                 -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
-			new_input new_s new_acc
+                        new_input new_s new_acc
 
   where
-	check_accs [] = last_acc
-	check_accs (AlexAcc a : _) = AlexLastAcc a input (I# (len))
-	check_accs (AlexAccSkip : _)  = AlexLastSkip  input (I# (len))
-	check_accs (AlexAccPred a predx : rest)
-	   | predx user orig_input (I# (len)) input
-	   = AlexLastAcc a input (I# (len))
-	check_accs (AlexAccSkipPred predx : rest)
-	   | predx user orig_input (I# (len)) input
-	   = AlexLastSkip input (I# (len))
-	check_accs (_ : rest) = check_accs rest
+        check_accs [] = last_acc
+        check_accs (AlexAcc a : _) = AlexLastAcc a input (I# (len))
+        check_accs (AlexAccSkip : _)  = AlexLastSkip  input (I# (len))
+        check_accs (AlexAccPred a predx : rest)
+           | predx user orig_input (I# (len)) input
+           = AlexLastAcc a input (I# (len))
+        check_accs (AlexAccSkipPred predx : rest)
+           | predx user orig_input (I# (len)) input
+           = AlexLastSkip input (I# (len))
+        check_accs (_ : rest) = check_accs rest
 
 data AlexLastAcc a
   = AlexNone
@@ -405,11 +405,11 @@ alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
 --alexRightContext :: Int -> AlexAccPred _
 alexRightContext (I# (sc)) user _ _ input = 
      case alex_scan_tkn user input 0# input sc AlexNone of
-	  (AlexNone, _) -> False
-	  _ -> True
-	-- TODO: there's no need to find the longest
-	-- match when checking the right context, just
-	-- the first match will do.
+          (AlexNone, _) -> False
+          _ -> True
+        -- TODO: there's no need to find the longest
+        -- match when checking the right context, just
+        -- the first match will do.
 
 -- used by wrappers
 iUnbox (I# (i)) = i

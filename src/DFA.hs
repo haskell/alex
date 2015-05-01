@@ -25,7 +25,7 @@ import CharSet
 import Data.Array ( (!) )
 import Data.Maybe ( fromJust )
 
-{- 			  Defined in the Scan Module
+{-                        Defined in the Scan Module
 
 -- (This section should logically belong to the DFA module but it has been
 -- placed here to make this module self-contained.)
@@ -94,9 +94,9 @@ scanner2dfa enc scanner scs = nfa2dfa scs (scanner2nfa enc scanner scs)
 
 nfa2dfa:: [StartCode] -> NFA -> DFA SNum Code
 nfa2dfa scs nfa = mk_int_dfa nfa (nfa2pdfa nfa pdfa (dfa_start_states pdfa))
-	where
-	pdfa = new_pdfa n_starts nfa
-	n_starts = length scs  -- number of start states
+        where
+        pdfa = new_pdfa n_starts nfa
+        n_starts = length scs  -- number of start states
 
 -- `nfa2pdfa' works by taking the next outstanding state set to be considered
 -- and and ignoring it if the state is already in the partial DFA, otherwise
@@ -113,40 +113,40 @@ nfa2pdfa nfa pdfa (ss:umkd)
   where
         pdfa' = add_pdfa ss (State accs (IntMap.fromList ss_outs)) pdfa
 
-	umkd' = rctx_sss ++ map snd ss_outs ++ umkd
+        umkd' = rctx_sss ++ map snd ss_outs ++ umkd
 
         -- for each character, the set of states that character would take
         -- us to from the current set of states in the NFA.
         ss_outs :: [(Int, StateSet)]
         ss_outs = [ (fromIntegral ch, mk_ss nfa ss')
-		  | ch  <- byteSetElems $ setUnions [p | (p,_) <- outs],
-		    let ss'  = [ s' | (p,s') <- outs, byteSetElem p ch ],
-		    not (null ss')
-		  ]
+                  | ch  <- byteSetElems $ setUnions [p | (p,_) <- outs],
+                    let ss'  = [ s' | (p,s') <- outs, byteSetElem p ch ],
+                    not (null ss')
+                  ]
 
-	rctx_sss = [ mk_ss nfa [s]
-		   | Acc _ _ _ (RightContextRExp s) <- accs ]
+        rctx_sss = [ mk_ss nfa [s]
+                   | Acc _ _ _ (RightContextRExp s) <- accs ]
 
         outs :: [(ByteSet,SNum)]
-	outs =  [ out | s <- ss, out <- nst_outs (nfa!s) ]
+        outs =  [ out | s <- ss, out <- nst_outs (nfa!s) ]
 
-	accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
+        accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
 
 -- `sort_accs' sorts a list of accept values into decending order of priority,
 -- eliminating any elements that follow an unconditional accept value.
 
 sort_accs:: [Accept a] -> [Accept a]
 sort_accs accs = foldr chk [] (msort le accs)
-	where
-	chk acc@(Acc _ _ Nothing NoRightContext) _   = [acc]
-	chk acc                                  rst = acc:rst
+        where
+        chk acc@(Acc _ _ Nothing NoRightContext) _   = [acc]
+        chk acc                                  rst = acc:rst
 
-	le (Acc{accPrio = n}) (Acc{accPrio=n'}) = n<=n'
+        le (Acc{accPrio = n}) (Acc{accPrio=n'}) = n<=n'
 
 
 
 {------------------------------------------------------------------------------
-			  State Sets and Partial DFAs
+                          State Sets and Partial DFAs
 ------------------------------------------------------------------------------}
 
 
@@ -166,7 +166,7 @@ new_pdfa starts nfa
          dfa_states = Map.empty
        }
  where
-	start_ss = [ msort (<=) (nst_cl(nfa!n)) | n <- [0..(starts-1)]]
+        start_ss = [ msort (<=) (nst_cl(nfa!n)) | n <- [0..(starts-1)]]
 
  -- starts is the number of start states
 
@@ -186,25 +186,25 @@ in_pdfa ss (DFA _ mp) = ss `Map.member` mp
 mk_int_dfa:: NFA -> DFA StateSet a -> DFA SNum a
 mk_int_dfa nfa (DFA start_states mp)
   = DFA [0 .. length start_states-1] 
-	(Map.fromList [ (lookup' st, cnv pds) | (st, pds) <- Map.toAscList mp ])
+        (Map.fromList [ (lookup' st, cnv pds) | (st, pds) <- Map.toAscList mp ])
   where
-	mp' = Map.fromList (zip (start_states ++ 
-				 (map fst . Map.toAscList) (foldr Map.delete mp start_states)) [0..])
+        mp' = Map.fromList (zip (start_states ++ 
+                                 (map fst . Map.toAscList) (foldr Map.delete mp start_states)) [0..])
 
-	lookup' = fromJust . flip Map.lookup mp'
+        lookup' = fromJust . flip Map.lookup mp'
 
-	cnv :: State StateSet a -> State SNum a
-	cnv (State accs as) = State accs' as'
-		where
+        cnv :: State StateSet a -> State SNum a
+        cnv (State accs as) = State accs' as'
+                where
                 as'   = IntMap.mapWithKey (\_ch s -> lookup' s) as
 
-		accs' = map cnv_acc accs
-		cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'
-		  where rctx' =	
-			  case rctx of
-				RightContextRExp s -> 
-				  RightContextRExp (lookup' (mk_ss nfa [s]))
-				other -> other
+                accs' = map cnv_acc accs
+                cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'
+                  where rctx' = 
+                          case rctx of
+                                RightContextRExp s -> 
+                                  RightContextRExp (lookup' (mk_ss nfa [s]))
+                                other -> other
 
 {-
 
@@ -227,22 +227,22 @@ mk_int_dfa nfa (DFA start_states mp)
 
 mk_st:: [Accept Code] -> [(Char,Int)] -> State Code
 mk_st accs as =
-	if null as
-	   then St accs (-1) (listArray ('0','0') [-1])
-	   else St accs df (listArray bds [arr!c| c<-range bds])
-	where
-	bds = if sz==0 then ('0','0') else bds0
+        if null as
+           then St accs (-1) (listArray ('0','0') [-1])
+           else St accs df (listArray bds [arr!c| c<-range bds])
+        where
+        bds = if sz==0 then ('0','0') else bds0
 
-	(sz,df,bds0) | sz1 < sz2 = (sz1,df1,bds1)
-		     | otherwise = (sz2,df2,bds2)
+        (sz,df,bds0) | sz1 < sz2 = (sz1,df1,bds1)
+                     | otherwise = (sz2,df2,bds2)
 
-	(sz1,df1,bds1) = mk_bds(arr!chr 0)
-	(sz2,df2,bds2) = mk_bds(arr!chr 255)
+        (sz1,df1,bds1) = mk_bds(arr!chr 0)
+        (sz2,df2,bds2) = mk_bds(arr!chr 255)
 
-	mk_bds df = (t-b, df, (chr b, chr (255-t)))
-		where
-		b = length (takeWhile id [arr!c==df| c<-['\0'..'\xff']])
-		t = length (takeWhile id [arr!c==df| c<-['\xff','\xfe'..'\0']])
+        mk_bds df = (t-b, df, (chr b, chr (255-t)))
+                where
+                b = length (takeWhile id [arr!c==df| c<-['\0'..'\xff']])
+                t = length (takeWhile id [arr!c==df| c<-['\xff','\xfe'..'\0']])
 
-	arr = listArray ('\0','\xff') (take 256 (repeat (-1))) // as
+        arr = listArray ('\0','\xff') (take 256 (repeat (-1))) // as
 -}
