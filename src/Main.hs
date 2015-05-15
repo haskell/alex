@@ -131,6 +131,13 @@ alex cli file basename script = do
                 [f] -> return f
                 _   -> dieAlex "multiple -o/--outfile options"
   
+   tab_size <- case [ s | OptTabSize s <- cli ] of
+                []  -> return 8
+                [s] -> case reads s of
+                        [(n,"")] -> return n
+                        _        -> dieAlex "-s/--tab-size option is not a valid integer"
+                _   -> dieAlex "multiple -s/--tab-size options"
+
    let target 
         | OptGhcTarget `elem` cli = GhcTarget
         | otherwise               = HaskellTarget
@@ -163,6 +170,10 @@ alex cli file basename script = do
    when (isJust wrapper_name) $
         do str <- alexReadFile (fromJust wrapper_name)
            hPutStr out_h str
+
+   -- Inject the tab size
+   hPutStrLn out_h $ "alex_tab_size :: Int"
+   hPutStrLn out_h $ "alex_tab_size = " ++ show tab_size
 
    let dfa = scanner2dfa encoding scanner_final scs
        min_dfa = minimizeDFA dfa
@@ -322,6 +333,7 @@ data CLIFlags
   | OptGhcTarget
   | OptOutputFile FilePath
   | OptInfoFile (Maybe FilePath)
+  | OptTabSize String
   | OptTemplateDir FilePath
   | OptLatin1
   | DumpHelp
@@ -340,6 +352,8 @@ argInfo  = [
         "use GHC extensions",
    Option ['l'] ["latin1"]    (NoArg OptLatin1)
         "generated lexer will use the Latin-1 encoding instead of UTF-8",
+   Option ['s'] ["tab-size"] (ReqArg OptTabSize "NUMBER")
+        "set tab size to be used in the generated lexer (default: 8)",
    Option ['d'] ["debug"] (NoArg OptDebugParser)
         "produce a debugging scanner",
    Option ['?'] ["help"] (NoArg DumpHelp)
