@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- CharSet.hs, part of Alex
 --
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
@@ -108,9 +108,9 @@ toUtfRange :: Span [Byte] -> [Span [Byte]]
 toUtfRange (Span x y) = fix x y
 
 fix :: [Byte] -> [Byte] -> [Span [Byte]]
-fix x y 
+fix x y
     | length x == length y = [Span x y]
-    | length x == 1 = Span x [0x7F] : fix [0xC2,0x80] y    
+    | length x == 1 = Span x [0x7F] : fix [0xC2,0x80] y
     | length x == 2 = Span x [0xDF,0xBF] : fix [0xE0,0x80,0x80] y
     | length x == 3 = Span x [0xEF,0xBF,0xBF] : fix [0xF0,0x80,0x80,0x80] y
     | otherwise = error "fix: incorrect input given"
@@ -151,14 +151,9 @@ byteSetRange c1 c2 = makeRangedSet [Range (BoundaryBelow c1) (BoundaryAbove c2)]
 byteSetSingleton :: Byte -> ByteSet
 byteSetSingleton = rSingleton
 
-instance DiscreteOrdered Word8 where
-    adjacent x y = x + 1 == y
-    adjacentBelow 0 = Nothing
-    adjacentBelow x = Just (x-1)
-
 -- TODO: More efficient generated code!
 charSetQuote :: CharSet -> String
-charSetQuote s = "(\\c -> " ++ foldr (\x y -> x ++ " || " ++ y) "False" (map quoteRange (rSetRanges s)) ++ ")" 
+charSetQuote s = "(\\c -> " ++ foldr (\x y -> x ++ " || " ++ y) "False" (map quoteRange (rSetRanges s)) ++ ")"
     where quoteRange (Range l h) = quoteL l ++ " && " ++ quoteH h
           quoteL (BoundaryAbove a) = "c > " ++ show a
           quoteL (BoundaryBelow a) = "c >= " ++ show a
