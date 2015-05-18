@@ -21,7 +21,7 @@ main = defaultMainWithHooks simpleUserHooks{ postBuild = myPostBuild,
                                              copyHook  = myCopy,
                                              instHook  = myInstall }
 
--- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into 
+-- hack to turn cpp-style '# 27 "GenericTemplate.hs"' into
 -- '{-# LINE 27 "GenericTemplate.hs" #-}'.
 mungeLinePragma line = case symbols line of
  syms | Just prag <- getLinePrag syms  -> prag
@@ -53,7 +53,7 @@ myPostBuild _ flags _ lbi = do
         removeFile tmp
 
   sequence_ ([ cpp_template "GenericTemplate.hs" dst opts | (dst,opts) <- templates ] ++
-  	     [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
+             [ cpp_template "wrappers.hs"        dst opts | (dst,opts) <- wrappers ])
 
 myPostClean _ _ _ _ = let try' = try :: IO a -> IO (Either IOException a)
                       in mapM_ (try' . removeFile) all_template_files
@@ -62,13 +62,13 @@ myInstall pkg_descr lbi hooks flags =
   instHook simpleUserHooks pkg_descr' lbi hooks flags
   where pkg_descr' = pkg_descr {
           dataFiles = dataFiles pkg_descr ++ all_template_files
-	}
+        }
 
 myCopy pkg_descr lbi hooks copy_flags =
   copyHook simpleUserHooks pkg_descr' lbi hooks copy_flags
   where pkg_descr' = pkg_descr {
           dataFiles = dataFiles pkg_descr ++ all_template_files
-	}
+        }
 
 all_template_files :: [FilePath]
 all_template_files = map fst (templates ++ wrappers)

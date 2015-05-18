@@ -20,6 +20,7 @@ module Data.Ranged.Boundaries (
 ) where
 
 import Data.Ratio
+import Data.Word
 import Test.QuickCheck
 
 infix 4 />/
@@ -118,6 +119,11 @@ instance (Ord a, Ord b, Ord c, DiscreteOrdered d) =>
       adjacentBelow (x1, x2, x3, x4) = do -- Maybe monad
          x4' <- adjacentBelow x4
          return (x1, x2, x3, x4')
+
+instance DiscreteOrdered Word8 where
+    adjacent x y = x + 1 == y
+    adjacentBelow 0 = Nothing
+    adjacentBelow x = Just (x-1)
 
 
 -- | Check adjacency for sparse enumerated types (i.e. where there

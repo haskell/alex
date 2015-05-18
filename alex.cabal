@@ -41,43 +41,43 @@ cabal-version: >= 1.8
 build-type: Custom
 
 extra-source-files:
-	ANNOUNCE
-	README
-	TODO
-	alex.spec
-	doc/Makefile
-	doc/aclocal.m4
-	doc/alex.1.in
-	doc/alex.xml
-	doc/config.mk.in
-	doc/configure.ac
-	doc/docbook-xml.mk
-	doc/fptools.css
-	examples/Makefile
-	examples/Tokens.x
-	examples/Tokens_gscan.x
-	examples/Tokens_posn.x
-	examples/examples.x
-	examples/haskell.x
-	examples/lit.x
-	examples/pp.x
-	examples/state.x
-	examples/tiny.y
-	examples/tkns.hs
-	examples/words.x
-	examples/words_monad.x
-	examples/words_posn.x
-	src/Parser.y
-	src/Scan.hs
-	src/ghc_hooks.c
-	templates/GenericTemplate.hs
+        ANNOUNCE
+        README
+        TODO
+        alex.spec
+        doc/Makefile
+        doc/aclocal.m4
+        doc/alex.1.in
+        doc/alex.xml
+        doc/config.mk.in
+        doc/configure.ac
+        doc/docbook-xml.mk
+        doc/fptools.css
+        examples/Makefile
+        examples/Tokens.x
+        examples/Tokens_gscan.x
+        examples/Tokens_posn.x
+        examples/examples.x
+        examples/haskell.x
+        examples/lit.x
+        examples/pp.x
+        examples/state.x
+        examples/tiny.y
+        examples/tkns.hs
+        examples/words.x
+        examples/words_monad.x
+        examples/words_posn.x
+        src/Parser.y
+        src/Scan.hs
+        src/ghc_hooks.c
+        templates/GenericTemplate.hs
         templates/wrappers.hs
-	tests/Makefile
+        tests/Makefile
         tests/simple.x
         tests/null.x
         tests/tokens.x
-	tests/tokens_gscan.x
-	tests/tokens_posn.x
+        tests/tokens_gscan.x
+        tests/tokens_posn.x
         tests/tokens_bytestring.x
         tests/tokens_posn_bytestring.x
         tests/tokens_strict_bytestring.x
