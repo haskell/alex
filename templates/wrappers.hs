@@ -350,7 +350,7 @@ alexMonadScan = do
 -- -----------------------------------------------------------------------------
 -- Useful token actions
 
-type AlexAction result = AlexInput -> Int -> Alex result
+type AlexAction result = AlexInput -> Int64 -> Alex result
 
 -- just ignore this token and scan another one
 -- skip :: AlexAction result
@@ -364,7 +364,7 @@ begin code input len = do alexSetStartCode code; alexMonadScan
 andBegin :: AlexAction result -> Int -> AlexAction result
 (action `andBegin` code) input len = do alexSetStartCode code; action input len
 
-token :: (AlexInput -> Int -> token) -> AlexAction token
+token :: (AlexInput -> Int64 -> token) -> AlexAction token
 token t input len = return (t input len)
 #endif /* ALEX_MONAD_BYTESTRING */
 
