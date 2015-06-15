@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Output.hs, part of Alex
 --
 -- (c) Simon Marlow 2003
@@ -28,11 +28,11 @@ import Data.List ( maximumBy, sortBy, groupBy )
 -- -----------------------------------------------------------------------------
 -- Printing the output
 
-outputDFA :: Target -> Int -> String -> DFA SNum Code -> ShowS
-outputDFA target _ _ dfa
-  = interleave_shows nl 
+outputDFA :: Target -> Int -> String -> Maybe (Maybe String, String) -> DFA SNum Code -> ShowS
+outputDFA target _ _ typesig dfa
+  = interleave_shows nl
         [outputBase, outputTable, outputCheck, outputDefault, outputAccept]
-  where    
+  where
     (base, table, check, deflt, accept) = mkTables dfa
 
     table_size = length table - 1
@@ -49,7 +49,7 @@ outputDFA target _ _ dfa
     outputCheck   = do_array hexChars16 check_nm table_size check
     outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
-    do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $ 
+    do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $
      case target of
       GhcTarget ->
           str nm . str " :: AlexAddr\n"
@@ -64,11 +64,25 @@ outputDFA target _ _ dfa
         . str "]\n"
 
     outputAccept
-        = -- No type signature: we don't know what the type of the actions is.
-          -- str accept_nm . str " :: Array Int (Accept Code)\n"
-          str accept_nm . str " = listArray (0::Int," . shows n_states
-        . str ") [" . interleave_shows (char ',') (map outputAccs accept)
-        . str "]\n"
+        = case typesig of
+          Nothing ->
+              -- No type signature: we don't know what the type of the actions is.
+              -- str accept_nm . str " :: Array Int (Accept Code)\n"
+              str accept_nm . str " = listArray (0::Int," . shows n_states
+            . str ") [" . interleave_shows (char ',') (map outputAccs accept)
+            . str "]\n"
+          Just (Nothing, rettype) ->
+              str accept_nm . str " :: Array Int (AlexAcc ("
+            . str rettype . str "))\n"
+            . str accept_nm . str " = listArray (0::Int," . shows n_states
+            . str ") [" . interleave_shows (char ',') (map outputAccs accept)
+            . str "]\n"
+          Just (Just tyclasses, rettype) ->
+              str accept_nm . str " :: (" . str tyclasses
+            . str ") => Array Int (AlexAcc (" . str rettype . str "))\n"
+            . str accept_nm . str " = listArray (0::Int," . shows n_states
+            . str ") [" . interleave_shows (char ',') (map outputAccs accept)
+            . str "]\n"
 
     outputAccs :: [Accept Code] -> ShowS
     outputAccs []
@@ -139,7 +153,7 @@ outputDFA target _ _ dfa
 
 
 mkTables :: DFA SNum Code
-         -> ( 
+         -> (
               [Int],            -- base
               [Int],            -- table
               [Int],            -- check
@@ -148,13 +162,13 @@ mkTables :: DFA SNum Code
             )
 mkTables dfa = -- trace (show (defaults)) $
                -- trace (show (fmap (length . snd)  dfa_no_defaults)) $
-  ( elems base_offs, 
+  ( elems base_offs,
      take max_off (elems table),
      take max_off (elems check),
      elems defaults,
      accept
   )
- where 
+ where
         accept   = [ as | State as _ <- elems dfa_arr ]
 
         state_assocs = Map.toAscList (dfa_states dfa)
@@ -167,8 +181,8 @@ mkTables dfa = -- trace (show (defaults)) $
         -- fill in all the error productions
         expand_states =
            [ expand (dfa_arr!state) | state <- [0..top_state] ]
-         
-        expand (State _ out) = 
+
+        expand (State _ out) =
            [(i, lookup' out i) | i <- [0..0xff]]
            where lookup' out' i = case IntMap.lookup i out' of
                                         Nothing -> -1
@@ -194,12 +208,12 @@ mkTables dfa = -- trace (show (defaults)) $
           | (s, out) <- zip [0..] expand_states
           ]
 
-        prods_without_defaults s out 
+        prods_without_defaults s out
           = [ (fromIntegral c, dest) | (c,dest) <- out, dest /= defaults!s ]
 
         (base_offs, table, check, max_off)
            = runST (genTables n_states 255 dfa_no_defaults)
-          
+
 
 genTables
          :: Int                         -- number of states
@@ -285,7 +299,7 @@ findFreeOffset off check off_arr state = do
 
     -- check whether the actions for this state fit in the table
   ok <- fits off state check
-  if ok then return off else try_next 
+  if ok then return off else try_next
  where
         try_next = findFreeOffset (off+1) check off_arr state
 
@@ -328,7 +342,7 @@ hexChars16 acts = concat (map conv16 acts)
 hexChars32 :: [Int] -> String
 hexChars32 acts = concat (map conv32 acts)
   where
-    conv32 i = hexChar16 (i .&. 0xffff) ++ 
+    conv32 i = hexChar16 (i .&. 0xffff) ++
                 hexChar16 ((i `shiftR` 16) .&. 0xffff)
 
 hexChar16 :: Int -> String

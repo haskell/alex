@@ -1,6 +1,6 @@
 {-# LANGUAGE CPP #-}
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Main.hs, part of Alex
 --
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
@@ -67,7 +67,7 @@ alexOpenFile file mode = do
 alexOpenFile = openFile
 #endif
 
--- `main' decodes the command line arguments and calls `alex'.  
+-- `main' decodes the command line arguments and calls `alex'.
 
 main:: IO ()
 main =  do
@@ -78,7 +78,7 @@ main =  do
         bye (usageInfo (usageHeader prog) argInfo)
     (cli,_,[]) | DumpVersion `elem` cli ->
         bye copyright
-    (cli,[file],[]) -> 
+    (cli,[file],[]) ->
         runAlex cli file
     (_,_,errors) -> do
         prog <- getProgramName
@@ -98,7 +98,7 @@ runAlex cli file = do
   basename <- case (reverse file) of
                 'x':'.':r -> return (reverse r)
                 _         -> die (file ++ ": filename must end in \'.x\'\n")
-  
+
   prg <- alexReadFile file
   script <- parseScript file prg
   alex cli file basename script
@@ -107,7 +107,7 @@ parseScript :: FilePath -> String
   -> IO (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code))
 parseScript file prg =
   case runP prg initialParserEnv parse of
-        Left (Just (AlexPn _ line col),err) -> 
+        Left (Just (AlexPn _ line col),err) ->
                 die (file ++ ":" ++ show line ++ ":" ++ show col
                                  ++ ": " ++ err ++ "\n")
         Left (Nothing, err) ->
@@ -119,18 +119,18 @@ alex :: [CLIFlags] -> FilePath -> FilePath
      -> (Maybe (AlexPosn, Code), [Directive], Scanner, Maybe (AlexPosn, Code))
      -> IO ()
 alex cli file basename script = do
-   (put_info, finish_info) <- 
+   (put_info, finish_info) <-
       case [ f | OptInfoFile f <- cli ] of
            []  -> return (\_ -> return (), return ())
            [Nothing] -> infoStart file (basename ++ ".info")
            [Just f]  -> infoStart file f
            _   -> dieAlex "multiple -i/--info options"
-   
+
    o_file <- case [ f | OptOutputFile f <- cli ] of
                 []  -> return (basename ++ ".hs")
                 [f] -> return f
                 _   -> dieAlex "multiple -o/--outfile options"
-  
+
    tab_size <- case [ s | OptTabSize s <- cli ] of
                 []  -> return 8
                 [s] -> case reads s of
@@ -138,7 +138,7 @@ alex cli file basename script = do
                         _        -> dieAlex "-s/--tab-size option is not a valid integer"
                 _   -> dieAlex "multiple -s/--tab-size options"
 
-   let target 
+   let target
         | OptGhcTarget `elem` cli = GhcTarget
         | otherwise               = HaskellTarget
 
@@ -147,17 +147,20 @@ alex cli file basename script = do
         | otherwise            = []
 
    template_dir  <- templateDir getDataDir cli
-                
+
+   let (maybe_header, directives, scanner1, maybe_footer) = script
+
+   actty_info <- actionType directives
+
    -- open the output file; remove it if we encounter an error
-   bracketOnError 
+   bracketOnError
         (alexOpenFile o_file WriteMode)
         (\h -> do hClose h; removeFile o_file)
         $ \out_h -> do
 
    let
-         (maybe_header, directives, scanner1, maybe_footer) = script
          (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
-         (scanner_final, actions) = extractActions scanner2
+         (scanner_final, actions) = extractActions actty_info scanner2
 
          encodingsScript = [ e | EncodingDirective e <- directives ]
 
@@ -188,7 +191,7 @@ alex cli file basename script = do
        nm  = scannerName scanner_final
        usespreds = usesPreds min_dfa
 
-   
+
    put_info "\nStart codes\n"
    put_info (show $ scs)
    put_info "\nScanner\n"
@@ -199,7 +202,7 @@ alex cli file basename script = do
    put_info (infoDFA 1 nm dfa "")
    put_info "\nMinimized DFA"
    put_info (infoDFA 1 nm min_dfa "")
-   hPutStr out_h (outputDFA target 1 nm min_dfa "")
+   hPutStr out_h (outputDFA target 1 nm actty_info min_dfa "")
 
    injectCode maybe_footer file out_h
 
@@ -280,7 +283,7 @@ templateDir def cli
 templateFile :: FilePath -> Target -> UsesPreds -> [CLIFlags] -> FilePath
 templateFile dir target usespreds cli
   = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug ++ maybe_nopred
-  where 
+  where
         maybe_ghc = case target of
                       GhcTarget -> "-ghc"
                       _         -> ""
@@ -302,6 +305,13 @@ wrapperFile dir directives =
         [f] -> return (Just (dir ++ "/AlexWrapper-" ++ f))
         _many -> dieAlex "multiple %wrapper directives"
 
+actionType :: [Directive] -> IO (Maybe (Maybe String, String))
+actionType directives =
+  case [ (tyclasses, actty) | ActionType tyclasses actty <- directives ] of
+    [] -> return Nothing
+    [res] -> return (Just res)
+    _ -> dieAlex "multiple %actiontype directives"
+
 infoStart :: FilePath -> FilePath -> IO (String -> IO (), IO ())
 infoStart x_file info_file = do
   bracketOnError
@@ -314,7 +324,7 @@ infoStart x_file info_file = do
 infoHeader :: Handle -> FilePath -> IO ()
 infoHeader h file = do
 --  hSetBuffering h NoBuffering
-  hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++ 
+  hPutStrLn h ("Info file produced by Alex version " ++ projectVersion ++
                 ", from " ++ file)
   hPutStrLn h hline
   hPutStr h "\n"
@@ -325,7 +335,7 @@ initialParserEnv = (initSetEnv, initREEnv)
 initSetEnv :: Map String CharSet
 initSetEnv = Map.fromList [("white", charSet " \t\n\v\f\r"),
                            ("printable", charSetRange (chr 32) (chr 0x10FFFF)), -- FIXME: Look it up the unicode standard
-                           (".", charSetComplement emptyCharSet 
+                           (".", charSetComplement emptyCharSet
                             `charSetMinus` charSetSingleton '\n')]
 
 initREEnv :: Map String RExp
@@ -334,7 +344,7 @@ initREEnv = Map.empty
 -- -----------------------------------------------------------------------------
 -- Command-line flags
 
-data CLIFlags 
+data CLIFlags
   = OptDebugParser
   | OptGhcTarget
   | OptOutputFile FilePath
@@ -394,8 +404,8 @@ bracketOnError
         -> IO c         -- returns the value from the in-between computation
 bracketOnError before after thing =
   block (do
-    a <- before 
-    r <- Exception.catch 
+    a <- before
+    r <- Exception.catch
            (unblock (thing a))
            (\e -> do { after a; throw e })
     return r

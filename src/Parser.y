@@ -1,6 +1,6 @@
 {
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Parser.y, part of Alex
 --
 -- (c) Simon Marlow 2003
@@ -60,13 +60,14 @@ import Data.Char
 	RMAC_DEF	{ T _ (RMacDefT $$) }
 	WRAPPER		{ T _ WrapperT }
 	ENCODING	{ T _ EncodingT }
+        ACTIONTYPE      { T _ ActionTypeT }
 %%
 
 alex	:: { (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code)) }
 	: maybe_code directives macdefs scanner maybe_code { ($1,$2,$4,$5) }
 
 maybe_code :: { Maybe (AlexPosn,Code) }
-	: CODE				{ case $1 of T pos (CodeT code) -> 
+	: CODE				{ case $1 of T pos (CodeT code) ->
 						Just (pos,code) }
 	| {- empty -}			{ Nothing }
 
@@ -77,10 +78,12 @@ directives :: { [Directive] }
 directive  :: { Directive }
 	: WRAPPER STRING		{ WrapperDirective $2 }
 	| ENCODING encoding		{ EncodingDirective $2 }
+        | ACTIONTYPE STRING             { ActionType Nothing $2 }
+        | ACTIONTYPE STRING STRING      { ActionType (Just $2) $3 }
 
 encoding :: { Encoding }
         : STRING         		{% lookupEncoding $1 }
-        
+
 macdefs :: { () }
 	: macdef macdefs		{ () }
 	| {- empty -}			{ () }
@@ -107,7 +110,7 @@ tokendef :: { [RECtx] }
 	| rule				{ [ $1 ] }
 
 rule    :: { RECtx }
-	: context rhs			{ let (l,e,r) = $1 in 
+	: context rhs			{ let (l,e,r) = $1 in
 					  RECtx [] l e r $2 }
 
 rules	:: { [RECtx] }
@@ -140,7 +143,7 @@ left_ctx :: { CharSet }
 right_ctx :: { RightContext RExp }
 	: '$'		{ RightContextRExp (Ch (charSetSingleton '\n')) }
 	| '/' rexp	{ RightContextRExp $2 }
-        | '/' CODE	{ RightContextCode (case $2 of 
+        | '/' CODE	{ RightContextCode (case $2 of
 						T _ (CodeT code) -> code) }
 	| {- empty -}	{ NoRightContext }
 
@@ -168,7 +171,7 @@ rep	:: { RExp -> RExp }
 
 rexp0	:: { RExp }
 	: '(' ')'  			{ Eps }
-	| STRING			{ foldr (:%%) Eps 
+	| STRING			{ foldr (:%%) Eps
 					    (map (Ch . charSetSingleton) $1) }
 	| RMAC 				{% lookupRMac $1 }
 	| set 				{ Ch $1 }
@@ -187,7 +190,7 @@ set0	:: { CharSet }
 	-- [^sets] is the same as  '. # [sets]'
 	-- The upshot is that [^set] does *not* match a newline character,
 	-- which seems much more useful than just taking the complement.
-	| '[' '^' sets ']'		
+	| '[' '^' sets ']'
 			{% do { dot <- lookupSMac (tokPosn $1, ".");
 		      	        return (dot `charSetMinus`
 			      		  foldr charSetUnion emptyCharSet $3) }}
