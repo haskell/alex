@@ -61,6 +61,7 @@ import Data.Char
 	WRAPPER		{ T _ WrapperT }
 	ENCODING	{ T _ EncodingT }
         ACTIONTYPE      { T _ ActionTypeT }
+        TOKENTYPE       { T _ TokenTypeT }
 %%
 
 alex	:: { (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code)) }
@@ -80,6 +81,7 @@ directive  :: { Directive }
 	| ENCODING encoding		{ EncodingDirective $2 }
         | ACTIONTYPE STRING             { ActionType Nothing $2 }
         | ACTIONTYPE STRING STRING      { ActionType (Just $2) $3 }
+        | TOKENTYPE STRING              { TokenType $2 }
 
 encoding :: { Encoding }
         : STRING         		{% lookupEncoding $1 }

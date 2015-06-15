@@ -43,6 +43,7 @@ data Directive
    | EncodingDirective Encoding         -- use this encoding
    | ActionType (Maybe String) String   -- Type signature of actions,
                                         -- with optional typeclasses
+   | TokenType String
    deriving Show
 
 -- TODO: update this comment

@@ -50,7 +50,8 @@ alex :-
 <0> $special			{ special }  -- note: matches {
 <0> \% "wrapper"		{ wrapper }
 <0> \% "encoding"		{ encoding }
-<0> \% "actiontype"             { actionty }
+<0> \% "action"                 { actionty }
+<0> \% "token"                  { tokenty }
 
 <0> \\ $digit+			{ decch }
 <0> \\ x $hexdig+		{ hexch }
@@ -100,6 +101,7 @@ data Tkn
  | WrapperT
  | EncodingT
  | ActionTypeT
+ | TokenTypeT
  | EOFT
  deriving Show
 
@@ -123,6 +125,7 @@ startcode (p,_,str) ln = return $ T p (IdT (take ln str))
 wrapper   (p,_,str) ln = return $ T p WrapperT
 encoding  (p,_,str) ln = return $ T p EncodingT
 actionty  (p,_,str) ln = return $ T p ActionTypeT
+tokenty   (p,_,str) ln = return $ T p TokenTypeT
 
 isIdChar c = isAlphaNum c || c `elem` "_'"
 
