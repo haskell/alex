@@ -52,6 +52,7 @@ alex :-
 <0> \% "encoding"		{ encoding }
 <0> \% "action"                 { actionty }
 <0> \% "token"                  { tokenty }
+<0> \% "typeclass"              { typeclass }
 
 <0> \\ $digit+			{ decch }
 <0> \\ x $hexdig+		{ hexch }
@@ -102,6 +103,7 @@ data Tkn
  | EncodingT
  | ActionTypeT
  | TokenTypeT
+ | TypeClassT
  | EOFT
  deriving Show
 
@@ -126,6 +128,7 @@ wrapper   (p,_,str) ln = return $ T p WrapperT
 encoding  (p,_,str) ln = return $ T p EncodingT
 actionty  (p,_,str) ln = return $ T p ActionTypeT
 tokenty   (p,_,str) ln = return $ T p TokenTypeT
+typeclass (p,_,str) ln = return $ T p TypeClassT
 
 isIdChar c = isAlphaNum c || c `elem` "_'"
 

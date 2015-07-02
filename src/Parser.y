@@ -62,6 +62,7 @@ import Data.Char
 	ENCODING	{ T _ EncodingT }
         ACTIONTYPE      { T _ ActionTypeT }
         TOKENTYPE       { T _ TokenTypeT }
+        TYPECLASS       { T _ TypeClassT }
 %%
 
 alex	:: { (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code)) }
@@ -82,6 +83,7 @@ directive  :: { Directive }
         | ACTIONTYPE STRING             { ActionType Nothing $2 }
         | ACTIONTYPE STRING STRING      { ActionType (Just $2) $3 }
         | TOKENTYPE STRING              { TokenType $2 }
+        | TYPECLASS STRING              { TypeClass $2 }
 
 encoding :: { Encoding }
         : STRING         		{% lookupEncoding $1 }

@@ -10,12 +10,13 @@
 -- ----------------------------------------------------------------------------}
 
 module AbsSyn (
-  Code, Directive(..),
+  Code, Directive(..), Scheme(..),
+  wrapperName,
   Scanner(..),
   RECtx(..),
   RExp(..),
   DFA(..), State(..), SNum, StartCode, Accept(..),
-  RightContext(..), showRCtx,
+  RightContext(..), showRCtx, strtype,
   encodeStartCodes, extractActions,
   Target(..),
   UsesPreds(..), usesPreds
@@ -43,8 +44,27 @@ data Directive
    | EncodingDirective Encoding         -- use this encoding
    | ActionType (Maybe String) String   -- Type signature of actions,
                                         -- with optional typeclasses
+   | TypeClass String
    | TokenType String
    deriving Show
+
+data Scheme
+  = Default
+  | Basic { basicByteString :: Bool,
+            basicTypeInfo :: Maybe (Maybe String, String) }
+  | Posn { posnByteString :: Bool,
+           posnTypeInfo :: Maybe (Maybe String, String) }
+
+strtype :: Bool -> String
+strtype True = "Data.ByteString.Lazy.ByteString"
+strtype False = "String"
+
+wrapperName :: Scheme -> Maybe String
+wrapperName Default {} = Nothing
+wrapperName Basic { basicByteString = False } = Just "basic"
+wrapperName Basic { basicByteString = True } = Just "basic-bytestring"
+wrapperName Posn { posnByteString = False } = Just "posn"
+wrapperName Posn { posnByteString = True } = Just "posn-bytestring"
 
 -- TODO: update this comment
 --
@@ -278,8 +298,8 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 -- because the actual action fragments might be duplicated in the
 -- generated file.
 
-extractActions :: Maybe (Maybe String, String) -> Scanner -> (Scanner,ShowS)
-extractActions actionty scanner = (scanner{scannerTokens = new_tokens}, decl_str)
+extractActions :: Scheme -> Scanner -> (Scanner,ShowS)
+extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
  where
   (new_tokens, decls) = unzip (zipWith f (scannerTokens scanner) act_names)
 
@@ -288,15 +308,18 @@ extractActions actionty scanner = (scanner{scannerTokens = new_tokens}, decl_str
   f r@RECtx{ reCtxCode = Nothing } _
         = (r{reCtxCode = Nothing}, Nothing)
 
-  mkDecl fun code = case actionty of
-    Nothing -> str fun . str " = " . str code . nl
-    Just (Nothing, actionty') ->
-      str fun . str " :: " . str actionty' . str "\n" .
-      str fun . str " = " . str code . nl
-    Just (Just tyclasses, actionty') ->
+  mkDecl fun code = case scheme of
+    Basic { basicByteString = isByteString,
+            basicTypeInfo = Just (Nothing, tokenty) } ->
+      str fun . str " :: " . str (strtype isByteString) . str " -> "
+      . str tokenty . str "\n"
+      . str fun . str " = " . str code . nl
+    Basic { basicByteString = isByteString,
+            basicTypeInfo = Just (Just tyclasses, tokenty) } ->
       str fun . str " :: (" . str tyclasses . str ") => " .
-      str actionty' . str "\n" .
+      str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
       str fun . str " = " . str code . nl
+    _ -> str fun . str " = " . str code . nl
 
   act_names = map (\n -> "alex_action_" ++ show (n::Int)) [0..]
 

@@ -150,7 +150,7 @@ alex cli file basename script = do
 
    let (maybe_header, directives, scanner1, maybe_footer) = script
 
-   actty_info <- actionType directives
+   scheme <- getScheme directives
 
    -- open the output file; remove it if we encounter an error
    bracketOnError
@@ -159,9 +159,9 @@ alex cli file basename script = do
         $ \out_h -> do
 
    let
+         wrapper_name = wrapperFile template_dir scheme
          (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
-         (scanner_final, actions) = extractActions actty_info scanner2
-
+         (scanner_final, actions) = extractActions scheme scanner2
          encodingsScript = [ e | EncodingDirective e <- directives ]
 
    encoding <- case nub (encodingsCli ++ encodingsScript) of
@@ -169,8 +169,6 @@ alex cli file basename script = do
      [e] -> return e
      _ | null encodingsCli -> dieAlex "conflicting %encoding directives"
        | otherwise -> dieAlex "--latin1 flag conflicts with %encoding directive"
-
-   wrapper_name <- wrapperFile template_dir directives
 
    hPutStr out_h (optsToInject target cli)
    injectCode maybe_header file out_h
@@ -202,7 +200,7 @@ alex cli file basename script = do
    put_info (infoDFA 1 nm dfa "")
    put_info "\nMinimized DFA"
    put_info (infoDFA 1 nm min_dfa "")
-   hPutStr out_h (outputDFA target 1 nm actty_info min_dfa "")
+   hPutStr out_h (outputDFA target 1 nm scheme min_dfa "")
 
    injectCode maybe_footer file out_h
 
@@ -216,6 +214,62 @@ alex cli file basename script = do
 
    hClose out_h
    finish_info
+
+actionType :: [Directive] -> IO (Maybe (Maybe String, String))
+actionType directives =
+  case [ (tyclasses, actty) | ActionType tyclasses actty <- directives ] of
+    [] -> return Nothing
+    [res] -> return (Just res)
+    _ -> dieAlex "multiple %actiontype directives"
+
+getScheme :: [Directive] -> IO Scheme
+getScheme directives =
+  do
+    token <- case [ ty | TokenType ty <- directives ] of
+      [] -> return Nothing
+      [res] -> return (Just res)
+      _ -> dieAlex "multiple %token directives"
+
+    typeclass <- case [ tyclass | TypeClass tyclass <- directives ] of
+      [] -> return Nothing
+      [res] -> return (Just res)
+      _ -> dieAlex "multiple %typeclass directives"
+
+    case [ f | WrapperDirective f <- directives ] of
+        []  -> return Default
+        [single]
+          | single == "basic" || single == "basic-bytestring" ->
+            let
+              isByteString = single == "basic-bytestring"
+            in case (typeclass, token) of
+              (Nothing, Nothing) ->
+                return Basic { basicByteString = isByteString,
+                               basicTypeInfo = Nothing }
+              (Nothing, Just tokenty) ->
+                return Basic { basicByteString = isByteString,
+                               basicTypeInfo = Just (Nothing, tokenty) }
+              (Just _, Just tokenty) ->
+                return Basic { basicByteString = isByteString,
+                               basicTypeInfo = Just (typeclass, tokenty) }
+              (Just _, Nothing) ->
+                dieAlex "%typeclass directive without %token directive"
+          | single == "posn" || single == "posn-bytestring" ->
+            let
+              isByteString = single == "posn-bytestring"
+            in case (typeclass, token) of
+              (Nothing, Nothing) ->
+                return Posn { posnByteString = isByteString,
+                              posnTypeInfo = Nothing }
+              (Nothing, Just tokenty) ->
+                return Posn { posnByteString = isByteString,
+                              posnTypeInfo = Just (Nothing, tokenty) }
+              (Just _, Just tokenty) ->
+                return Posn { posnByteString = isByteString,
+                              posnTypeInfo = Just (typeclass, tokenty) }
+              (Just _, Nothing) ->
+                dieAlex "%typeclass directive without %token directive"
+          | otherwise -> dieAlex ("unknown wrapper type " ++ single)
+        _many -> dieAlex "multiple %wrapper directives"
 
 -- inject some code, and add a {-# LINE #-} pragma at the top
 injectCode :: Maybe (AlexPosn,Code) -> FilePath -> Handle -> IO ()
@@ -298,19 +352,11 @@ templateFile dir target usespreds cli
                           && null maybe_debug -> "-nopred"
             _                                 -> ""
 
-wrapperFile :: FilePath -> [Directive] -> IO (Maybe FilePath)
-wrapperFile dir directives =
-  case [ f | WrapperDirective f <- directives ] of
-        []  -> return Nothing
-        [f] -> return (Just (dir ++ "/AlexWrapper-" ++ f))
-        _many -> dieAlex "multiple %wrapper directives"
-
-actionType :: [Directive] -> IO (Maybe (Maybe String, String))
-actionType directives =
-  case [ (tyclasses, actty) | ActionType tyclasses actty <- directives ] of
-    [] -> return Nothing
-    [res] -> return (Just res)
-    _ -> dieAlex "multiple %actiontype directives"
+wrapperFile :: FilePath -> Scheme -> Maybe FilePath
+wrapperFile dir scheme =
+  do
+    f <- wrapperName scheme
+    return (dir ++ "/AlexWrapper-" ++ f)
 
 infoStart :: FilePath -> FilePath -> IO (String -> IO (), IO ())
 infoStart x_file info_file = do

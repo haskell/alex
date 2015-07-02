@@ -21,17 +21,19 @@ import Data.Array ( Array )
 import Data.Array.Base ( unsafeRead )
 import Data.Array.ST ( STUArray, newArray, readArray, writeArray, freeze )
 import Data.Array.Unboxed ( UArray, elems, (!), array, listArray )
+import Data.Maybe (isJust)
 import Data.Bits
 import Data.Char ( ord, chr )
-import Data.List ( maximumBy, sortBy, groupBy )
+import Data.List ( maximumBy, sortBy, groupBy, mapAccumR )
 
 -- -----------------------------------------------------------------------------
 -- Printing the output
 
-outputDFA :: Target -> Int -> String -> Maybe (Maybe String, String) -> DFA SNum Code -> ShowS
-outputDFA target _ _ typesig dfa
+outputDFA :: Target -> Int -> String -> Scheme -> DFA SNum Code -> ShowS
+outputDFA target _ _ scheme dfa
   = interleave_shows nl
-        [outputBase, outputTable, outputCheck, outputDefault, outputAccept]
+        [outputBase, outputTable, outputCheck, outputDefault,
+         outputAccept, outputActions, outputSigs]
   where
     (base, table, check, deflt, accept) = mkTables dfa
 
@@ -43,6 +45,7 @@ outputDFA target _ _ typesig dfa
     check_nm  = "alex_check"
     deflt_nm  = "alex_deflt"
     accept_nm = "alex_accept"
+    actions_nm = "alex_actions"
 
     outputBase    = do_array hexChars32 base_nm  n_states   base
     outputTable   = do_array hexChars16 table_nm table_size table
@@ -63,43 +66,89 @@ outputDFA target _ _ typesig dfa
         . str ") [" . interleave_shows (char ',') (map shows ints)
         . str "]\n"
 
-    outputAccept
-        = case typesig of
-          Nothing ->
+    outputAccept =
+        str accept_nm . str " :: Array Int (AlexAcc ())\n"
+      . str accept_nm . str " = listArray (0::Int," . shows n_states . str ") ["
+      . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
+      . str "]\n"
+
+    outputActions
+        = let
+            (nacts, acts) = mapAccumR outputActs 0 accept
+          in case scheme of
+          Basic { basicByteString = isByteString,
+                  basicTypeInfo = Just (Nothing, toktype) } ->
+              str actions_nm . str " :: Array Int ("
+            . str (strtype isByteString) . str " -> " . str toktype
+            . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Basic { basicByteString = isByteString,
+                  basicTypeInfo = Just (Just tyclasses, toktype) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int ("
+            . str (strtype isByteString) . str " -> " . str toktype
+            . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          _ ->
               -- No type signature: we don't know what the type of the actions is.
               -- str accept_nm . str " :: Array Int (Accept Code)\n"
-              str accept_nm . str " = listArray (0::Int," . shows n_states
-            . str ") [" . interleave_shows (char ',') (map outputAccs accept)
-            . str "]\n"
-          Just (Nothing, rettype) ->
-              str accept_nm . str " :: Array Int (AlexAcc ("
-            . str rettype . str "))\n"
-            . str accept_nm . str " = listArray (0::Int," . shows n_states
-            . str ") [" . interleave_shows (char ',') (map outputAccs accept)
-            . str "]\n"
-          Just (Just tyclasses, rettype) ->
-              str accept_nm . str " :: (" . str tyclasses
-            . str ") => Array Int (AlexAcc (" . str rettype . str "))\n"
-            . str accept_nm . str " = listArray (0::Int," . shows n_states
-            . str ") [" . interleave_shows (char ',') (map outputAccs accept)
+              str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
             . str "]\n"
 
-    outputAccs :: [Accept Code] -> ShowS
-    outputAccs []
-        = str "AlexAccNone"
-    outputAccs (Acc _ Nothing Nothing NoRightContext : [])
-        = str "AlexAccSkip"
-    outputAccs (Acc _ (Just act) Nothing NoRightContext : [])
-        = str "AlexAcc " . paren (str act)
-    outputAccs (Acc _ Nothing lctx rctx : rest)
-        = str "AlexAccSkipPred " . space
-        . paren (outputPred lctx rctx)
-        . paren (outputAccs rest)
-    outputAccs (Acc _ (Just act) lctx rctx : rest)
-        = str "AlexAccPred " . space
-        . paren (str act) . space
-        . paren (outputPred lctx rctx)
-        . paren (outputAccs rest)
+    outputSigs
+        = case scheme of
+          Basic { basicByteString = isByteString,
+                  basicTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+          Basic { basicByteString = isByteString,
+                  basicTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+          _ ->
+              str ""
+
+    outputAccs :: Int -> [Accept Code] -> (Int, ShowS)
+    outputAccs idx [] = (idx, str "AlexAccNone")
+    outputAccs idx (Acc _ Nothing Nothing NoRightContext : [])
+      = (idx, str "AlexAccSkip")
+    outputAccs idx (Acc _ (Just _) Nothing NoRightContext : [])
+      = (idx + 1, str "AlexAcc " . str (show idx))
+    outputAccs idx (Acc _ Nothing lctx rctx : rest)
+      = let (idx', rest') = outputAccs idx rest
+        in (idx', str "AlexAccSkipPred" . space
+                 . paren (outputPred lctx rctx)
+                 . paren rest')
+    outputAccs idx (Acc _ (Just _) lctx rctx : rest)
+      = let (idx', rest') = outputAccs (idx + 1) rest
+        in (idx', str "AlexAccPred" . space
+                  . str (show idx) . space
+                  . paren (outputPred lctx rctx)
+                  . paren rest')
+
+    outputActs :: Int -> [Accept Code] -> (Int, [ShowS])
+    outputActs idx =
+      let
+        outputAct _ (Acc _ Nothing _ _) = error "Shouldn't see this"
+        outputAct idx (Acc _ (Just act) _ _) =
+          (idx + 1, paren (shows idx . str "," . str act))
+      in
+        mapAccumR outputAct idx . filter (\(Acc _ act _ _) -> isJust act)
 
     outputPred (Just set) NoRightContext
         = outputLCtx set
