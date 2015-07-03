@@ -319,6 +319,16 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
       str fun . str " :: (" . str tyclasses . str ") => " .
       str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
       str fun . str " = " . str code . nl
+    Posn { posnByteString = isByteString,
+           posnTypeInfo = Just (Nothing, tokenty) } ->
+      str fun . str " :: AlexPosn -> " . str (strtype isByteString) . str " -> "
+      . str tokenty . str "\n"
+      . str fun . str " = " . str code . nl
+    Posn { posnByteString = isByteString,
+           posnTypeInfo = Just (Just tyclasses, tokenty) } ->
+      str fun . str " :: (" . str tyclasses . str ") => AlexPosn -> " .
+      str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
+      str fun . str " = " . str code . nl
     _ -> str fun . str " = " . str code . nl
 
   act_names = map (\n -> "alex_action_" ++ show (n::Int)) [0..]
