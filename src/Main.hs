@@ -268,6 +268,21 @@ getScheme directives =
                               posnTypeInfo = Just (typeclass, tokenty) }
               (Just _, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
+          | single == "monad" || single == "monad-bytestring" ->
+            let
+              isByteString = single == "monad-bytestring"
+            in case (typeclass, token) of
+              (Nothing, Nothing) ->
+                return Monad { monadByteString = isByteString,
+                               monadTypeInfo = Nothing }
+              (Nothing, Just tokenty) ->
+                return Monad { monadByteString = isByteString,
+                               monadTypeInfo = Just (Nothing, tokenty) }
+              (Just _, Just tokenty) ->
+                return Monad { monadByteString = isByteString,
+                               monadTypeInfo = Just (typeclass, tokenty) }
+              (Just _, Nothing) ->
+                dieAlex "%typeclass directive without %token directive"
           | otherwise -> dieAlex ("unknown wrapper type " ++ single)
         _many -> dieAlex "multiple %wrapper directives"
 

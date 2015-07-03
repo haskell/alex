@@ -54,6 +54,8 @@ data Scheme
             basicTypeInfo :: Maybe (Maybe String, String) }
   | Posn { posnByteString :: Bool,
            posnTypeInfo :: Maybe (Maybe String, String) }
+  | Monad { monadByteString :: Bool,
+            monadTypeInfo :: Maybe (Maybe String, String) }
 
 strtype :: Bool -> String
 strtype True = "Data.ByteString.Lazy.ByteString"
@@ -65,6 +67,8 @@ wrapperName Basic { basicByteString = False } = Just "basic"
 wrapperName Basic { basicByteString = True } = Just "basic-bytestring"
 wrapperName Posn { posnByteString = False } = Just "posn"
 wrapperName Posn { posnByteString = True } = Just "posn-bytestring"
+wrapperName Monad { monadByteString = False } = Just "monad"
+wrapperName Monad { monadByteString = True } = Just "monad-bytestring"
 
 -- TODO: update this comment
 --
@@ -328,6 +332,14 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
            posnTypeInfo = Just (Just tyclasses, tokenty) } ->
       str fun . str " :: (" . str tyclasses . str ") => AlexPosn -> " .
       str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
+      str fun . str " = " . str code . nl
+    Monad { monadTypeInfo = Just (Nothing, tokenty) } ->
+      str fun . str " :: AlexInput -> Int -> Alex ("
+      . str tokenty . str ")\n"
+      . str fun . str " = " . str code . nl
+    Monad { monadTypeInfo = Just (Just tyclasses, tokenty) } ->
+      str fun . str " :: (" . str tyclasses . str ") => " .
+      str " AlexInput -> Int -> Alex (" . str tokenty . str ")\n" .
       str fun . str " = " . str code . nl
     _ -> str fun . str " = " . str code . nl
 
