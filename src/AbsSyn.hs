@@ -54,7 +54,7 @@ data Scheme
             basicTypeInfo :: Maybe (Maybe String, String) }
   | Posn { posnByteString :: Bool,
            posnTypeInfo :: Maybe (Maybe String, String) }
-  | Monad { monadByteString :: Bool,
+  | Monad { monadByteString :: Bool, monadUserState :: Bool,
             monadTypeInfo :: Maybe (Maybe String, String) }
 
 strtype :: Bool -> String
@@ -67,8 +67,14 @@ wrapperName Basic { basicByteString = False } = Just "basic"
 wrapperName Basic { basicByteString = True } = Just "basic-bytestring"
 wrapperName Posn { posnByteString = False } = Just "posn"
 wrapperName Posn { posnByteString = True } = Just "posn-bytestring"
-wrapperName Monad { monadByteString = False } = Just "monad"
-wrapperName Monad { monadByteString = True } = Just "monad-bytestring"
+wrapperName Monad { monadByteString = False,
+                    monadUserState = False } = Just "monad"
+wrapperName Monad { monadByteString = True,
+                    monadUserState = False } = Just "monad-bytestring"
+wrapperName Monad { monadByteString = False,
+                    monadUserState = True } = Just "monadUserState"
+wrapperName Monad { monadByteString = True,
+                    monadUserState = True } = Just "monadUserState-bytestring"
 
 -- TODO: update this comment
 --

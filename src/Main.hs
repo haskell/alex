@@ -268,18 +268,26 @@ getScheme directives =
                               posnTypeInfo = Just (typeclass, tokenty) }
               (Just _, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
-          | single == "monad" || single == "monad-bytestring" ->
+          | single == "monad" || single == "monad-bytestring" ||
+            single == "monadUserState" ||
+            single == "monadUserState-bytestring" ->
             let
-              isByteString = single == "monad-bytestring"
+              isByteString = single == "monad-bytestring" ||
+                             single == "monadUserState-bytestring"
+              userState = single == "monadUserState" ||
+                          single == "monadUserState-ByteString"
             in case (typeclass, token) of
               (Nothing, Nothing) ->
                 return Monad { monadByteString = isByteString,
+                               monadUserState = userState,
                                monadTypeInfo = Nothing }
               (Nothing, Just tokenty) ->
                 return Monad { monadByteString = isByteString,
+                               monadUserState = userState,
                                monadTypeInfo = Just (Nothing, tokenty) }
               (Just _, Just tokenty) ->
                 return Monad { monadByteString = isByteString,
+                               monadUserState = userState,
                                monadTypeInfo = Just (typeclass, tokenty) }
               (Just _, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"

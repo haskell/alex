@@ -67,10 +67,16 @@ outputDFA target _ _ scheme dfa
         . str "]\n"
 
     outputAccept =
-        str accept_nm . str " :: Array Int (AlexAcc ())\n"
-      . str accept_nm . str " = listArray (0::Int," . shows n_states . str ") ["
-      . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
-      . str "]\n"
+      let
+        userStateTy = case scheme of
+          Monad { monadUserState = True } -> "AlexUserState"
+          _ -> "()"
+      in
+          str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy
+        . str ")\n" . str accept_nm
+        . str " = listArray (0::Int," . shows n_states . str ") ["
+        . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
+        . str "]\n"
 
     outputActions
         = let
@@ -168,19 +174,32 @@ outputDFA target _ _ scheme dfa
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
-          Monad { monadTypeInfo = Just (Nothing, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+          Monad { monadTypeInfo = Just (Nothing, toktype),
+                  monadUserState = userState } ->
+            let
+              userStateTy | userState = "AlexUserState"
+                          | otherwise = "()"
+            in
+              str "alex_scan_tkn :: " . str userStateTy
+            . str " -> AlexInput -> Int -> "
             . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
-            . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
+            . str "alexScanUser :: " . str userStateTy
+            . str " -> AlexInput -> Int -> AlexReturn ("
             . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn ("
             . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
             . str "alexMonadScan :: Alex (" . str toktype . str ")\n"
-          Monad { monadTypeInfo = Just (Just tyclasses, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+          Monad { monadTypeInfo = Just (Just tyclasses, toktype),
+                  monadUserState = userState } ->
+            let
+              userStateTy | userState = "AlexUserState"
+                          | otherwise = "()"
+            in
+              str "alex_scan_tkn :: " . str userStateTy
+            . str " -> AlexInput -> Int -> "
             . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
-            . str "alexScanUser :: (" . str tyclasses
-            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . str "alexScanUser :: (" . str tyclasses . str ") => "
+            . str userStateTy . str " -> AlexInput -> Int -> AlexReturn ("
             . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn ("
