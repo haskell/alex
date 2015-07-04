@@ -291,8 +291,8 @@ outputDFA target _ _ scheme dfa
     outputActs idx =
       let
         outputAct _ (Acc _ Nothing _ _) = error "Shouldn't see this"
-        outputAct idx (Acc _ (Just act) _ _) =
-          (idx + 1, paren (shows idx . str "," . str act))
+        outputAct idx' (Acc _ (Just act) _ _) =
+          (idx + 1, paren (shows idx' . str "," . str act))
       in
         mapAccumR outputAct idx . filter (\(Acc _ act _ _) -> isJust act)
 
