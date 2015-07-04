@@ -238,6 +238,16 @@ getScheme directives =
     case [ f | WrapperDirective f <- directives ] of
         []  -> return Default
         [single]
+          | single == "gscan" ->
+            case (typeclass, token) of
+              (Nothing, Nothing) ->
+                return GScan { gscanTypeInfo = Nothing }
+              (Nothing, Just tokenty) ->
+                return GScan { gscanTypeInfo = Just (Nothing, tokenty) }
+              (Just _, Just tokenty) ->
+                return GScan { gscanTypeInfo = Just (typeclass, tokenty) }
+              (Just _, Nothing) ->
+                dieAlex "%typeclass directive without %token directive"
           | single == "basic" || single == "basic-bytestring" ->
             let
               isByteString = single == "basic-bytestring"

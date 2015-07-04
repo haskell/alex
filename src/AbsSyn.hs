@@ -50,6 +50,7 @@ data Directive
 
 data Scheme
   = Default
+  | GScan { gscanTypeInfo :: Maybe (Maybe String, String) }
   | Basic { basicByteString :: Bool,
             basicTypeInfo :: Maybe (Maybe String, String) }
   | Posn { posnByteString :: Bool,
@@ -63,6 +64,7 @@ strtype False = "String"
 
 wrapperName :: Scheme -> Maybe String
 wrapperName Default {} = Nothing
+wrapperName GScan {} = Just "gscan"
 wrapperName Basic { basicByteString = False } = Just "basic"
 wrapperName Basic { basicByteString = True } = Just "basic-bytestring"
 wrapperName Posn { posnByteString = False } = Just "posn"
@@ -318,7 +320,18 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
   f r@RECtx{ reCtxCode = Nothing } _
         = (r{reCtxCode = Nothing}, Nothing)
 
+  gscanActionType res =
+      str "AlexPosn -> Char -> String -> Int -> ((Int, state) -> "
+    . str res . str ") -> (Int, state) -> " . str res
+
   mkDecl fun code = case scheme of
+    GScan { gscanTypeInfo = Just (Nothing, tokenty) } ->
+        str fun . str " :: " . gscanActionType tokenty . str "\n"
+      . str fun . str " = " . str code . nl
+    GScan { gscanTypeInfo = Just (Just tyclasses, tokenty) } ->
+      str fun . str " :: (" . str tyclasses . str ") => " .
+      gscanActionType tokenty . str "\n" .
+      str fun . str " = " . str code . nl
     Basic { basicByteString = isByteString,
             basicTypeInfo = Just (Nothing, tokenty) } ->
       str fun . str " :: " . str (strtype isByteString) . str " -> "

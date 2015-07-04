@@ -78,10 +78,27 @@ outputDFA target _ _ scheme dfa
         . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
         . str "]\n"
 
+    gscanActionType res =
+        str "AlexPosn -> Char -> String -> Int -> ((Int, state) -> "
+      . str res . str ") -> (Int, state) -> " . str res
+
     outputActions
         = let
             (nacts, acts) = mapAccumR outputActs 0 accept
           in case scheme of
+          GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
+              str actions_nm . str " :: Array Int ("
+            . gscanActionType toktype . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int ("
+            . gscanActionType toktype . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
           Basic { basicByteString = isByteString,
                   basicTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
@@ -138,6 +155,22 @@ outputDFA target _ _ scheme dfa
 
     outputSigs
         = case scheme of
+          GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> "
+            . str "AlexReturn (" . gscanActionType toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . gscanActionType toktype . str ")\n"
+          GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . gscanActionType toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . gscanActionType toktype . str ")\n"
           Basic { basicByteString = isByteString,
                   basicTypeInfo = Just (Nothing, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> Int -> "
