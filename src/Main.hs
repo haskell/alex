@@ -215,13 +215,6 @@ alex cli file basename script = do
    hClose out_h
    finish_info
 
-actionType :: [Directive] -> IO (Maybe (Maybe String, String))
-actionType directives =
-  case [ (tyclasses, actty) | ActionType tyclasses actty <- directives ] of
-    [] -> return Nothing
-    [res] -> return (Just res)
-    _ -> dieAlex "multiple %actiontype directives"
-
 getScheme :: [Directive] -> IO Scheme
 getScheme directives =
   do
@@ -230,53 +223,75 @@ getScheme directives =
       [res] -> return (Just res)
       _ -> dieAlex "multiple %token directives"
 
+    action <- case [ ty | ActionType ty <- directives ] of
+      [] -> return Nothing
+      [res] -> return (Just res)
+      _ -> dieAlex "multiple %action directives"
+
     typeclass <- case [ tyclass | TypeClass tyclass <- directives ] of
       [] -> return Nothing
       [res] -> return (Just res)
       _ -> dieAlex "multiple %typeclass directives"
 
     case [ f | WrapperDirective f <- directives ] of
-        []  -> return Default
+        []  ->
+          case (typeclass, token, action) of
+            (Nothing, Nothing, Nothing) ->
+              return Default { defaultTypeInfo = Nothing }
+            (Nothing, Nothing, Just actionty) ->
+              return Default { defaultTypeInfo = Just (Nothing, actionty) }
+            (Just _, Nothing, Just actionty) ->
+              return Default { defaultTypeInfo = Just (typeclass, actionty) }
+            (_, Just _, _) ->
+              dieAlex "%token directive only allowed with a wrapper"
+            (Just _, Nothing, Nothing) ->
+              dieAlex "%typeclass directive without %token directive"
         [single]
           | single == "gscan" ->
-            case (typeclass, token) of
-              (Nothing, Nothing) ->
+            case (typeclass, token, action) of
+              (Nothing, Nothing, Nothing) ->
                 return GScan { gscanTypeInfo = Nothing }
-              (Nothing, Just tokenty) ->
+              (Nothing, Just tokenty, Nothing) ->
                 return GScan { gscanTypeInfo = Just (Nothing, tokenty) }
-              (Just _, Just tokenty) ->
+              (Just _, Just tokenty, Nothing) ->
                 return GScan { gscanTypeInfo = Just (typeclass, tokenty) }
-              (Just _, Nothing) ->
+              (_, _, Just _) ->
+                dieAlex "%action directive not allowed with a wrapper"
+              (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
           | single == "basic" || single == "basic-bytestring" ->
             let
               isByteString = single == "basic-bytestring"
-            in case (typeclass, token) of
-              (Nothing, Nothing) ->
+            in case (typeclass, token, action) of
+              (Nothing, Nothing, Nothing) ->
                 return Basic { basicByteString = isByteString,
                                basicTypeInfo = Nothing }
-              (Nothing, Just tokenty) ->
+              (Nothing, Just tokenty, Nothing) ->
                 return Basic { basicByteString = isByteString,
                                basicTypeInfo = Just (Nothing, tokenty) }
-              (Just _, Just tokenty) ->
+              (Just _, Just tokenty, Nothing) ->
                 return Basic { basicByteString = isByteString,
                                basicTypeInfo = Just (typeclass, tokenty) }
-              (Just _, Nothing) ->
+              (_, _, Just _) ->
+                dieAlex "%action directive not allowed with a wrapper"
+              (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
           | single == "posn" || single == "posn-bytestring" ->
             let
               isByteString = single == "posn-bytestring"
-            in case (typeclass, token) of
-              (Nothing, Nothing) ->
+            in case (typeclass, token, action) of
+              (Nothing, Nothing, Nothing) ->
                 return Posn { posnByteString = isByteString,
                               posnTypeInfo = Nothing }
-              (Nothing, Just tokenty) ->
+              (Nothing, Just tokenty, Nothing) ->
                 return Posn { posnByteString = isByteString,
                               posnTypeInfo = Just (Nothing, tokenty) }
-              (Just _, Just tokenty) ->
+              (Just _, Just tokenty, Nothing) ->
                 return Posn { posnByteString = isByteString,
                               posnTypeInfo = Just (typeclass, tokenty) }
-              (Just _, Nothing) ->
+              (_, _, Just _) ->
+                  dieAlex "%action directive not allowed with a wrapper"
+              (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
           | single == "monad" || single == "monad-bytestring" ||
             single == "monadUserState" ||
@@ -286,20 +301,22 @@ getScheme directives =
                              single == "monadUserState-bytestring"
               userState = single == "monadUserState" ||
                           single == "monadUserState-ByteString"
-            in case (typeclass, token) of
-              (Nothing, Nothing) ->
+            in case (typeclass, token, action) of
+              (Nothing, Nothing, Nothing) ->
                 return Monad { monadByteString = isByteString,
                                monadUserState = userState,
                                monadTypeInfo = Nothing }
-              (Nothing, Just tokenty) ->
+              (Nothing, Just tokenty, Nothing) ->
                 return Monad { monadByteString = isByteString,
                                monadUserState = userState,
                                monadTypeInfo = Just (Nothing, tokenty) }
-              (Just _, Just tokenty) ->
+              (Just _, Just tokenty, Nothing) ->
                 return Monad { monadByteString = isByteString,
                                monadUserState = userState,
                                monadTypeInfo = Just (typeclass, tokenty) }
-              (Just _, Nothing) ->
+              (_, _, Just _) ->
+                  dieAlex "%action directive not allowed with a wrapper"
+              (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
           | otherwise -> dieAlex ("unknown wrapper type " ++ single)
         _many -> dieAlex "multiple %wrapper directives"

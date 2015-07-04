@@ -42,14 +42,14 @@ type Code = String
 data Directive
    = WrapperDirective String            -- use this wrapper
    | EncodingDirective Encoding         -- use this encoding
-   | ActionType (Maybe String) String   -- Type signature of actions,
+   | ActionType String                  -- Type signature of actions,
                                         -- with optional typeclasses
    | TypeClass String
    | TokenType String
    deriving Show
 
 data Scheme
-  = Default
+  = Default { defaultTypeInfo :: Maybe (Maybe String, String) }
   | GScan { gscanTypeInfo :: Maybe (Maybe String, String) }
   | Basic { basicByteString :: Bool,
             basicTypeInfo :: Maybe (Maybe String, String) }
@@ -325,6 +325,13 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
     . str res . str ") -> (Int, state) -> " . str res
 
   mkDecl fun code = case scheme of
+    Default { defaultTypeInfo = Just (Nothing, actionty) } ->
+        str fun . str " :: " . str actionty . str "\n"
+      . str fun . str " = " . str code . nl
+    Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
+      str fun . str " :: (" . str tyclasses . str ") => " .
+      str actionty . str "\n" .
+      str fun . str " = " . str code . nl
     GScan { gscanTypeInfo = Just (Nothing, tokenty) } ->
         str fun . str " :: " . gscanActionType tokenty . str "\n"
       . str fun . str " = " . str code . nl

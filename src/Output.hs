@@ -86,6 +86,17 @@ outputDFA target _ _ scheme dfa
         = let
             (nacts, acts) = mapAccumR outputActs 0 accept
           in case scheme of
+          Default { defaultTypeInfo = Just (Nothing, actionty) } ->
+              str actions_nm . str " :: Array Int (" . str actionty . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int (" . str actionty . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
           GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
             . gscanActionType toktype . str ")\n"
@@ -155,6 +166,22 @@ outputDFA target _ _ scheme dfa
 
     outputSigs
         = case scheme of
+          Default { defaultTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+          Default { defaultTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
+            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
           GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> Int -> "
             . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"

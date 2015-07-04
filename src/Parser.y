@@ -80,8 +80,7 @@ directives :: { [Directive] }
 directive  :: { Directive }
 	: WRAPPER STRING		{ WrapperDirective $2 }
 	| ENCODING encoding		{ EncodingDirective $2 }
-        | ACTIONTYPE STRING             { ActionType Nothing $2 }
-        | ACTIONTYPE STRING STRING      { ActionType (Just $2) $3 }
+        | ACTIONTYPE STRING             { ActionType $2 }
         | TOKENTYPE STRING              { TokenType $2 }
         | TYPECLASS STRING              { TypeClass $2 }
 
