@@ -239,6 +239,3 @@ alexRightContext IBOX(sc) user _ _ input =
         -- match when checking the right context, just
         -- the first match will do.
 #endif
-
--- used by wrappers
-iUnbox IBOX(i) = i
