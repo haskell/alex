@@ -207,7 +207,7 @@ optsToInject GhcTarget _ = optNoWarnings ++ "{-# LANGUAGE CPP,MagicHash #-}\n"
 optsToInject _         _ = optNoWarnings ++ "{-# LANGUAGE CPP #-}\n"
 
 optNoWarnings :: String
-optNoWarnings = "{-# OPTIONS_GHC -w #-}\n"
+optNoWarnings = "{-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
