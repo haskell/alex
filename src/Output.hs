@@ -37,6 +37,10 @@ outputDFA target _ _ scheme dfa
   where
     (base, table, check, deflt, accept) = mkTables dfa
 
+    intty = case target of
+      GhcTarget -> "Int#"
+      HaskellTarget -> "Int"
+
     table_size = length table - 1
     n_states   = length base - 1
 
@@ -167,15 +171,17 @@ outputDFA target _ _ scheme dfa
     outputSigs
         = case scheme of
           Default { defaultTypeInfo = Just (Nothing, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
             . str toktype . str ")\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn ("
             . str toktype . str ")\n"
           Default { defaultTypeInfo = Just (Just tyclasses, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses
             . str ") => () -> AlexInput -> Int -> AlexReturn ("
             . str toktype . str ")\n"
@@ -183,15 +189,17 @@ outputDFA target _ _ scheme dfa
             . str ") => AlexInput -> Int -> AlexReturn ("
             . str toktype . str ")\n"
           GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: () -> AlexInput -> Int -> "
             . str "AlexReturn (" . gscanActionType toktype . str ")\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn ("
             . gscanActionType toktype . str ")\n"
           GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses
             . str ") => () -> AlexInput -> Int -> AlexReturn ("
             . gscanActionType toktype . str ")\n"
@@ -200,16 +208,18 @@ outputDFA target _ _ scheme dfa
             . gscanActionType toktype . str ")\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Nothing, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
             . str (show strty) . str " -> " . str toktype . str ")\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn ("
             . str (show strty) . str " -> " . str toktype . str ")\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Just tyclasses, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses
             . str ") => () -> AlexInput -> Int -> AlexReturn ("
             . str (show strty) . str " -> " . str toktype . str ")\n"
@@ -218,16 +228,18 @@ outputDFA target _ _ scheme dfa
             . str (show strty) . str " -> " . str toktype . str ")\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Nothing, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Just tyclasses, toktype) } ->
-              str "alex_scan_tkn :: () -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses
             . str ") => () -> AlexInput -> Int -> AlexReturn (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
@@ -241,8 +253,9 @@ outputDFA target _ _ scheme dfa
                           | otherwise = "()"
             in
               str "alex_scan_tkn :: " . str userStateTy
-            . str " -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str " -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: " . str userStateTy
             . str " -> AlexInput -> Int -> AlexReturn ("
             . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
@@ -256,8 +269,9 @@ outputDFA target _ _ scheme dfa
                           | otherwise = "()"
             in
               str "alex_scan_tkn :: " . str userStateTy
-            . str " -> AlexInput -> Int -> "
-            . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str " -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses . str ") => "
             . str userStateTy . str " -> AlexInput -> Int -> AlexReturn ("
             . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
