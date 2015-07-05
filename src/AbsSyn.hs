@@ -19,7 +19,8 @@ module AbsSyn (
   RightContext(..), showRCtx, strtype,
   encodeStartCodes, extractActions,
   Target(..),
-  UsesPreds(..), usesPreds
+  UsesPreds(..), usesPreds,
+  StrType(..)
   ) where
 
 import CharSet ( CharSet, Encoding )
@@ -48,10 +49,17 @@ data Directive
    | TokenType String
    deriving Show
 
+data StrType = Str | Lazy | Strict
+
+instance Show StrType where
+  show Str = "String"
+  show Lazy = "ByteString.ByteString"
+  show Strict = "ByteString.ByteString"
+
 data Scheme
   = Default { defaultTypeInfo :: Maybe (Maybe String, String) }
   | GScan { gscanTypeInfo :: Maybe (Maybe String, String) }
-  | Basic { basicByteString :: Bool,
+  | Basic { basicStrType :: StrType,
             basicTypeInfo :: Maybe (Maybe String, String) }
   | Posn { posnByteString :: Bool,
            posnTypeInfo :: Maybe (Maybe String, String) }
@@ -59,14 +67,15 @@ data Scheme
             monadTypeInfo :: Maybe (Maybe String, String) }
 
 strtype :: Bool -> String
-strtype True = "Data.ByteString.Lazy.ByteString"
+strtype True = "ByteString.ByteString"
 strtype False = "String"
 
 wrapperName :: Scheme -> Maybe String
 wrapperName Default {} = Nothing
 wrapperName GScan {} = Just "gscan"
-wrapperName Basic { basicByteString = False } = Just "basic"
-wrapperName Basic { basicByteString = True } = Just "basic-bytestring"
+wrapperName Basic { basicStrType = Str } = Just "basic"
+wrapperName Basic { basicStrType = Lazy } = Just "basic-bytestring"
+wrapperName Basic { basicStrType = Strict } = Just "strict-bytestring"
 wrapperName Posn { posnByteString = False } = Just "posn"
 wrapperName Posn { posnByteString = True } = Just "posn-bytestring"
 wrapperName Monad { monadByteString = False,
@@ -339,15 +348,14 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
       str fun . str " :: (" . str tyclasses . str ") => " .
       gscanActionType tokenty . str "\n" .
       str fun . str " = " . str code . nl
-    Basic { basicByteString = isByteString,
-            basicTypeInfo = Just (Nothing, tokenty) } ->
-      str fun . str " :: " . str (strtype isByteString) . str " -> "
+    Basic { basicStrType = strty, basicTypeInfo = Just (Nothing, tokenty) } ->
+      str fun . str " :: " . str (show strty) . str " -> "
       . str tokenty . str "\n"
       . str fun . str " = " . str code . nl
-    Basic { basicByteString = isByteString,
+    Basic { basicStrType = strty,
             basicTypeInfo = Just (Just tyclasses, tokenty) } ->
       str fun . str " :: (" . str tyclasses . str ") => " .
-      str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
+      str (show strty) . str " -> " . str tokenty . str "\n" .
       str fun . str " = " . str code . nl
     Posn { posnByteString = isByteString,
            posnTypeInfo = Just (Nothing, tokenty) } ->

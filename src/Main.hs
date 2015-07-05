@@ -259,18 +259,23 @@ getScheme directives =
                 dieAlex "%action directive not allowed with a wrapper"
               (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
-          | single == "basic" || single == "basic-bytestring" ->
+          | single == "basic" || single == "basic-bytestring" ||
+            single == "strict-bytestring" ->
             let
-              isByteString = single == "basic-bytestring"
+              strty = case single of
+                "basic" -> Str
+                "basic-bytestring" -> Lazy
+                "strict-bytestring" -> Strict
+                _ -> error "Impossible case"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
-                return Basic { basicByteString = isByteString,
+                return Basic { basicStrType = strty,
                                basicTypeInfo = Nothing }
               (Nothing, Just tokenty, Nothing) ->
-                return Basic { basicByteString = isByteString,
+                return Basic { basicStrType = strty,
                                basicTypeInfo = Just (Nothing, tokenty) }
               (Just _, Just tokenty, Nothing) ->
-                return Basic { basicByteString = isByteString,
+                return Basic { basicStrType = strty,
                                basicTypeInfo = Just (typeclass, tokenty) }
               (_, _, Just _) ->
                 dieAlex "%action directive not allowed with a wrapper"

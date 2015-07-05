@@ -110,19 +110,19 @@ outputDFA target _ _ scheme dfa
             . str actions_nm . str " = array (0::Int," . shows nacts
             . str ") [" . interleave_shows (char ',') (concat acts)
             . str "]\n"
-          Basic { basicByteString = isByteString,
+          Basic { basicStrType = strty,
                   basicTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
-            . str (strtype isByteString) . str " -> " . str toktype
+            . str (show strty) . str " -> " . str toktype
             . str ")\n"
             . str actions_nm . str " = array (0::Int," . shows nacts
             . str ") [" . interleave_shows (char ',') (concat acts)
             . str "]\n"
-          Basic { basicByteString = isByteString,
+          Basic { basicStrType = strty,
                   basicTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int ("
-            . str (strtype isByteString) . str " -> " . str toktype
+            . str (show strty) . str " -> " . str toktype
             . str ")\n"
             . str actions_nm . str " = array (0::Int," . shows nacts
             . str ") [" . interleave_shows (char ',') (concat acts)
@@ -198,24 +198,24 @@ outputDFA target _ _ scheme dfa
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn ("
             . gscanActionType toktype . str ")\n"
-          Basic { basicByteString = isByteString,
+          Basic { basicStrType = strty,
                   basicTypeInfo = Just (Nothing, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> Int -> "
             . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str (show strty) . str " -> " . str toktype . str ")\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn ("
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
-          Basic { basicByteString = isByteString,
+            . str (show strty) . str " -> " . str toktype . str ")\n"
+          Basic { basicStrType = strty,
                   basicTypeInfo = Just (Just tyclasses, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> Int -> "
             . str "AlexInput -> Int -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses
             . str ") => () -> AlexInput -> Int -> AlexReturn ("
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str (show strty) . str " -> " . str toktype . str ")\n"
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn ("
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str (show strty) . str " -> " . str toktype . str ")\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Nothing, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> Int -> "
