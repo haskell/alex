@@ -281,18 +281,18 @@ outputDFA target _ _ scheme dfa
                  . paren (outputPred lctx rctx)
                  . paren rest')
     outputAccs idx (Acc _ (Just _) lctx rctx : rest)
-      = let (idx', rest') = outputAccs (idx + 1) rest
-        in (idx', str "AlexAccPred" . space
-                  . str (show idx) . space
-                  . paren (outputPred lctx rctx)
-                  . paren rest')
+      = let (idx', rest') = outputAccs idx rest
+        in (idx' + 1, str "AlexAccPred" . space
+                      . str (show idx') . space
+                      . paren (outputPred lctx rctx)
+                      . paren rest')
 
     outputActs :: Int -> [Accept Code] -> (Int, [ShowS])
     outputActs idx =
       let
         outputAct _ (Acc _ Nothing _ _) = error "Shouldn't see this"
-        outputAct idx' (Acc _ (Just act) _ _) =
-          (idx + 1, paren (shows idx' . str "," . str act))
+        outputAct inneridx (Acc _ (Just act) _ _) =
+          (inneridx + 1, paren (shows inneridx . str "," . str act))
       in
         mapAccumR outputAct idx . filter (\(Acc _ act _ _) -> isJust act)
 
