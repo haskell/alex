@@ -137,7 +137,7 @@
 
     <section id="relnotes-20">
       <title>Release Notes for version 2.0</title>
-      
+
       <para>Alex has changed a <emphasis>lot</emphasis> between
       versions 1.x and 2.0.  The following is supposed to be an
       exhaustive list of the changes:</para>
@@ -260,14 +260,14 @@
 
       <section id="changes-usage">
 	<title>Usage changes</title>
-	
+
 	<para>The command-line syntax is quite different.  See <xref
 	linkend="invoking"/>.</para>
       </section>
 
       <section id="changes-implementation">
 	<title>Implementation changes</title>
-	
+
 	<itemizedlist>
 	  <listitem>
 	    <para>A more efficient table representation, coupled with
@@ -505,7 +505,7 @@ main = do
 
     <section id="lexical">
       <title>Lexical syntax</title>
-      
+
       <para>Alex's lexical syntax is given below.  It is written as a
       set of macro definitions using Alex's own syntax.  These macros
       are used in the BNF specification of the syntax later on.</para>
@@ -558,7 +558,9 @@ $graphic    = $printable # $white
       them directly after this code fragment in the output
       file.</para>
 
-      <para>Next comes an optional wrapper specification:</para>
+      <para>Next comes an optional directives section</para>
+
+      <para>The first kind of directive is a specification:</para>
 
 <programlisting>wrapper := '%wrapper' @string</programlisting>
 
@@ -568,6 +570,16 @@ $graphic    = $printable # $white
 <programlisting>encoding := '%encoding' @string</programlisting>
 
       <para>encodings are described in <xref linkend="encoding"/>.</para>
+
+      <para>Additionally, you can specify a token type, a typeclass,
+      or an action type (depending on what wrapper you use):</para>
+
+<programlisting>action type := '%action' @string</programlisting>
+<programlisting>token type := '%token' @string</programlisting>
+<programlisting>typeclass(es) := '%typeclass' @string</programlisting>
+
+      <para>these are described in <xref
+      linkend="types"/>.</para>
 
       <section id="macrodefs">
 	<title>Macro definitions</title>
@@ -642,10 +654,10 @@ rhs        := @code | ';'</programlisting>
 
 	<section id="contexts">
 	  <title>Contexts</title>
-    
+
 	  <para>Alex allows a left and right context to be placed on
 	  any rule:</para>
-	  
+
 <programlisting>
 left_ctx   := '^'
             | set '^'
@@ -722,7 +734,7 @@ right_ctx  := '$'
 
 	<section id="startcodes">
 	  <title>Start codes</title>
-	  
+
 	  <para>Start codes are a way of adding state to a lexical
 	  specification, such that only certain rules will match for a
 	  given state.</para>
@@ -734,7 +746,7 @@ right_ctx  := '$'
 
 <programlisting>startcode  := @id | '0'
 startcodes := '&lt;' startcode { ',' startcode } '>'</programlisting>
-    
+
 	  <para>When the lexer is invoked to scan the next token from
 	  the input stream, the start code to use is also specified
 	  (see <xref linkend="api"/>).  Only rules that mention this
@@ -773,7 +785,7 @@ bar = 2</programlisting>
           thereafter causes a <literal>stringchar</literal> action,
           until the next quotation mark is found, when we switch back
           into the <literal>0</literal> state again.</para>
-	  
+
 	  <para>From the lexer's point of view, the startcode is just
 	  an integer passed in, which tells it which state to start
 	  in.  In order to actually use it as a state, you must have
@@ -920,7 +932,7 @@ set0    := @char [ '-' @char ]
         | '~' set0</programlisting>
 
       <para>The various character set constructions are:</para>
-      
+
       <variablelist>
 	<varlistentry>
 	  <term><literal><replaceable>char</replaceable></literal></term>
@@ -1031,7 +1043,7 @@ set0    := @char [ '-' @char ]
           </listitem>
 	</varlistentry>
       </variablelist>
-      
+
       <para>Character set macros can be defined at the top of the file
       at the same time as regular expression macros (see <xref
       linkend="regexps"/>).  Here are some example character set
@@ -1163,7 +1175,7 @@ data AlexReturn action
       !AlexInput     -- Remaining input
       !Int           -- Token length
 
-  | AlexToken  
+  | AlexToken
       !AlexInput     -- Remaining input
       !Int           -- Token length
       action         -- action value</programlisting>
@@ -1422,16 +1434,16 @@ token t input len = return (t input len)</programlisting>
       <section>
 	<title>The "monadUserState" wrapper</title>
 
-	<para>The <literal>monadUserState</literal> wrapper is built 
+	<para>The <literal>monadUserState</literal> wrapper is built
     upon the <literal>monad</literal> wrapper. It includes a reference
-    to a type which must be defined in the user's program, 
+    to a type which must be defined in the user's program,
     <literal>AlexUserState</literal>, and a call to an initialization
     function which must also be defined in the user's program,
     <literal>alexInitUserState</literal>. It gives great flexibility
     because it is now possible to add any needed information and carry
     it during the whole lexing phase.</para>
 
-    <para>The generated code is the same as in the <literal>monad</literal> 
+    <para>The generated code is the same as in the <literal>monad</literal>
     wrapper, except in 3 places:</para>
     <para>1) The definition of the general state, which now refers to a
     type (<literal>AlexUserState</literal>) that must be defined in the Alex file.</para>
@@ -1447,14 +1459,14 @@ data AlexState = AlexState {
     }
 </programlisting>
 
-    <para>2) The initialization code, where a user-specified routine (<literal>alexInitUserState</literal>) will be 
+    <para>2) The initialization code, where a user-specified routine (<literal>alexInitUserState</literal>) will be
     called.</para>
 
 <programlisting>
 runAlex :: String -> Alex a -> Either String a
-runAlex input (Alex f) 
+runAlex input (Alex f)
    = case f (AlexState {alex_pos = alexStartPos,
-                        alex_inp = input,       
+                        alex_inp = input,
                         alex_chr = '\n',
                         alex_bytes = [],
                         alex_ust = alexInitUserState,
@@ -1513,8 +1525,8 @@ addCharToLexerStringValue c = do ust &lt;- alexGetUserState; alexSetUserState us
 
 <programlisting>alexGScan :: StopAction state result -> state -> String -> result
 
-type StopAction state result 
-         = AlexPosn -> Char -> String -> (Int,state) -> result</programlisting>    
+type StopAction state result
+         = AlexPosn -> Char -> String -> (Int,state) -> result</programlisting>
 
 	<para>The token actions should all have this type:</para>
 
@@ -1524,7 +1536,7 @@ type StopAction state result
              -> Int                     -- length of token
              -> ((Int,state) -> result) -- continuation
              -> (Int,state)             -- current (startcode,state)
-             -> result</programlisting>    
+             -> result</programlisting>
       </section>
       <section>
         <title>The bytestring wrappers</title>
@@ -1536,7 +1548,7 @@ type StopAction state result
 	<literal>monad</literal> wrappers that use lazy
 	<literal>ByteString</literal>s as the input and token types instead of
 	an ordinary <literal>String</literal>.</para>
-	
+
 	<para>The point of using these wrappers is that
 	<literal>ByteString</literal>s provide a more memory efficient
 	representation of an input stream. They can also be somewhat faster to
@@ -1544,7 +1556,7 @@ type StopAction state result
 	on the <literal>ByteString</literal> modules, which live in the
 	<literal>bytestring</literal> package (or in the
 	<literal>base</literal> package in <literal>ghc-6.6</literal>)</para>
-	
+
         <para>
           As mentioned earlier (<xref linkend="encoding" />), Alex
           lexers internally process a UTF-8 encoded string of bytes.
@@ -1677,6 +1689,112 @@ runAlex          :: ByteString.ByteString -> Alex a -> Either String a
 	only the types of the function to run the monad and the type of the
 	<literal>token</literal> function that change.</para>
 	</section>
+      </section>
+    </section>
+
+    <section id="types">
+      <title>Type Signatures and Typeclasses</title>
+      <para>The <literal>%token</literal>, <literal>%typeclass</literal>,
+      and <literal>%action</literal> directives can be used to cause
+      Alex to emit additional type signatures in generated
+      code.  This allows the use of typeclasses in generated lexers.</para>
+
+      <section>
+        <title>Generating Type Signatures with Wrappers</title>
+
+        <para>The <literal>%token</literal> directive can be used to
+        specify the token type when any kind of
+        <literal>%wrapper</literal> directive has been given.
+        Whenever <literal>%token</literal> is used, the
+        <literal>%typeclass</literal> directive can also be used to
+        specify one or more typeclass constraints.  The following
+        shows a simple lexer that makes use of this to interpret the
+        meaning of tokens using the <literal>Read</literal>
+        typeclass:</para>
+<programlisting>
+%wrapper "basic"
+%token "Token s"
+%typeclass "Read s"
+
+tokens :-
+
+[a-zA-Z0-9]+ { mkToken }
+[ \t\r\n]+   ;
+
+{
+
+data Token s = Tok s
+
+mkToken :: Read s => String -> Token s
+mkToken = Tok . read
+
+lex :: Read s => String -> [Token s]
+lex = alexScanTokens
+
+}
+</programlisting>
+
+        <para>Multiple typeclasses can be given by separating them with
+        commas, for example:</para>
+<programlisting>
+%typeclass "Read s, Eq s"
+</programlisting>
+      </section>
+      <section>
+        <title>Generating Type Signatures without Wrappers</title>
+        <para>Type signatures can also be generated for lexers that do
+        not use any wrapper.  Instead of the <literal>%token</literal>
+        directive, the <literal>%action</literal> directive is used to
+        specify the type of a lexer action.  The
+        <literal>%typeclass</literal> directive can be used to specify
+        the typeclass in the same way as with a wrapper.  The
+        following example shows the use of typeclasses with a
+        "homegrown" monadic lexer:</para>
+<programlisting>
+{
+{-# LANGUAGE FlexibleContexts #-}
+
+module Lexer where
+
+import Control.Monad.State
+import qualified Data.Bits
+import Data.Word
+
+}
+
+%action "AlexInput -> Int -> m (Token s)"
+%typeclass "Read s, MonadState AlexState m"
+
+tokens :-
+
+[a-zA-Z0-9]+ { mkToken }
+[ \t\n\r]+   ;
+
+{
+
+alexEOF :: MonadState AlexState m => m (Token s)
+alexEOF = return EOF
+
+mkToken :: (Read s, MonadState AlexState m) =>
+           AlexInput -> Int -> m (Token s)
+mkToken (_, _, _, s) len = return (Tok (read (take len s)))
+
+data Token s = Tok s | EOF
+
+lex :: (MonadState AlexState m, Read s) => String -> m (Token s)
+lex input = alexMonadScan
+
+-- "Boilerplate" code from monad wrapper has been omitted
+
+}
+</programlisting>
+        <para>The <literal>%token</literal> directive may only be used
+        with wrapper, and the <literal>%action</literal> can only be
+        used when no wrapper is used.</para>
+
+        <para>The <literal>%typeclass</literal> directive cannot be
+        given without the <literal>%token</literal> or
+        <literal>%action</literal> directive.</para>
       </section>
     </section>
   </chapter>
