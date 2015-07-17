@@ -207,7 +207,7 @@ optsToInject GhcTarget _ = optNoWarnings ++ "{-# LANGUAGE CPP,MagicHash #-}\n"
 optsToInject _         _ = optNoWarnings ++ "{-# LANGUAGE CPP #-}\n"
 
 optNoWarnings :: String
-optNoWarnings = "{-# OPTIONS_GHC -w #-}\n"
+optNoWarnings = "{-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}\n"
 
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
@@ -230,11 +230,9 @@ always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
                  "#endif\n" ++
                  "#if __GLASGOW_HASKELL__ >= 503\n" ++
                  "import Data.Array\n" ++
-                 "import Data.Char (ord)\n" ++
                  "import Data.Array.Base (unsafeAt)\n" ++
                  "#else\n" ++
                  "import Array\n" ++
-                 "import Char (ord)\n" ++
                  "#endif\n"
 
 import_glaexts :: String

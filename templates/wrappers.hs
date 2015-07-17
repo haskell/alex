@@ -23,6 +23,7 @@ import qualified Data.ByteString.Unsafe   as ByteString
 
 #else
 
+import Data.Char (ord)
 import qualified Data.Bits
 
 -- | Encode a Haskell String to a list of Word8 values, in UTF8 format.

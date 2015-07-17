@@ -79,8 +79,8 @@ ALEX_IF_BIGENDIAN
   narrow32Int# i
   where
    i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
-		     (b2 `uncheckedShiftL#` 16#) `or#`
-		     (b1 `uncheckedShiftL#` 8#) `or#` b0)
+                     (b2 `uncheckedShiftL#` 16#) `or#`
+                     (b1 `uncheckedShiftL#` 8#) `or#` b0)
    b3   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 3#)))
    b2   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 2#)))
    b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
@@ -120,30 +120,30 @@ alexScan input IBOX(sc)
 
 alexScanUser user input IBOX(sc)
   = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
-	(AlexNone, input') ->
-		case alexGetByte input of
-			Nothing -> 
+        (AlexNone, input') ->
+                case alexGetByte input of
+                        Nothing -> 
 #ifdef ALEX_DEBUG
-				   trace ("End of input.") $
+                                   trace ("End of input.") $
 #endif
-				   AlexEOF
-			Just _ ->
+                                   AlexEOF
+                        Just _ ->
 #ifdef ALEX_DEBUG
-				   trace ("Error.") $
+                                   trace ("Error.") $
 #endif
-				   AlexError input'
+                                   AlexError input'
 
-	(AlexLastSkip input'' len, _) ->
+        (AlexLastSkip input'' len, _) ->
 #ifdef ALEX_DEBUG
-		trace ("Skipping.") $ 
+                trace ("Skipping.") $ 
 #endif
-		AlexSkip input'' len
+                AlexSkip input'' len
 
-	(AlexLastAcc k input''' len, _) ->
+        (AlexLastAcc k input''' len, _) ->
 #ifdef ALEX_DEBUG
-		trace ("Accept.") $ 
+                trace ("Accept.") $ 
 #endif
-		AlexToken input''' len k
+                AlexToken input''' len k
 
 
 -- Push the input through the DFA, remembering the most recent accepting
@@ -152,7 +152,7 @@ alexScanUser user input IBOX(sc)
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
   let 
-	new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
+        new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
   in
   new_acc `seq`
   case alexGetByte input of
@@ -166,34 +166,34 @@ alex_scan_tkn user orig_input len input s last_acc =
                 base   = alexIndexInt32OffAddr alex_base s
                 offset = PLUS(base,ord_c)
                 check  = alexIndexInt16OffAddr alex_check offset
-		
+                
                 new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
-			  then alexIndexInt16OffAddr alex_table offset
-			  else alexIndexInt16OffAddr alex_deflt s
-	in
+                          then alexIndexInt16OffAddr alex_table offset
+                          else alexIndexInt16OffAddr alex_deflt s
+        in
         case new_s of
-	    ILIT(-1) -> (new_acc, input)
-		-- on an error, we want to keep the input *before* the
-		-- character that failed, not after.
-    	    _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
+            ILIT(-1) -> (new_acc, input)
+                -- on an error, we want to keep the input *before* the
+                -- character that failed, not after.
+            _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
                                                 -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
-			new_input new_s new_acc
+                        new_input new_s new_acc
       }
   where
-	check_accs (AlexAccNone) = last_acc
-	check_accs (AlexAcc a  ) = AlexLastAcc a input IBOX(len)
-	check_accs (AlexAccSkip) = AlexLastSkip  input IBOX(len)
+        check_accs (AlexAccNone) = last_acc
+        check_accs (AlexAcc a  ) = AlexLastAcc a input IBOX(len)
+        check_accs (AlexAccSkip) = AlexLastSkip  input IBOX(len)
 #ifndef ALEX_NOPRED
-	check_accs (AlexAccPred a predx rest)
-	   | predx user orig_input IBOX(len) input
-	   = AlexLastAcc a input IBOX(len)
-	   | otherwise
-	   = check_accs rest
-	check_accs (AlexAccSkipPred predx rest)
-	   | predx user orig_input IBOX(len) input
-	   = AlexLastSkip input IBOX(len)
-	   | otherwise
-	   = check_accs rest
+        check_accs (AlexAccPred a predx rest)
+           | predx user orig_input IBOX(len) input
+           = AlexLastAcc a input IBOX(len)
+           | otherwise
+           = check_accs rest
+        check_accs (AlexAccSkipPred predx rest)
+           | predx user orig_input IBOX(len) input
+           = AlexLastSkip input IBOX(len)
+           | otherwise
+           = check_accs rest
 #endif
 
 data AlexLastAcc a
@@ -202,9 +202,9 @@ data AlexLastAcc a
   | AlexLastSkip  !AlexInput !Int
 
 instance Functor AlexLastAcc where
-    fmap f AlexNone = AlexNone
+    fmap _ AlexNone = AlexNone
     fmap f (AlexLastAcc x y z) = AlexLastAcc (f x) y z
-    fmap f (AlexLastSkip x y) = AlexLastSkip x y
+    fmap _ (AlexLastSkip x y) = AlexLastSkip x y
 
 data AlexAcc a user
   = AlexAccNone
@@ -233,12 +233,9 @@ alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
 --alexRightContext :: Int -> AlexAccPred _
 alexRightContext IBOX(sc) user _ _ input = 
      case alex_scan_tkn user input ILIT(0) input sc AlexNone of
-	  (AlexNone, _) -> False
-	  _ -> True
-	-- TODO: there's no need to find the longest
-	-- match when checking the right context, just
-	-- the first match will do.
+          (AlexNone, _) -> False
+          _ -> True
+        -- TODO: there's no need to find the longest
+        -- match when checking the right context, just
+        -- the first match will do.
 #endif
-
--- used by wrappers
-iUnbox IBOX(i) = i
