@@ -132,7 +132,7 @@ alex cli file basename script = do
                 _   -> dieAlex "multiple -o/--outfile options"
 
    tab_size <- case [ s | OptTabSize s <- cli ] of
-                []  -> return 8
+                []  -> return (8 :: Int)
                 [s] -> case reads s of
                         [(n,"")] -> return n
                         _        -> dieAlex "-s/--tab-size option is not a valid integer"
@@ -305,7 +305,7 @@ getScheme directives =
               isByteString = single == "monad-bytestring" ||
                              single == "monadUserState-bytestring"
               userState = single == "monadUserState" ||
-                          single == "monadUserState-ByteString"
+                          single == "monadUserState-bytestring"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
                 return Monad { monadByteString = isByteString,

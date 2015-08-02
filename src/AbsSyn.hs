@@ -367,14 +367,23 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
       str fun . str " :: (" . str tyclasses . str ") => AlexPosn -> " .
       str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
       str fun . str " = " . str code . nl
-    Monad { monadTypeInfo = Just (Nothing, tokenty) } ->
-      str fun . str " :: AlexInput -> Int -> Alex ("
+    Monad { monadByteString = isByteString,
+            monadTypeInfo = Just (Nothing, tokenty) } ->
+      let
+        actintty = if isByteString then "Int64" else "Int"
+      in
+        str fun . str " :: AlexInput -> " . str actintty . str " -> Alex ("
       . str tokenty . str ")\n"
       . str fun . str " = " . str code . nl
-    Monad { monadTypeInfo = Just (Just tyclasses, tokenty) } ->
-      str fun . str " :: (" . str tyclasses . str ") => " .
-      str " AlexInput -> Int -> Alex (" . str tokenty . str ")\n" .
-      str fun . str " = " . str code . nl
+    Monad { monadByteString = isByteString,
+            monadTypeInfo = Just (Just tyclasses, tokenty) } ->
+      let
+        actintty = if isByteString then "Int64" else "Int"
+      in
+        str fun . str " :: (" . str tyclasses . str ") => "
+      . str " AlexInput -> " . str actintty
+      . str " -> Alex (" . str tokenty . str ")\n"
+      . str fun . str " = " . str code . nl
     _ -> str fun . str " = " . str code . nl
 
   act_names = map (\n -> "alex_action_" ++ show (n::Int)) [0..]

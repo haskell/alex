@@ -148,16 +148,24 @@ outputDFA target _ _ scheme dfa
             . str actions_nm . str " = array (0::Int," . shows nacts
             . str ") [" . interleave_shows (char ',') (concat acts)
             . str "]\n"
-          Monad { monadTypeInfo = Just (Nothing, toktype) } ->
-              str actions_nm . str " :: Array Int (AlexInput -> Int -> Alex("
-            . str toktype . str "))\n"
+          Monad { monadByteString = isByteString,
+                  monadTypeInfo = Just (Nothing, toktype) } ->
+            let
+              actintty = if isByteString then "Int64" else "Int"
+            in
+              str actions_nm . str " :: Array Int (AlexInput -> "
+            . str actintty . str " -> Alex(" . str toktype . str "))\n"
             . str actions_nm . str " = array (0::Int," . shows nacts
             . str ") [" . interleave_shows (char ',') (concat acts)
             . str "]\n"
-          Monad { monadTypeInfo = Just (Just tyclasses, toktype) } ->
+          Monad { monadByteString = isByteString,
+                  monadTypeInfo = Just (Just tyclasses, toktype) } ->
+            let
+              actintty = if isByteString then "Int64" else "Int"
+            in
               str actions_nm . str " :: (" . str tyclasses
-            . str ") => Array Int (AlexInput -> Int -> Alex("
-            . str toktype . str "))\n"
+            . str ") => Array Int (AlexInput -> "
+            . str actintty . str " -> Alex(" . str toktype . str "))\n"
             . str actions_nm . str " = array (0::Int," . shows nacts
             . str ") [" . interleave_shows (char ',') (concat acts)
             . str "]\n"
@@ -247,8 +255,10 @@ outputDFA target _ _ scheme dfa
             . str ") => AlexInput -> Int -> AlexReturn (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
           Monad { monadTypeInfo = Just (Nothing, toktype),
+                  monadByteString = isByteString,
                   monadUserState = userState } ->
             let
+              actintty = if isByteString then "Int64" else "Int"
               userStateTy | userState = "AlexUserState"
                           | otherwise = "()"
             in
@@ -258,13 +268,17 @@ outputDFA target _ _ scheme dfa
             . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: " . str userStateTy
             . str " -> AlexInput -> Int -> AlexReturn ("
-            . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
+            . str "AlexInput -> " . str actintty . str " -> Alex ("
+            . str toktype . str "))\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn ("
-            . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
+            . str "AlexInput -> " . str actintty
+            . str " -> Alex (" . str toktype . str "))\n"
             . str "alexMonadScan :: Alex (" . str toktype . str ")\n"
           Monad { monadTypeInfo = Just (Just tyclasses, toktype),
+                  monadByteString = isByteString,
                   monadUserState = userState } ->
             let
+              actintty = if isByteString then "Int64" else "Int"
               userStateTy | userState = "AlexUserState"
                           | otherwise = "()"
             in
@@ -274,10 +288,12 @@ outputDFA target _ _ scheme dfa
             . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses . str ") => "
             . str userStateTy . str " -> AlexInput -> Int -> AlexReturn ("
-            . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
+            . str "AlexInput -> " . str actintty
+            . str " -> Alex (" . str toktype . str "))\n"
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn ("
-            . str "AlexInput -> Int -> Alex (" . str toktype . str "))\n"
+            . str "AlexInput -> " . str actintty
+            . str " -> Alex (" . str toktype . str "))\n"
             . str "alexMonadScan :: (" . str tyclasses
             . str ") => Alex (" . str toktype . str ")\n"
           _ ->
