@@ -6,7 +6,7 @@ module Main (main) where
 import System.Exit
 import Prelude hiding (lex)
 
-import Data.ByteString.Lazy.UTF8 as Lazy
+import Data.ByteString.Lazy.Char8 as Lazy
 
 }
 
@@ -52,7 +52,7 @@ tokpred :: () -> AlexInput -> Int -> AlexInput -> Bool
 tokpred _ _ _ _ = True
 
 idtoken :: Read s => Int -> Lazy.ByteString -> Token s
-idtoken n s = Id n (read ("\"" ++ (Lazy.toString s) ++ "\""))
+idtoken n s = Id n (read ("\"" ++ (Lazy.unpack s) ++ "\""))
 
 data Token s = Id Int s
   deriving (Show, Ord, Eq)

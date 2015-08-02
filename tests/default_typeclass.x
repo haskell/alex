@@ -1,11 +1,13 @@
 {
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleContexts, MultiParamTypeClasses, FunctionalDependencies,
+             FlexibleInstances #-}
 
 module Main (main) where
 import System.Exit
 import Prelude hiding (lex)
-import Control.Monad.State
 import qualified Data.Bits
+import Control.Applicative
+import Control.Monad
 import Data.Word
 import Data.Char
 
@@ -191,16 +193,119 @@ tokens = [ Id 0 "abab", Id 1 "dddc", Id 2 "fff", Id 3 "gh", Id 4 "ijji",
 
 main :: IO ()
 main =
-  let
-    (result, _) = runState lex AlexState { alex_pos = alexStartPos,
-                                           alex_inp = input,
-                                           alex_chr = '\n',
-                                           alex_bytes = [],
-                                           alex_scd = 0,
-                                           alex_errs= [] }
-  in do
+  do
+    (result, _) <- runStateT lex AlexState { alex_pos = alexStartPos,
+                                             alex_inp = input,
+                                             alex_chr = '\n',
+                                             alex_bytes = [],
+                                             alex_scd = 0,
+                                             alex_errs= [] }
     if result /= tokens
       then exitFailure
       else exitWith ExitSuccess
+
+-- | Minimal definition is either both of @get@ and @put@ or just @state@
+class Monad m => MonadState s m | m -> s where
+    -- | Return the state from the internals of the monad.
+    get :: m s
+    get = state (\s -> (s, s))
+
+    -- | Replace the state inside the monad.
+    put :: s -> m ()
+    put s = state (\_ -> ((), s))
+
+    -- | Embed a simple state action into the monad.
+    state :: (s -> (a, s)) -> m a
+    state f = do
+      s <- get
+      let ~(a, s') = f s
+      put s'
+      return a
+
+-- | Construct a state monad computation from a function.
+-- (The inverse of 'runState'.)
+state' :: Monad m
+       => (s -> (a, s))  -- ^pure state transformer
+       -> StateT s m a   -- ^equivalent state-passing computation
+state' f = StateT (return . f)
+
+-- ---------------------------------------------------------------------------
+-- | A state transformer monad parameterized by:
+--
+--   * @s@ - The state.
+--
+--   * @m@ - The inner monad.
+--
+-- The 'return' function leaves the state unchanged, while @>>=@ uses
+-- the final state of the first computation as the initial state of
+-- the second.
+newtype StateT s m a = StateT { runStateT :: s -> m (a,s) }
+
+-- | Evaluate a state computation with the given initial state
+-- and return the final value, discarding the final state.
+--
+-- * @'evalStateT' m s = 'liftM' 'fst' ('runStateT' m s)@
+evalStateT :: (Monad m) => StateT s m a -> s -> m a
+evalStateT m s = do
+    (a, _) <- runStateT m s
+    return a
+
+-- | Evaluate a state computation with the given initial state
+-- and return the final state, discarding the final value.
+--
+-- * @'execStateT' m s = 'liftM' 'snd' ('runStateT' m s)@
+execStateT :: (Monad m) => StateT s m a -> s -> m s
+execStateT m s = do
+    (_, s') <- runStateT m s
+    return s'
+
+-- | Map both the return value and final state of a computation using
+-- the given function.
+--
+-- * @'runStateT' ('mapStateT' f m) = f . 'runStateT' m@
+mapStateT :: (m (a, s) -> n (b, s)) -> StateT s m a -> StateT s n b
+mapStateT f m = StateT $ f . runStateT m
+
+-- | @'withStateT' f m@ executes action @m@ on a state modified by
+-- applying @f@.
+--
+-- * @'withStateT' f m = 'modify' f >> m@
+withStateT :: (s -> s) -> StateT s m a -> StateT s m a
+withStateT f m = StateT $ runStateT m . f
+
+instance (Functor m) => Functor (StateT s m) where
+    fmap f m = StateT $ \ s ->
+        fmap (\ (a, s') -> (f a, s')) $ runStateT m s
+
+instance (Monad m) => Monad (StateT s m) where
+    return a = state $ \s -> (a, s)
+    m >>= k  = StateT $ \s -> do
+        (a, s') <- runStateT m s
+        runStateT (k a) s'
+    fail str = StateT $ \_ -> fail str
+
+-- | Fetch the current value of the state within the monad.
+get' :: (Monad m) => StateT s m s
+get' = state $ \s -> (s, s)
+
+-- | @'put' s@ sets the state within the monad to @s@.
+put' :: (Monad m) => s -> StateT s m ()
+put' s = state $ \_ -> ((), s)
+
+-- | @'modify' f@ is an action that updates the state to the result of
+-- applying @f@ to the current state.
+--
+-- * @'modify' f = 'get' >>= ('put' . f)@
+modify' :: (Monad m) => (s -> s) -> StateT s m ()
+modify' f = state $ \s -> ((), f s)
+
+instance Monad m => MonadState s (StateT s m) where
+    get = get'
+    put = put'
+    state = state'
+
+instance (Functor m, Monad m) => Applicative (StateT s m) where
+    pure = return
+    (<*>) = ap
 
 }
