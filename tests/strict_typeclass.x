@@ -6,7 +6,7 @@ module Main (main) where
 import System.Exit
 import Prelude hiding (lex)
 
-import Data.ByteString.UTF8 as Strict
+import Data.ByteString.Char8 as Strict
 
 }
 
@@ -52,7 +52,7 @@ tokpred :: () -> AlexInput -> Int -> AlexInput -> Bool
 tokpred _ _ _ _ = True
 
 idtoken :: Read s => Int -> Strict.ByteString -> Token s
-idtoken n s = Id n (read ("\"" ++ (Strict.toString s) ++ "\""))
+idtoken n s = Id n (read ("\"" ++ (Strict.unpack s) ++ "\""))
 
 data Token s = Id Int s deriving Eq
 
