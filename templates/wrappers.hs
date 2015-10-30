@@ -70,8 +70,9 @@ alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
 alexGetByte (p,c,[],[]) = Nothing
 alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
-                                  bs = utf8Encode c
-                              in p' `seq` Just (head bs, (p', c, tail bs, s))
+                              in case utf8Encode c of
+                                [] -> error "utf8Encode returned empty list"
+                                (b:bs) -> p' `seq` Just (b, (p', c, bs, s))
 #endif
 
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
