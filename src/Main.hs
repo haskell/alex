@@ -173,7 +173,7 @@ alex cli file basename script = do
 
    -- Inject the tab size
    hPutStrLn out_h $ "alex_tab_size :: Int"
-   hPutStrLn out_h $ "alex_tab_size = " ++ show tab_size
+   hPutStrLn out_h $ "alex_tab_size = " ++ show (tab_size :: Int)
 
    let dfa = scanner2dfa encoding scanner_final scs
        min_dfa = minimizeDFA dfa
