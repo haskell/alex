@@ -169,11 +169,11 @@ instance Functor NFAM where
   fmap = liftM
 
 instance Applicative NFAM where
-  pure  = return
+  pure a = N $ \s n _ -> (s,n,a)
   (<*>) = ap
 
 instance Monad NFAM where
-  return a = N $ \s n _ -> (s,n,a)
+  return = pure
 
   m >>= k  = N $ \s n e -> case unN m s n e of
                                  (s', n', a) -> unN (k a) s' n' e
