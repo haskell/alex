@@ -249,7 +249,7 @@ rSetUnfold bound upperFunc succFunc = RSet $ normalise $ ranges1 bound
 
 -- QuickCheck Generators
 
-instance (Arbitrary v, DiscreteOrdered v, Show v) =>
+instance (Arbitrary v, DiscreteOrdered v) =>
       Arbitrary (RSet v)
    where
    arbitrary = frequency [
@@ -266,7 +266,7 @@ instance (Arbitrary v, DiscreteOrdered v, Show v) =>
          rangeList (b1:b2:bs) = Range b1 b2 : rangeList bs
          rangeList _ = []
 
-instance (CoArbitrary v, DiscreteOrdered v, Show v) =>
+instance (CoArbitrary v, DiscreteOrdered v) =>
       CoArbitrary (RSet v)
    where
    coarbitrary (RSet ls) = variant (0 :: Int) . coarbitrary ls
