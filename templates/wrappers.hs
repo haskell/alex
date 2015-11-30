@@ -203,7 +203,7 @@ instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
                                 Left msg -> Left msg
                                 Right (s',a) -> unAlex (k a) s'
-  return a = Alex $ \s -> Right (s,a)
+  return = pure
 
 alexGetInput :: Alex AlexInput
 alexGetInput
@@ -302,14 +302,14 @@ instance Functor Alex where
   fmap f m = do x <- m; return (f x)
 
 instance Applicative Alex where
-  pure = return
+  pure a = Alex $ \s -> Right (s,a)
   (<*>) = Control.Monad.ap
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
                                 Left msg -> Left msg
                                 Right (s',a) -> unAlex (k a) s'
-  return a = Alex $ \s -> Right (s,a)
+  return = pure
 
 alexGetInput :: Alex AlexInput
 alexGetInput

@@ -93,14 +93,14 @@ instance Functor P where
   fmap = liftM
 
 instance Applicative P where
-  pure  = return
+  pure a = P $ \env -> Right (env,a)
   (<*>) = ap
 
 instance Monad P where
  (P m) >>= k = P $ \env -> case m env of
                         Left err -> Left err
                         Right (env',ok) -> unP (k ok) env'
- return a = P $ \env -> Right (env,a)
+ return = pure
 
 runP :: String -> (Map String CharSet, Map String RExp) 
         -> P a -> Either ParseError a

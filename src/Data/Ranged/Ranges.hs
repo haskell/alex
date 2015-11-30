@@ -215,7 +215,7 @@ rangeDifference r1@(Range lower1 upper1) (Range lower2 upper2) =
 
 -- QuickCheck generators
 
-instance (Arbitrary v,  DiscreteOrdered v, Show v) =>
+instance (Arbitrary v,  DiscreteOrdered v) =>
    Arbitrary (Range v) where
 
    arbitrary = frequency [
@@ -234,7 +234,7 @@ instance (Arbitrary v,  DiscreteOrdered v, Show v) =>
       (1, return fullRange)
       ]
 
-instance (CoArbitrary v, DiscreteOrdered v, Show v) =>
+instance (CoArbitrary v, DiscreteOrdered v) =>
    CoArbitrary (Range v) where
 
    coarbitrary (Range lower upper) =
