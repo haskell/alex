@@ -32,7 +32,7 @@ import Control.Exception ( bracketOnError )
 #endif
 import Control.Monad ( when, liftM )
 import Data.Char ( chr )
-import Data.List ( isSuffixOf )
+import Data.List ( isSuffixOf, nub )
 import Data.Maybe ( isJust, fromJust )
 import Data.Version ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
@@ -142,9 +142,9 @@ alex cli file basename script = do
         | OptGhcTarget `elem` cli = GhcTarget
         | otherwise               = HaskellTarget
 
-   let encoding
-        | OptLatin1 `elem` cli = Latin1
-        | otherwise            = UTF8
+   let encodingsCli
+        | OptLatin1 `elem` cli = [Latin1]
+        | otherwise            = []
 
    template_dir  <- templateDir getDataDir cli
                 
@@ -158,7 +158,15 @@ alex cli file basename script = do
          (maybe_header, directives, scanner1, maybe_footer) = script
          (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
          (scanner_final, actions) = extractActions scanner2
- 
+
+         encodingsScript = [ e | EncodingDirective e <- directives ]
+
+   encoding <- case nub (encodingsCli ++ encodingsScript) of
+     []  -> return UTF8 -- default
+     [e] -> return e
+     _ | null encodingsCli -> dieAlex "conflicting %encoding directives"
+       | otherwise -> dieAlex "--latin1 flag conflicts with %encoding directive"
+
    wrapper_name <- wrapperFile template_dir directives
 
    hPutStr out_h (optsToInject target cli)

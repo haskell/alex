@@ -49,6 +49,7 @@ alex :-
 <0> \{ / (\n | [^$digit])       { code }
 <0> $special			{ special }  -- note: matches {
 <0> \% "wrapper"		{ wrapper }
+<0> \% "encoding"		{ encoding }
 
 <0> \\ $digit+			{ decch }
 <0> \\ x $hexdig+		{ hexch }
@@ -96,6 +97,7 @@ data Tkn
  | RMacDefT String  
  | NumT Int	
  | WrapperT
+ | EncodingT
  | EOFT
  deriving Show
 
@@ -117,6 +119,7 @@ smacdef   (p,_,str) ln = return $ T p (SMacDefT (macdef ln str))
 rmacdef   (p,_,str) ln = return $ T p (RMacDefT (macdef ln str))
 startcode (p,_,str) ln = return $ T p (IdT (take ln str))
 wrapper   (p,_,str) ln = return $ T p WrapperT
+encoding  (p,_,str) ln = return $ T p EncodingT
 
 isIdChar c = isAlphaNum c || c `elem` "_'"
 

@@ -21,7 +21,7 @@ module AbsSyn (
   UsesPreds(..), usesPreds
   ) where
 
-import CharSet ( CharSet )
+import CharSet ( CharSet, Encoding )
 import Map ( Map )
 import qualified Map hiding ( Map )
 import Data.IntMap (IntMap)
@@ -40,6 +40,8 @@ type Code = String
 
 data Directive
    = WrapperDirective String            -- use this wrapper
+   | EncodingDirective Encoding         -- use this encoding
+   deriving Show
 
 -- TODO: update this comment
 --

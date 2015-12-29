@@ -51,6 +51,7 @@ type ByteSet = RSet Byte
 type Utf8Range = Span [Byte]
 
 data Encoding = Latin1 | UTF8
+              deriving (Eq, Show)
 
 emptyCharSet :: CharSet
 emptyCharSet = rSetEmpty
