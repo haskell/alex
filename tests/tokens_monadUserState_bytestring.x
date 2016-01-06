@@ -6,6 +6,7 @@ import qualified Data.ByteString.Lazy.Char8 as B
 }
 
 %wrapper "monadUserState-bytestring"
+%encoding "iso-8859-1"
 
 $digit = 0-9			-- digits
 $alpha = [a-zA-Z]		-- alphabetic characters

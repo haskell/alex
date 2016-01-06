@@ -6,6 +6,7 @@ import Data.ByteString.Lazy.Char8 (unpack)
 }
 
 %wrapper "posn-bytestring"
+%encoding "UTF8"
 
 $digit = 0-9			-- digits
 $alpha = [a-zA-Z]		-- alphabetic characters
