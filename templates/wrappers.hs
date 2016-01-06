@@ -4,12 +4,15 @@
 -- This code is in the PUBLIC DOMAIN; you may copy it freely and use
 -- it for any purpose whatsoever.
 
-import Control.Applicative (Applicative (..))
+#if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING)
+import Control.Applicative as App (Applicative (..))
 import qualified Control.Monad (ap)
+#endif
+
 import Data.Word (Word8)
-import Data.Int (Int64)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
+import Data.Int (Int64)
 import qualified Data.Char
 import qualified Data.ByteString.Lazy     as ByteString
 import qualified Data.ByteString.Internal as ByteString (w2c)
@@ -203,7 +206,7 @@ instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
                                 Left msg -> Left msg
                                 Right (s',a) -> unAlex (k a) s'
-  return = pure
+  return = App.pure
 
 alexGetInput :: Alex AlexInput
 alexGetInput
@@ -309,7 +312,7 @@ instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of 
                                 Left msg -> Left msg
                                 Right (s',a) -> unAlex (k a) s'
-  return = pure
+  return = App.pure
 
 alexGetInput :: Alex AlexInput
 alexGetInput
