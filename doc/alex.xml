@@ -544,7 +544,7 @@ $graphic    = $printable # $white
 
       <para>The overall layout of an Alex file is:</para>
 
-<programlisting>alex := [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]</programlisting>
+<programlisting>alex := [ @code ] [ wrapper ] [ encoding ] { macrodef } @id ':-' { rule } [ @code ]</programlisting>
 
       <para>The file begins and ends with optional code fragments.
       These code fragments are copied verbatim into the generated
@@ -562,8 +562,12 @@ $graphic    = $printable # $white
 
 <programlisting>wrapper := '%wrapper' @string</programlisting>
 
-      <para>wrappers are described in <xref
-      linkend="wrappers"/>.</para>
+      <para>wrappers are described in <xref linkend="wrappers"/>. This
+      can be followed by an optional encoding declaration:</para>
+
+<programlisting>encoding := '%encoding' @string</programlisting>
+
+      <para>encodings are described in <xref linkend="encoding"/>.</para>
 
       <section id="macrodefs">
 	<title>Macro definitions</title>
@@ -1088,10 +1092,33 @@ $del      = \127                  -- ASCII DEL</programlisting>
 
       <para>
         None of this applies if you used the <option>--latin1</option>
-        option to Alex.  In that case, the input is just a sequence of
-        8-bit bytes, interpreted as characters in the Latin-1
+        option to Alex or specify a Latin-1 encoding via a
+        <literal>%encoding</literal> declaration.  In that case, the input is
+        just a sequence of 8-bit bytes, interpreted as characters in the Latin-1
         character set.
       </para>
+
+      <para>
+        The following (case-insenstive) encoding strings are currently
+        supported:
+      </para>
+
+      <variablelist>
+        <varlistentry>
+          <term><literal>%encoding "latin-1"</literal></term>
+          <term><literal>%encoding "iso-8859-1"</literal></term>
+          <listitem><para>Declare Latin-1 encoding as described above.</para></listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><literal>%encoding "utf-8"</literal></term>
+          <term><literal>%encoding "utf8"</literal></term>
+          <listitem><para>Declare UTF-8 encoding. This is
+          the default encoding but it may be useful to explicitly declare
+          this to make protect against Alex being called with the
+          <option>--latin1</option> flag.</para></listitem>
+        </varlistentry>
+      </variablelist>
+
     </section>
 
     <section id="basic-api">
@@ -1523,7 +1550,8 @@ type StopAction state result
           lexers internally process a UTF-8 encoded string of bytes.
           This means that the <literal>ByteString</literal> supplied
           as input when using one of the ByteString wrappers should be
-          UTF-8 encoded (or use the <option>--latin1</option> option).
+          UTF-8 encoded (or use either the <option>--latin1</option>
+          option or the <literal>%encoding</literal> declaration).
         </para>
 
         <para>Do note that <literal>token</literal> provides a
@@ -1754,6 +1782,11 @@ runAlex          :: ByteString.ByteString -> Alex a -> Either String a
           so <option>--latin1</option> does not make sense in
           conjunction with these wrappers (not that you would want to
           do that, anyway).
+
+          Alternatively, a <literal>%encoding "latin1"</literal> declaration can be
+          used inside the Alex source file to request a Latin-1 mapping. See also
+          <xref linkend="encoding" /> for more information about the
+          <literal>%encoding</literal> declaration.
           </para>
         </listitem>
       </varlistentry>
