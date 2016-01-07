@@ -6,6 +6,7 @@ import Data.ByteString.Char8 (unpack)
 }
 
 %wrapper "strict-bytestring"
+%encoding "ISO-8859-1"
 
 $digit = 0-9			-- digits
 $alpha = [a-zA-Z]		-- alphabetic characters

@@ -59,6 +59,7 @@ import Data.Char
 	SMAC_DEF	{ T _ (SMacDefT $$) }
 	RMAC_DEF	{ T _ (RMacDefT $$) }
 	WRAPPER		{ T _ WrapperT }
+	ENCODING	{ T _ EncodingT }
 %%
 
 alex	:: { (Maybe (AlexPosn,Code), [Directive], Scanner, Maybe (AlexPosn,Code)) }
@@ -75,7 +76,11 @@ directives :: { [Directive] }
 
 directive  :: { Directive }
 	: WRAPPER STRING		{ WrapperDirective $2 }
+	| ENCODING encoding		{ EncodingDirective $2 }
 
+encoding :: { Encoding }
+        : STRING         		{% lookupEncoding $1 }
+        
 macdefs :: { () }
 	: macdef macdefs		{ () }
 	| {- empty -}			{ () }
@@ -217,4 +222,13 @@ repeat_rng n (Just (Just m)) re = intl :%% rst
 	rst = foldr (\re re'->Ques(re :%% re')) Eps (replicate (m-n) re)
 
 replaceCodes codes rectx = rectx{ reCtxStartCodes = codes }
+
+lookupEncoding :: String -> P Encoding
+lookupEncoding s = case map toLower s of
+  "iso-8859-1" -> return Latin1
+  "latin1"     -> return Latin1
+  "utf-8"      -> return UTF8
+  "utf8"       -> return UTF8
+  _            -> failP ("encoding " ++ show s ++ " not supported")
+
 }
