@@ -58,7 +58,9 @@ module Data.Ranged.RangedSet (
 
 import Data.Ranged.Boundaries
 import Data.Ranged.Ranges
-#if __GLASGOW_HASKELL__ < 710
+#if __GLASGOW_HASKELL__ >= 800
+import Data.Semigroup
+#elif __GLASGOW_HASKELL__ < 710
 import Data.Monoid
 #endif
 
@@ -74,9 +76,18 @@ infixl 5 -<=-, -<-, -?-
 newtype DiscreteOrdered v => RSet v = RSet {rSetRanges :: [Range v]}
    deriving (Eq, Show, Ord)
 
+#if __GLASGOW_HASKELL__ >= 800
+instance DiscreteOrdered a => Semigroup (RSet a) where
+    (<>) = rSetUnion
+
+instance DiscreteOrdered a => Monoid (RSet a) where
+    mappend = (<>)
+    mempty = rSetEmpty
+#else
 instance DiscreteOrdered a => Monoid (RSet a) where
     mappend = rSetUnion
     mempty = rSetEmpty
+#endif
 
 -- | Determine if the ranges in the list are both in order and non-overlapping.
 -- If so then they are suitable input for the unsafeRangedSet function.
