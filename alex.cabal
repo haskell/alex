@@ -1,5 +1,6 @@
 name: alex
-version: 3.1.6
+version: 3.1.7
+-- don't forget updating changelog.md!
 license: BSD3
 license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
@@ -15,43 +16,13 @@ description:
   expressions and generates a Haskell module containing code
   for scanning text efficiently. It is similar to the tool
   lex or flex for C/C++.
-  .
-  Changes in 3.1.6:
-  .
-  * sdist for 3.1.5 was mis-generated, causing it to ask for Happy
-    when building.
-  .
-  Changes in 3.1.5:
-  .
-  * Generate less warning-laden code, and suppress other warnings.
-  * Bug fixes.
-  .
-  Changes in 3.1.4:
-  .
-  * Add Applicative/Functor instances for GHC 7.10
-  .
-  Changes in 3.1.3:
-  .
-  * Fix for clang (XCode 5)
-  .
-  Changes in 3.1.2:
-  .
-  * Add missing file to extra-source-files
-  .
-  Changes in 3.1.1:
-  .
-  * Bug fixes (#24, #30, #31, #32)
-  .
-  Changes in 3.1.0:
-  .
-  * necessary changes to work with GHC 7.8.1
 
 category: Development
 cabal-version: >= 1.8
 build-type: Custom
 
 extra-source-files:
-        ANNOUNCE
+        CHANGELOG.md
         README
         TODO
         alex.spec
