@@ -1,12 +1,12 @@
 -------------------------------------------------------------------------------
 --		    ALEX SCANNER AND LITERATE PREPROCESSOR
--- 
+--
 -- This Script defines the grammar used to generate the Alex scanner and a
 -- preprocessing scanner for dealing with literate scripts.  The actions for
 -- the Alex scanner are given separately in the Alex module.
---  
+--
 -- See the Alex manual for a discussion of the scanners defined here.
---  
+--
 -- Chris Dornan, Aug-95, 4-Jun-96, 10-Jul-96, 29-Sep-97
 -------------------------------------------------------------------------------
 
@@ -50,6 +50,9 @@ alex :-
 <0> $special			{ special }  -- note: matches {
 <0> \% "wrapper"		{ wrapper }
 <0> \% "encoding"		{ encoding }
+<0> \% "action"                 { actionty }
+<0> \% "token"                  { tokenty }
+<0> \% "typeclass"              { typeclass }
 
 <0> \\ $digit+			{ decch }
 <0> \\ x $hexdig+		{ hexch }
@@ -92,12 +95,15 @@ data Tkn
  | BindT String
  | CharT Char
  | SMacT String
- | RMacT String  
+ | RMacT String
  | SMacDefT String
- | RMacDefT String  
- | NumT Int	
+ | RMacDefT String
+ | NumT Int
  | WrapperT
  | EncodingT
+ | ActionTypeT
+ | TokenTypeT
+ | TypeClassT
  | EOFT
  deriving Show
 
@@ -120,11 +126,14 @@ rmacdef   (p,_,str) ln = return $ T p (RMacDefT (macdef ln str))
 startcode (p,_,str) ln = return $ T p (IdT (take ln str))
 wrapper   (p,_,str) ln = return $ T p WrapperT
 encoding  (p,_,str) ln = return $ T p EncodingT
+actionty  (p,_,str) ln = return $ T p ActionTypeT
+tokenty   (p,_,str) ln = return $ T p TokenTypeT
+typeclass (p,_,str) ln = return $ T p TypeClassT
 
 isIdChar c = isAlphaNum c || c `elem` "_'"
 
 extract ln str = take (ln-2) (tail str)
-		
+
 do_ech radix ln str = chr (parseInt radix str)
 
 mac ln (_ : str) = take (ln-1) str
@@ -160,9 +169,9 @@ code (p,_,inp) len = do
   go inp n cs = do
     case alexGetChar inp of
 	Nothing  -> err inp
-	Just (c,inp)   -> 
+	Just (c,inp)   ->
 	  case c of
-		'{'  -> go inp (n+1) (c:cs) 
+		'{'  -> go inp (n+1) (c:cs)
 		'}'  -> go inp (n-1) (c:cs)
 		'\'' -> go_char inp n (c:cs)
 		'\"' -> go_str inp n (c:cs) '\"'
@@ -177,7 +186,7 @@ code (p,_,inp) len = do
 	Nothing -> err inp
 	Just (c,inp)
 	  | c == end  -> go inp n (c:cs)
-	  | otherwise -> 
+	  | otherwise ->
 		case c of
 		   '\\' -> case alexGetChar inp of
 			     Nothing -> err inp
@@ -185,7 +194,7 @@ code (p,_,inp) len = do
 		   c -> go_str inp n (c:cs) end
 
   err inp = do setInput inp; lexError "lexical error in code fragment"
-				  
+
 
 
 lexError s = do

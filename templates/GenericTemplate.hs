@@ -74,7 +74,7 @@ alexIndexInt16OffAddr arr off = arr ! off
 
 #ifdef ALEX_GHC
 {-# INLINE alexIndexInt32OffAddr #-}
-alexIndexInt32OffAddr (AlexA# arr) off = 
+alexIndexInt32OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
   narrow32Int# i
   where
@@ -120,9 +120,9 @@ alexScan input IBOX(sc)
 
 alexScanUser user input IBOX(sc)
   = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
-        (AlexNone, input') ->
-                case alexGetByte input of
-                        Nothing -> 
+	(AlexNone, input') ->
+		case alexGetByte input of
+			Nothing ->
 #ifdef ALEX_DEBUG
                                    trace ("End of input.") $
 #endif
@@ -135,15 +135,15 @@ alexScanUser user input IBOX(sc)
 
         (AlexLastSkip input'' len, _) ->
 #ifdef ALEX_DEBUG
-                trace ("Skipping.") $ 
+		trace ("Skipping.") $
 #endif
                 AlexSkip input'' len
 
         (AlexLastAcc k input''' len, _) ->
 #ifdef ALEX_DEBUG
-                trace ("Accept.") $ 
+		trace ("Accept.") $
 #endif
-                AlexToken input''' len k
+		AlexToken input''' len (alex_actions ! k)
 
 
 -- Push the input through the DFA, remembering the most recent accepting
@@ -151,13 +151,13 @@ alexScanUser user input IBOX(sc)
 
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
-  let 
-        new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
+  let
+	new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
   in
   new_acc `seq`
   case alexGetByte input of
      Nothing -> (new_acc, input)
-     Just (c, new_input) -> 
+     Just (c, new_input) ->
 #ifdef ALEX_DEBUG
       trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
 #endif
@@ -166,7 +166,7 @@ alex_scan_tkn user orig_input len input s last_acc =
                 base   = alexIndexInt32OffAddr alex_base s
                 offset = PLUS(base,ord_c)
                 check  = alexIndexInt16OffAddr alex_check offset
-                
+
                 new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
                           then alexIndexInt16OffAddr alex_table offset
                           else alexIndexInt16OffAddr alex_deflt s
@@ -196,23 +196,18 @@ alex_scan_tkn user orig_input len input s last_acc =
            = check_accs rest
 #endif
 
-data AlexLastAcc a
+data AlexLastAcc
   = AlexNone
-  | AlexLastAcc a !AlexInput !Int
-  | AlexLastSkip  !AlexInput !Int
+  | AlexLastAcc !Int !AlexInput !Int
+  | AlexLastSkip     !AlexInput !Int
 
-instance Functor AlexLastAcc where
-    fmap _ AlexNone = AlexNone
-    fmap f (AlexLastAcc x y z) = AlexLastAcc (f x) y z
-    fmap _ (AlexLastSkip x y) = AlexLastSkip x y
-
-data AlexAcc a user
+data AlexAcc user
   = AlexAccNone
-  | AlexAcc a
+  | AlexAcc Int
   | AlexAccSkip
 #ifndef ALEX_NOPRED
-  | AlexAccPred a   (AlexAccPred user) (AlexAcc a user)
-  | AlexAccSkipPred (AlexAccPred user) (AlexAcc a user)
+  | AlexAccPred Int (AlexAccPred user) (AlexAcc user)
+  | AlexAccSkipPred (AlexAccPred user) (AlexAcc user)
 
 type AlexAccPred user = user -> AlexInput -> Int -> AlexInput -> Bool
 
@@ -222,16 +217,16 @@ type AlexAccPred user = user -> AlexInput -> Int -> AlexInput -> Bool
 alexAndPred p1 p2 user in1 len in2
   = p1 user in1 len in2 && p2 user in1 len in2
 
---alexPrevCharIsPred :: Char -> AlexAccPred _ 
+--alexPrevCharIsPred :: Char -> AlexAccPred _
 alexPrevCharIs c _ input _ _ = c == alexInputPrevChar input
 
 alexPrevCharMatches f _ input _ _ = f (alexInputPrevChar input)
 
---alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _ 
+--alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _
 alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
 
 --alexRightContext :: Int -> AlexAccPred _
-alexRightContext IBOX(sc) user _ _ input = 
+alexRightContext IBOX(sc) user _ _ input =
      case alex_scan_tkn user input ILIT(0) input sc AlexNone of
           (AlexNone, _) -> False
           _ -> True

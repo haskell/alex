@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Output.hs, part of Alex
 --
 -- (c) Simon Marlow 2003
@@ -21,19 +21,25 @@ import Data.Array ( Array )
 import Data.Array.Base ( unsafeRead )
 import Data.Array.ST ( STUArray, newArray, readArray, writeArray, freeze )
 import Data.Array.Unboxed ( UArray, elems, (!), array, listArray )
+import Data.Maybe (isJust)
 import Data.Bits
 import Data.Char ( ord, chr )
-import Data.List ( maximumBy, sortBy, groupBy )
+import Data.List ( maximumBy, sortBy, groupBy, mapAccumR )
 
 -- -----------------------------------------------------------------------------
 -- Printing the output
 
-outputDFA :: Target -> Int -> String -> DFA SNum Code -> ShowS
-outputDFA target _ _ dfa
-  = interleave_shows nl 
-        [outputBase, outputTable, outputCheck, outputDefault, outputAccept]
-  where    
+outputDFA :: Target -> Int -> String -> Scheme -> DFA SNum Code -> ShowS
+outputDFA target _ _ scheme dfa
+  = interleave_shows nl
+        [outputBase, outputTable, outputCheck, outputDefault,
+         outputAccept, outputActions, outputSigs]
+  where
     (base, table, check, deflt, accept) = mkTables dfa
+
+    intty = case target of
+      GhcTarget -> "Int#"
+      HaskellTarget -> "Int"
 
     table_size = length table - 1
     n_states   = length base - 1
@@ -43,13 +49,14 @@ outputDFA target _ _ dfa
     check_nm  = "alex_check"
     deflt_nm  = "alex_deflt"
     accept_nm = "alex_accept"
+    actions_nm = "alex_actions"
 
     outputBase    = do_array hexChars32 base_nm  n_states   base
     outputTable   = do_array hexChars16 table_nm table_size table
     outputCheck   = do_array hexChars16 check_nm table_size check
     outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
-    do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $ 
+    do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $
      case target of
       GhcTarget ->
           str nm . str " :: AlexAddr\n"
@@ -63,29 +70,261 @@ outputDFA target _ _ dfa
         . str ") [" . interleave_shows (char ',') (map shows ints)
         . str "]\n"
 
-    outputAccept
-        = -- No type signature: we don't know what the type of the actions is.
-          -- str accept_nm . str " :: Array Int (Accept Code)\n"
-          str accept_nm . str " = listArray (0::Int," . shows n_states
-        . str ") [" . interleave_shows (char ',') (map outputAccs accept)
+    outputAccept =
+      let
+        userStateTy = case scheme of
+          Monad { monadUserState = True } -> "AlexUserState"
+          _ -> "()"
+      in
+          str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy
+        . str ")\n" . str accept_nm
+        . str " = listArray (0::Int," . shows n_states . str ") ["
+        . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
         . str "]\n"
 
-    outputAccs :: [Accept Code] -> ShowS
-    outputAccs []
-        = str "AlexAccNone"
-    outputAccs (Acc _ Nothing Nothing NoRightContext : [])
-        = str "AlexAccSkip"
-    outputAccs (Acc _ (Just act) Nothing NoRightContext : [])
-        = str "AlexAcc " . paren (str act)
-    outputAccs (Acc _ Nothing lctx rctx : rest)
-        = str "AlexAccSkipPred " . space
-        . paren (outputPred lctx rctx)
-        . paren (outputAccs rest)
-    outputAccs (Acc _ (Just act) lctx rctx : rest)
-        = str "AlexAccPred " . space
-        . paren (str act) . space
-        . paren (outputPred lctx rctx)
-        . paren (outputAccs rest)
+    gscanActionType res =
+        str "AlexPosn -> Char -> String -> Int -> ((Int, state) -> "
+      . str res . str ") -> (Int, state) -> " . str res
+
+    outputActions
+        = let
+            (nacts, acts) = mapAccumR outputActs 0 accept
+          in case scheme of
+          Default { defaultTypeInfo = Just (Nothing, actionty) } ->
+              str actions_nm . str " :: Array Int (" . str actionty . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int (" . str actionty . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
+              str actions_nm . str " :: Array Int ("
+            . gscanActionType toktype . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int ("
+            . gscanActionType toktype . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Basic { basicStrType = strty,
+                  basicTypeInfo = Just (Nothing, toktype) } ->
+              str actions_nm . str " :: Array Int ("
+            . str (show strty) . str " -> " . str toktype
+            . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Basic { basicStrType = strty,
+                  basicTypeInfo = Just (Just tyclasses, toktype) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int ("
+            . str (show strty) . str " -> " . str toktype
+            . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Posn { posnByteString = isByteString,
+                 posnTypeInfo = Just (Nothing, toktype) } ->
+              str actions_nm . str " :: Array Int (AlexPosn -> "
+            . str (strtype isByteString) . str " -> " . str toktype
+            . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Posn { posnByteString = isByteString,
+                 posnTypeInfo = Just (Just tyclasses, toktype) } ->
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int (AlexPosn -> "
+            . str (strtype isByteString) . str " -> " . str toktype
+            . str ")\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Monad { monadByteString = isByteString,
+                  monadTypeInfo = Just (Nothing, toktype) } ->
+            let
+              actintty = if isByteString then "Int64" else "Int"
+            in
+              str actions_nm . str " :: Array Int (AlexInput -> "
+            . str actintty . str " -> Alex(" . str toktype . str "))\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          Monad { monadByteString = isByteString,
+                  monadTypeInfo = Just (Just tyclasses, toktype) } ->
+            let
+              actintty = if isByteString then "Int64" else "Int"
+            in
+              str actions_nm . str " :: (" . str tyclasses
+            . str ") => Array Int (AlexInput -> "
+            . str actintty . str " -> Alex(" . str toktype . str "))\n"
+            . str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+          _ ->
+              -- No type signature: we don't know what the type of the actions is.
+              -- str accept_nm . str " :: Array Int (Accept Code)\n"
+              str actions_nm . str " = array (0::Int," . shows nacts
+            . str ") [" . interleave_shows (char ',') (concat acts)
+            . str "]\n"
+
+    outputSigs
+        = case scheme of
+          Default { defaultTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+          Default { defaultTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . str toktype . str ")\n"
+          GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> "
+            . str "AlexReturn (" . gscanActionType toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . gscanActionType toktype . str ")\n"
+          GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . gscanActionType toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . gscanActionType toktype . str ")\n"
+          Basic { basicStrType = strty,
+                  basicTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn ("
+            . str (show strty) . str " -> " . str toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . str (show strty) . str " -> " . str toktype . str ")\n"
+          Basic { basicStrType = strty,
+                  basicTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn ("
+            . str (show strty) . str " -> " . str toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . str (show strty) . str " -> " . str toktype . str ")\n"
+          Posn { posnByteString = isByteString,
+                 posnTypeInfo = Just (Nothing, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn (AlexPosn -> "
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn (AlexPosn -> "
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+          Posn { posnByteString = isByteString,
+                 posnTypeInfo = Just (Just tyclasses, toktype) } ->
+              str "alex_scan_tkn :: () -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses
+            . str ") => () -> AlexInput -> Int -> AlexReturn (AlexPosn -> "
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn (AlexPosn -> "
+            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+          Monad { monadTypeInfo = Just (Nothing, toktype),
+                  monadByteString = isByteString,
+                  monadUserState = userState } ->
+            let
+              actintty = if isByteString then "Int64" else "Int"
+              userStateTy | userState = "AlexUserState"
+                          | otherwise = "()"
+            in
+              str "alex_scan_tkn :: " . str userStateTy
+            . str " -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: " . str userStateTy
+            . str " -> AlexInput -> Int -> AlexReturn ("
+            . str "AlexInput -> " . str actintty . str " -> Alex ("
+            . str toktype . str "))\n"
+            . str "alexScan :: AlexInput -> Int -> AlexReturn ("
+            . str "AlexInput -> " . str actintty
+            . str " -> Alex (" . str toktype . str "))\n"
+            . str "alexMonadScan :: Alex (" . str toktype . str ")\n"
+          Monad { monadTypeInfo = Just (Just tyclasses, toktype),
+                  monadByteString = isByteString,
+                  monadUserState = userState } ->
+            let
+              actintty = if isByteString then "Int64" else "Int"
+              userStateTy | userState = "AlexUserState"
+                          | otherwise = "()"
+            in
+              str "alex_scan_tkn :: " . str userStateTy
+            . str " -> AlexInput -> " . str intty
+            . str " -> " . str "AlexInput -> " . str intty
+            . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
+            . str "alexScanUser :: (" . str tyclasses . str ") => "
+            . str userStateTy . str " -> AlexInput -> Int -> AlexReturn ("
+            . str "AlexInput -> " . str actintty
+            . str " -> Alex (" . str toktype . str "))\n"
+            . str "alexScan :: (" . str tyclasses
+            . str ") => AlexInput -> Int -> AlexReturn ("
+            . str "AlexInput -> " . str actintty
+            . str " -> Alex (" . str toktype . str "))\n"
+            . str "alexMonadScan :: (" . str tyclasses
+            . str ") => Alex (" . str toktype . str ")\n"
+          _ ->
+              str ""
+
+    outputAccs :: Int -> [Accept Code] -> (Int, ShowS)
+    outputAccs idx [] = (idx, str "AlexAccNone")
+    outputAccs idx (Acc _ Nothing Nothing NoRightContext : [])
+      = (idx, str "AlexAccSkip")
+    outputAccs idx (Acc _ (Just _) Nothing NoRightContext : [])
+      = (idx + 1, str "AlexAcc " . str (show idx))
+    outputAccs idx (Acc _ Nothing lctx rctx : rest)
+      = let (idx', rest') = outputAccs idx rest
+        in (idx', str "AlexAccSkipPred" . space
+                 . paren (outputPred lctx rctx)
+                 . paren rest')
+    outputAccs idx (Acc _ (Just _) lctx rctx : rest)
+      = let (idx', rest') = outputAccs idx rest
+        in (idx' + 1, str "AlexAccPred" . space
+                      . str (show idx') . space
+                      . paren (outputPred lctx rctx)
+                      . paren rest')
+
+    outputActs :: Int -> [Accept Code] -> (Int, [ShowS])
+    outputActs idx =
+      let
+        outputAct _ (Acc _ Nothing _ _) = error "Shouldn't see this"
+        outputAct inneridx (Acc _ (Just act) _ _) =
+          (inneridx + 1, paren (shows inneridx . str "," . str act))
+      in
+        mapAccumR outputAct idx . filter (\(Acc _ act _ _) -> isJust act)
 
     outputPred (Just set) NoRightContext
         = outputLCtx set
@@ -139,7 +378,7 @@ outputDFA target _ _ dfa
 
 
 mkTables :: DFA SNum Code
-         -> ( 
+         -> (
               [Int],            -- base
               [Int],            -- table
               [Int],            -- check
@@ -148,13 +387,13 @@ mkTables :: DFA SNum Code
             )
 mkTables dfa = -- trace (show (defaults)) $
                -- trace (show (fmap (length . snd)  dfa_no_defaults)) $
-  ( elems base_offs, 
+  ( elems base_offs,
      take max_off (elems table),
      take max_off (elems check),
      elems defaults,
      accept
   )
- where 
+ where
         accept   = [ as | State as _ <- elems dfa_arr ]
 
         state_assocs = Map.toAscList (dfa_states dfa)
@@ -167,8 +406,8 @@ mkTables dfa = -- trace (show (defaults)) $
         -- fill in all the error productions
         expand_states =
            [ expand (dfa_arr!state) | state <- [0..top_state] ]
-         
-        expand (State _ out) = 
+
+        expand (State _ out) =
            [(i, lookup' out i) | i <- [0..0xff]]
            where lookup' out' i = case IntMap.lookup i out' of
                                         Nothing -> -1
@@ -194,12 +433,12 @@ mkTables dfa = -- trace (show (defaults)) $
           | (s, out) <- zip [0..] expand_states
           ]
 
-        prods_without_defaults s out 
+        prods_without_defaults s out
           = [ (fromIntegral c, dest) | (c,dest) <- out, dest /= defaults!s ]
 
         (base_offs, table, check, max_off)
            = runST (genTables n_states 255 dfa_no_defaults)
-          
+
 
 genTables
          :: Int                         -- number of states
@@ -285,7 +524,7 @@ findFreeOffset off check off_arr state = do
 
     -- check whether the actions for this state fit in the table
   ok <- fits off state check
-  if ok then return off else try_next 
+  if ok then return off else try_next
  where
         try_next = findFreeOffset (off+1) check off_arr state
 
@@ -328,7 +567,7 @@ hexChars16 acts = concat (map conv16 acts)
 hexChars32 :: [Int] -> String
 hexChars32 acts = concat (map conv32 acts)
   where
-    conv32 i = hexChar16 (i .&. 0xffff) ++ 
+    conv32 i = hexChar16 (i .&. 0xffff) ++
                 hexChar16 ((i `shiftR` 16) .&. 0xffff)
 
 hexChar16 :: Int -> String

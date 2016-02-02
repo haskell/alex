@@ -21,7 +21,7 @@ import qualified Data.ByteString.Internal as ByteString (w2c)
 
 import qualified Data.Char
 import qualified Data.ByteString          as ByteString
-import qualified Data.ByteString.Internal as ByteString
+import qualified Data.ByteString.Internal as ByteString hiding (ByteString)
 import qualified Data.ByteString.Unsafe   as ByteString
 
 #else
