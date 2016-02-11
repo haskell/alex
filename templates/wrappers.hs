@@ -100,9 +100,9 @@ alexGetByte (p,_,cs,n) | ByteString.null cs = Nothing
 #endif
 
 #ifdef ALEX_BASIC_BYTESTRING
-data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,
-                             alexStr ::  !ByteString.ByteString,
-                             alexBytePos :: {-# UNPACK #-} !Int64}
+data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,      -- previous char
+                             alexStr ::  !ByteString.ByteString,    -- current input string
+                             alexBytePos :: {-# UNPACK #-} !Int64}  -- bytes consumed so far
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexChar
@@ -405,7 +405,7 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
 
 #ifdef ALEX_BASIC_BYTESTRING
 
--- alexScanTokens :: String -> [token]
+-- alexScanTokens :: ByteString.ByteString -> [token]
 alexScanTokens str = go (AlexInput '\n' str 0)
   where go inp =
           case alexScan inp 0 of
@@ -421,7 +421,7 @@ alexScanTokens str = go (AlexInput '\n' str 0)
 
 #ifdef ALEX_STRICT_BYTESTRING
 
--- alexScanTokens :: String -> [token]
+-- alexScanTokens :: ByteString.ByteString -> [token]
 alexScanTokens str = go (AlexInput '\n' str 0)
   where go inp =
           case alexScan inp 0 of
@@ -457,7 +457,7 @@ alexScanTokens str = go (alexStartPos,'\n',[],str)
 -- Posn wrapper, ByteString version
 
 #ifdef ALEX_POSN_BYTESTRING
---alexScanTokens :: ByteString -> [token]
+--alexScanTokens :: ByteString.ByteString -> [token]
 alexScanTokens str = go (alexStartPos,'\n',str,0)
   where go inp@(pos,_,str,n) =
           case alexScan inp 0 of
