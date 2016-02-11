@@ -1389,7 +1389,16 @@ alexScanTokens str = go (alexStartPos,'\n',[],str)
 newtype Alex a = Alex { unAlex :: AlexState
                                -> Either String (AlexState, a) }
 
+instance Functor Alex where ...
+instance Applicative Alex where ...
+instance Monad Alex where ...
+
 runAlex          :: String -> Alex a -> Either String a
+
+type AlexInput = (AlexPosn,     -- current position,
+                  Char,         -- previous char
+                  [Byte],       -- rest of the bytes for the current char
+                  String)       -- current input string
 
 alexGetInput     :: Alex AlexInput
 alexSetInput     :: AlexInput -> Alex ()
@@ -1427,7 +1436,7 @@ skip input len = alexMonadScan
 -- begin :: Int -> AlexAction result
 begin code = skip `andBegin` code
 
--- token :: (String -> Int -> token) -> AlexAction token
+-- token :: (AlexInput -> Int -> token) -> AlexAction token
 token t input len = return (t input len)</programlisting>
       </section>
 
@@ -1587,14 +1596,15 @@ type StopAction state result
 <programlisting>
 import qualified Data.ByteString.Lazy as ByteString
 
-type AlexInput = (Char,       -- previous char
-                  ByteString.ByteString) -- current input string
+data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,      -- previous char
+                             alexStr ::  !ByteString.ByteString,    -- current input string
+                             alexBytePos :: {-# UNPACK #-} !Int64}  -- bytes consumed so far
 
 alexGetByte :: AlexInput -> Maybe (Char,AlexInput)
 
 alexInputPrevChar :: AlexInput -> Char
 
--- alexScanTokens :: String -> [token]
+-- alexScanTokens :: ByteString.ByteString -> [token]
 </programlisting>
 
 	<para>All of the actions in your lexical specification
@@ -1616,7 +1626,8 @@ import qualified Data.ByteString.Lazy as ByteString
 
 type AlexInput = (AlexPosn,   -- current position,
                   Char,       -- previous char
-                  ByteString.ByteString) -- current input string
+                  ByteString.ByteString, -- current input string
+                  Int64)           -- bytes consumed so far
 
 -- alexScanTokens :: ByteString.ByteString -> [token]
 </programlisting>
@@ -1640,6 +1651,7 @@ import qualified Data.ByteString.Lazy as ByteString
 
 data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
+        alex_bpos:: !Int64,     -- bytes consumed so far
         alex_inp :: ByteString.ByteString, -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
@@ -1650,7 +1662,12 @@ newtype Alex a = Alex { unAlex :: AlexState
 
 runAlex          :: ByteString.ByteString -> Alex a -> Either String a
 
--- token :: (ByteString.ByteString -> Int -> token) -> AlexAction token
+type AlexInput = (AlexPosn,     -- current position,
+                  Char,         -- previous char
+                  ByteString.ByteString,   -- current input string
+                  Int64)        -- bytes consumed so far
+
+-- token :: (AlexInput -> Int -> token) -> AlexAction token
 </programlisting>
 
 	<para>All of the actions in your lexical specification
@@ -1670,6 +1687,7 @@ import qualified Data.ByteString.Lazy as ByteString
 
 ata AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
+        alex_bpos:: !Int64,     -- bytes consumed so far
         alex_inp :: ByteString.ByteString, -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_scd :: !Int        -- the current startcode
@@ -1681,7 +1699,7 @@ newtype Alex a = Alex { unAlex :: AlexState
 
 runAlex          :: ByteString.ByteString -> Alex a -> Either String a
 
--- token :: (ByteString.ByteString -> Int -> token) -> AlexAction token
+-- token :: (AlexInput -> Int -> token) -> AlexAction token
 </programlisting>
 
 	<para>All of the actions in your lexical specification
