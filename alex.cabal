@@ -74,6 +74,9 @@ source-repository head
 flag small_base
   description: Choose the new smaller, split-up base package.
 
+flag quickcheck
+  default: False
+
 executable alex
   hs-source-dirs: src
   main-is: Main.hs
@@ -85,7 +88,10 @@ executable alex
 
   build-depends: base < 5
   -- build-depends: Ranged-sets
-  build-depends: QuickCheck >=2
+
+  if flag(quickcheck)
+    build-depends: QuickCheck >= 2
+    cpp-options: -DUSE_QUICKCHECK
 
   extensions: CPP
   ghc-options: -Wall -rtsopts

@@ -29,6 +29,7 @@ module Data.Ranged.Ranges (
    rangeIntersection,
    rangeUnion,
    rangeDifference,
+#if defined(USE_QUICKCHECK)
    -- ** QuickCheck properties
    prop_unionRange,
    prop_unionRangeLength,
@@ -43,12 +44,15 @@ module Data.Ranged.Ranges (
    prop_fullNonSingleton,
    prop_nonSingleton,
    prop_intSingleton
+#endif
 ) where
 
 import Control.Monad
 import Data.Ranged.Boundaries
 import Data.Maybe
+#if defined(USE_QUICKCHECK)
 import Test.QuickCheck
+#endif
 
 -- | A Range has upper and lower boundaries.
 data Ord v => Range v = Range {rangeLower, rangeUpper :: Boundary v}
@@ -213,6 +217,7 @@ rangeDifference r1@(Range lower1 upper1) (Range lower2 upper2) =
       intersects = (max lower1 lower2) < (min upper1 upper2)
 
 
+#if defined(USE_QUICKCHECK)
 -- QuickCheck generators
 
 instance (Arbitrary v,  DiscreteOrdered v) =>
@@ -239,9 +244,10 @@ instance (CoArbitrary v, DiscreteOrdered v) =>
 
    coarbitrary (Range lower upper) =
       variant (0 :: Int) . coarbitrary lower . coarbitrary upper
+#endif
 
 
-
+#if defined(USE_QUICKCHECK)
 -- QuickCheck Properties
 
 -- | The union of two ranges has a value iff either range has it.
@@ -356,5 +362,4 @@ prop_intSingleton x y = forAll (rangeAround x y) $ \r ->
       rangeAround v1 v2 = return Range `ap` genBound v1 `ap` genBound v2
       genBound v = elements [BoundaryAbove v, BoundaryBelow v]
 
-
-
+#endif
