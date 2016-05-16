@@ -248,7 +248,7 @@ byteEdge from charset to = N $ \s n _ -> (s, addEdge n, ())
 epsilonEdge :: SNum -> SNum -> NFAM ()
 epsilonEdge from to 
  | from == to = return ()
- | otherwise  = N $ \s n _ -> (s, addEdge n, ())
+ | otherwise  = N $ \s n _ -> let n' = addEdge n in n' `seq` (s, n', ())
  where
    addEdge n =
      case Map.lookup from n of
