@@ -90,13 +90,14 @@ alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (_,c,_,_) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (p,_,cs,n) | ByteString.null cs = Nothing
-                       | otherwise = let b   = ByteString.head cs
-                                         cs' = ByteString.tail cs
-                                         c   = ByteString.w2c b
-                                         p'  = alexMove p c
-                                         n'  = n+1
-                                     in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs',n'))
+alexGetByte (p,_,cs,n) =
+    case ByteString.uncons cs of
+        Nothing -> Nothing
+        Just (b, cs') ->
+            let c   = ByteString.w2c b
+                p'  = alexMove p c
+                n'  = n+1
+            in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs',n'))
 #endif
 
 #ifdef ALEX_BASIC_BYTESTRING
@@ -107,14 +108,14 @@ data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,      -- previous 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexChar
 
-alexGetByte (AlexInput {alexStr=cs,alexBytePos=n})
-   | ByteString.null cs = Nothing
-   | otherwise          =
-     Just (ByteString.head cs,
-           AlexInput {
-             alexChar = ByteString.w2c $ ByteString.head cs,
-             alexStr =  ByteString.tail cs,
-             alexBytePos = n+1})
+alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
+    case ByteString.uncons cs of
+        Nothing -> Nothing
+        Just (c, rest) ->
+            Just (c, AlexInput {
+                alexChar = ByteString.w2c c,
+                alexStr =  rest,
+                alexBytePos = n+1})
 #endif
 
 #ifdef ALEX_STRICT_BYTESTRING
@@ -125,14 +126,14 @@ data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexChar
 
-alexGetByte (AlexInput {alexStr=cs,alexBytePos=n})
-   | ByteString.null cs = Nothing
-   | otherwise          =
-     Just $! (ByteString.head cs,
-           AlexInput {
-             alexChar = ByteString.w2c $ ByteString.unsafeHead cs,
-             alexStr =  ByteString.unsafeTail cs,
-             alexBytePos = n+1})
+alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
+    case ByteString.uncons cs of
+        Nothing -> Nothing
+        Just (c, rest) ->
+            Just (c, AlexInput {
+                alexChar = ByteString.w2c c,
+                alexStr =  rest,
+                alexBytePos = n+1})
 #endif
 
 -- -----------------------------------------------------------------------------
