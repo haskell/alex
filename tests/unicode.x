@@ -14,7 +14,7 @@ import System.IO
 
 tokens :-
 
-<0> {   
+<0> {
    "αω"        { string }
    [AΓ]        { character }
    .           { other }
@@ -23,13 +23,13 @@ tokens :-
 
 {
 string :: AlexInput -> Int -> Alex String
-string (p,_,_,input) len = return "string!"
+string (_,_,_,_) _ = return "string!"
 
 other :: AlexInput -> Int -> Alex String
-other (p,_,_,input) len = return (take len input)
+other (_,_,_,input) len = return (take len input)
 
 character :: AlexInput -> Int -> Alex String
-character (p,_,_,input) len = return "PING!"
+character (_,_,_,_) _ = return "PING!"
 
 alexEOF :: Alex String
 alexEOF = return "stopped."
@@ -37,16 +37,16 @@ alexEOF = return "stopped."
 scanner :: String -> Either String [String]
 scanner str = runAlex str $ do
   let loop = do tok <- alexMonadScan
-		if tok == "stopped." || tok == "error." 
+		if tok == "stopped." || tok == "error."
 			then return [tok]
 			else do toks <- loop
 				return (tok:toks)
-  loop  
+  loop
 
 main :: IO ()
 main = do
   let test1 = scanner str1
-  when (test1 /= out1) $ 
+  when (test1 /= out1) $
 	do hPutStrLn stderr "Test 1 failed:"
 	   print test1
 	   exitFailure

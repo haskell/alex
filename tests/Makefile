@@ -1,6 +1,6 @@
 ALEX=../dist/build/alex/alex
 HC=ghc
-HC_OPTS=-Wall -fno-warn-unused-binds -fno-warn-missing-signatures -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports -fno-warn-tabs -Werror
+HC_OPTS=-Wall -fno-warn-missing-signatures -fno-warn-name-shadowing -fno-warn-unused-imports -fno-warn-tabs -Werror
 
 .PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 
@@ -39,6 +39,6 @@ clean:
 	rm -f $(CLEAN_FILES)
 
 interact:
-	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception 
+	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception
 # -args='--template=.. simple.x -o simple.n.hs'
 # :set args --template=.. simple.x -o simple.n.hs

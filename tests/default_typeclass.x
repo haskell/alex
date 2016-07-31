@@ -90,14 +90,14 @@ type AlexInput = (AlexPosn,     -- current position,
                   String)       -- current input string
 
 ignorePendingBytes :: AlexInput -> AlexInput
-ignorePendingBytes (p,c,ps,s) = (p,c,[],s)
+ignorePendingBytes (p,c,_,s) = (p,c,[],s)
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (p,c,bs,s) = c
+alexInputPrevChar (_,c,_,_) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
-alexGetByte (p,c,[],[]) = Nothing
+alexGetByte (_,_,[],[]) = Nothing
 alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
                                   (b:bs) = utf8Encode c
                               in p' `seq`  Just (b, (p', c, bs, s))
@@ -110,7 +110,7 @@ alexStartPos = AlexPn 0 1 1
 
 alexMove :: AlexPosn -> Char -> AlexPosn
 alexMove (AlexPn a l c) '\t' = AlexPn (a+1)  l     (((c+7) `div` 8)*8+1)
-alexMove (AlexPn a l c) '\n' = AlexPn (a+1) (l+1)   1
+alexMove (AlexPn a l _) '\n' = AlexPn (a+1) (l+1)   1
 alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 
 alexGetInput :: MonadState AlexState m => m AlexInput
@@ -155,7 +155,7 @@ alexMonadScan = do
     AlexError ((AlexPn _ line column),_,_,_) ->
       alexError $ "lexical error at line " ++ (show line) ++
                   ", column " ++ (show column)
-    AlexSkip  inp' len -> do
+    AlexSkip  inp' _ -> do
         alexSetInput inp'
         alexMonadScan
     AlexToken inp' len action -> do
