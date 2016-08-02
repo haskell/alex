@@ -23,7 +23,7 @@ build-type: Custom
 
 extra-source-files:
         CHANGELOG.md
-        README
+        README.md
         TODO
         alex.spec
         doc/Makefile
