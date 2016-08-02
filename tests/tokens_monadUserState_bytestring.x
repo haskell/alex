@@ -15,8 +15,8 @@ tokens :-
 
   $white+				;
   "--".*				;
-  let					{ tok (\p s -> Let p) }
-  in					{ tok (\p s -> In p) }
+  let					{ tok (\p _ -> Let p) }
+  in					{ tok (\p _ -> In p) }
   $digit+                               { tok (\p s -> Int p (read (B.unpack s))) }
   [\=\+\-\*\/\(\)]                      { tok (\p s -> Sym p (head (B.unpack s))) }
   $alpha [$alpha $digit \_ \']*         { tok (\p s -> Var p (B.unpack s)) }
@@ -52,7 +52,7 @@ scanner str = runAlex str $ do
 			then return [tok]
 			else do toks <- loop
 				return (tok:toks)
-  loop  
+  loop
 
 test1 = case scanner "  let in 012334\n=+*foo bar__'" of
           Left err -> error err

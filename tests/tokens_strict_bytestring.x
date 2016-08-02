@@ -15,8 +15,8 @@ tokens :-
 
   $white+				;
   "--".*				;
-  let					{ \s -> Let }
-  in					{ \s -> In }
+  let					{ \_ -> Let }
+  in					{ \_ -> In }
   $digit+                               { \s -> Int (read (unpack s)) }
   [\=\+\-\*\/\(\)]                      { \s -> Sym (head (unpack s)) }
   $alpha [$alpha $digit \_ \']*         { \s -> Var (unpack s) }
@@ -31,7 +31,7 @@ data Token =
 	Sym Char	|
 	Var String	|
 	Int Int		|
-	Err 
+	Err
 	deriving (Eq,Show)
 
 main = if test1 /= result1 then exitFailure

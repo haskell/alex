@@ -12,8 +12,8 @@ tokens :-
 
   $white+				;
   "--".*				;
-  let					{ tok (\p s -> Let p) }
-  in					{ tok (\p s -> In p) }
+  let					{ tok (\p _ -> Let p) }
+  in					{ tok (\p _ -> In p) }
   $digit+				{ tok (\p s -> Int p (read s)) }
   [\=\+\-\*\/\(\)]			{ tok (\p s -> Sym p (head s)) }
   $alpha [$alpha $digit \_ \']*		{ tok (\p s -> Var p s) }

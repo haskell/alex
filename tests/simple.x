@@ -30,31 +30,31 @@ $white+			;
 
 {
 {- we can now have comments in source code? -}
-word (p,_,_,input) len = return (take len input)
+word (_,_,_,input) len = return (take len input)
 
-both (p,_,_,input) len = return ("BOTH:"++ take len input)
+both (_,_,_,input) len = return ("BOTH:"++ take len input)
 
-eol (p,_,_,input) len = return ("EOL:"++ take len input)
+eol (_,_,_,input) len = return ("EOL:"++ take len input)
 
-bol (p,_,_,input) len = return ("BOL:"++ take len input)
+bol (_,_,_,input) len = return ("BOL:"++ take len input)
 
-parenword (p,_,_,input) len = return (map toUpper (take len input))
+parenword (_,_,_,input) len = return (map toUpper (take len input))
 
-magic (p,_,_,input) len = return "PING!"
+magic (_,_,_,_) _ = return "PING!"
 
 alexEOF = return "stopped."
 
 scanner str = runAlex str $ do
   let loop = do tok <- alexMonadScan
-		if tok == "stopped." || tok == "error." 
+		if tok == "stopped." || tok == "error."
 			then return [tok]
 			else do toks <- loop
 				return (tok:toks)
-  loop  
+  loop
 
 main = do
   let test1 = scanner str1
-  when (test1 /= out1) $ 
+  when (test1 /= out1) $
 	do hPutStrLn stderr "Test 1 failed:"
 	   print test1
 	   exitFailure
