@@ -120,30 +120,30 @@ alexScan input IBOX(sc)
 
 alexScanUser user input IBOX(sc)
   = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
-	(AlexNone, input') ->
-		case alexGetByte input of
-			Nothing ->
+  (AlexNone, input') ->
+    case alexGetByte input of
+      Nothing ->
 #ifdef ALEX_DEBUG
                                    trace ("End of input.") $
 #endif
                                    AlexEOF
-                        Just _ ->
+      Just _ ->
 #ifdef ALEX_DEBUG
                                    trace ("Error.") $
 #endif
                                    AlexError input'
 
-        (AlexLastSkip input'' len, _) ->
+  (AlexLastSkip input'' len, _) ->
 #ifdef ALEX_DEBUG
-		trace ("Skipping.") $
+    trace ("Skipping.") $
 #endif
-                AlexSkip input'' len
+    AlexSkip input'' len
 
-        (AlexLastAcc k input''' len, _) ->
+  (AlexLastAcc k input''' len, _) ->
 #ifdef ALEX_DEBUG
-		trace ("Accept.") $
+    trace ("Accept.") $
 #endif
-		AlexToken input''' len (alex_actions ! k)
+    AlexToken input''' len (alex_actions ! k)
 
 
 -- Push the input through the DFA, remembering the most recent accepting
@@ -152,7 +152,7 @@ alexScanUser user input IBOX(sc)
 alex_scan_tkn user orig_input len input s last_acc =
   input `seq` -- strict in the input
   let
-	new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
+  new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
   in
   new_acc `seq`
   case alexGetByte input of
