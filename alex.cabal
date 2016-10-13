@@ -65,6 +65,17 @@ extra-source-files:
         tests/tokens_monad_bytestring.x
         tests/tokens_monadUserState_bytestring.x
         tests/tokens_bytestring_unicode.x
+        tests/basic_typeclass.x
+        tests/basic_typeclass_bytestring.x
+        tests/default_typeclass.x
+        tests/gscan_typeclass.x
+        tests/posn_typeclass.x
+        tests/monad_typeclass.x
+        tests/monad_typeclass_bytestring.x
+        tests/monadUserState_typeclass.x
+        tests/monadUserState_typeclass_bytestring.x
+        tests/posn_typeclass_bytestring.x
+        tests/strict_typeclass.x
         tests/unicode.x
 
 source-repository head
