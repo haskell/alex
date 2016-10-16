@@ -42,6 +42,10 @@
 /doc/config.log
 /doc/config.mk
 /doc/config.status
+/examples/*.alex.hs
+/examples/*.happy.hs
+/examples/*.bin
+/examples/*.exe
 /tests/*.[gn].hs
 /tests/*.[gn].bin
 /tests/*.[gn].exe
