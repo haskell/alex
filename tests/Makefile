@@ -10,7 +10,31 @@ else
 HS_PROG_EXT = .bin
 endif
 
-TESTS = unicode.x simple.x tokens.x tokens_posn.x tokens_gscan.x tokens_bytestring.x tokens_posn_bytestring.x tokens_strict_bytestring.x tokens_monad_bytestring.x tokens_monadUserState_bytestring.x null.x tokens_bytestring_unicode.x basic_typeclass.x basic_typeclass_bytestring.x strict_typeclass.x posn_typeclass.x posn_typeclass_bytestring.x gscan_typeclass.x monad_typeclass.x monad_typeclass_bytestring.x monadUserState_typeclass.x monadUserState_typeclass_bytestring.x default_typeclass.x
+TESTS = \
+        basic_typeclass.x \
+        basic_typeclass_bytestring.x \
+        default_typeclass.x \
+        gscan_typeclass.x \
+        monad_typeclass.x \
+        monad_typeclass_bytestring.x \
+        monadUserState_typeclass.x \
+        monadUserState_typeclass_bytestring.x \
+        null.x \
+        posn_typeclass.x \
+        posn_typeclass_bytestring.x \
+        strict_typeclass.x \
+        simple.x \
+        tokens.x \
+        tokens_bytestring.x \
+        tokens_bytestring_unicode.x \
+        tokens_gscan.x \
+        tokens_monad_bytestring.x \
+        tokens_monadUserState_bytestring.x \
+        tokens_posn.x \
+        tokens_posn_bytestring.x \
+        tokens_scan_user.x \
+        tokens_strict_bytestring.x \
+        unicode.x
 
 TEST_ALEX_OPTS = --template=..
 
