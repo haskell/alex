@@ -44,7 +44,6 @@ extra-source-files:
         examples/pp.x
         examples/state.x
         examples/tiny.y
-        examples/tkns.hs
         examples/words.x
         examples/words_monad.x
         examples/words_posn.x

@@ -7,7 +7,7 @@ HAPPY_OPTS=-agc
 ifeq "$(TARGETPLATFORM)" "i386-unknown-mingw32"
 exeext=.exe
 else
-exeext=
+exeext=.bin
 endif
 
 PROGS = lit Tokens Tokens_gscan words words_posn words_monad tiny haskell tiger
@@ -15,10 +15,10 @@ PROGS = lit Tokens Tokens_gscan words words_posn words_monad tiny haskell tiger
 ALEX_OPTS = --template=.. -g
 # ALEX_OPTS = --template=..
 
-%.hs : %.x
+%.alex.hs : %.x
 	$(ALEX) $(ALEX_OPTS) $< -o $@
 
-%.hs : %.y
+%.happy.hs : %.y
 	$(HAPPY) $(HAPPY_OPTS) $< -o $@
 
 %.o : %.hs
@@ -26,37 +26,36 @@ ALEX_OPTS = --template=.. -g
 
 CLEAN_FILES += *.info *.hi *.o *.bin *.exe
 
-all : $(addsuffix $(HS_PROG_EXT),$(PROGS))
+all : $(addsuffix $(exeext),$(PROGS))
 
-tiny$(exeext) : tiny.hs Tokens_posn.hs
+tiny$(exeext) : tiny.happy.hs Tokens_posn.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-lit$(exeext) : lit.hs
+lit$(exeext) : lit.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-Tokens$(exeext) : Tokens.hs
+Tokens$(exeext) : Tokens.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-Tokens_gscan$(exeext) : Tokens_gscan.hs
+Tokens_gscan$(exeext) : Tokens_gscan.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-words$(exeext) : words.hs
+words$(exeext) : words.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-words_posn$(exeext) : words_posn.hs
+words_posn$(exeext) : words_posn.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-words_monad$(exeext) : words_monad.hs
+words_monad$(exeext) : words_monad.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-haskell$(exeext) : haskell.hs
+haskell$(exeext) : haskell.alex.hs
 	$(HC) $(HC_OPTS) -o $@ $^
 
-tiger$(exeext) : tiger.hs
+tiger$(exeext) : tiger.alex.hs
 	$(HC) $(HC_OPTS) -main-is TigerLexer -o $@ $^
 
 .PHONY: clean
 clean:
-	rm -f *.o *.hi *.bin $(addsuffix $(exeext),$(PROGS)) \
-		$(addsuffix .hs,$(PROGS)) Tokens_posn.hs
-
+	rm -f *.o *.hi $(addsuffix $(exeext),$(PROGS)) \
+		*.alex.hs *.happy.hs
