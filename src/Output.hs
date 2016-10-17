@@ -71,14 +71,10 @@ outputDFA target _ _ scheme dfa
         . str "]\n"
 
     outputAccept =
-      let
-        userStateTy = case scheme of
-          Monad { monadUserState = True } -> "AlexUserState"
-          _ -> "()"
-      in
-          str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy
-        . str ")\n" . str accept_nm
-        . str " = listArray (0::Int," . shows n_states . str ") ["
+        -- Don't emit explicit type signature as it contains unknown user type,
+        -- see: https://github.com/simonmar/alex/issues/98
+        -- str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy . str ")\n"
+        str accept_nm . str " = listArray (0::Int," . shows n_states . str ") ["
         . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
         . str "]\n"
 
