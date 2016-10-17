@@ -1,3 +1,14 @@
+## Changes in 3.2.1:
+
+ * Fix build problem with GHC; add new test tokens_scan_user.x
+
+## Changes in 3.2.0:
+
+ * Allow the token type and productions to be overloaded, and add new
+   directives: %token, %typeclass, %action.  See "Type Signatures and
+   Typeclasses" in the manual.
+ * Some small space leak fixes
+
 ##  Changes in 3.1.7:
 
  * Add support for `%encoding` directive
