@@ -9,7 +9,7 @@ before_install:
  - sudo add-apt-repository -y ppa:hvr/ghc
  - sudo apt-get update
  - sudo apt-get install alex-3.1.7 happy-1.19.5 cabal-install-1.24 ghc-$GHCVER
- - export PATH=/opt/ghc/$GHCVER/bin:/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$PATH
+ - export PATH=/opt/cabal/bin:/opt/ghc/$GHCVER/bin:/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$PATH
 
 install:
  - cabal-1.24 update
