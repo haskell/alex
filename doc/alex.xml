@@ -1299,7 +1299,7 @@ alexGetByte (_,[],(c:s)) = case utf8Encode c of
                              (b:bs) -> Just (b, (c, bs, s))
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (c,_) = c
+alexInputPrevChar (c,_,_) = c
 
 -- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n',[],str)
