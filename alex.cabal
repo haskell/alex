@@ -53,8 +53,19 @@ extra-source-files:
         templates/GenericTemplate.hs
         templates/wrappers.hs
         tests/Makefile
-        tests/simple.x
+        tests/basic_typeclass.x
+        tests/basic_typeclass_bytestring.x
+        tests/default_typeclass.x
+        tests/gscan_typeclass.x
+        tests/monadUserState_typeclass.x
+        tests/monadUserState_typeclass_bytestring.x
+        tests/monad_typeclass.x
+        tests/monad_typeclass_bytestring.x
         tests/null.x
+        tests/posn_typeclass.x
+        tests/posn_typeclass_bytestring.x
+        tests/simple.x
+        tests/strict_typeclass.x
         tests/tokens.x
         tests/tokens_gscan.x
         tests/tokens_posn.x
