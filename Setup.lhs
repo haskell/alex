@@ -48,7 +48,7 @@ myPostBuild _ flags _ lbi = do
       runProgram p = rawSystemProgramConf verbosity p (withPrograms lbi)
       cpp_template src dst opts = do
         let tmp = dst ++ ".tmp"
-        runProgram ghcProgram (["-o", tmp, "-E", "-cpp", "templates" </> src] ++ opts)
+        runProgram ghcProgram (["-o", tmp, "-E", "-cpp", "-optP-P", "templates" </> src] ++ opts)
         writeFile dst . unlines . map mungeLinePragma . lines =<< readFile tmp
         removeFile tmp
 
