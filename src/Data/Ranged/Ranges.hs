@@ -51,7 +51,7 @@ import Data.Maybe
 import Test.QuickCheck
 
 -- | A Range has upper and lower boundaries.
-data Ord v => Range v = Range {rangeLower, rangeUpper :: Boundary v}
+data Range v = Range {rangeLower, rangeUpper :: Boundary v}
 
 instance (DiscreteOrdered a) => Eq (Range a) where
    r1 == r2   = (rangeIsEmpty r1 && rangeIsEmpty r2) ||
@@ -102,17 +102,17 @@ rangeListHas ls v = or $ map (\r -> rangeHas r v) ls
 
 
 -- | The empty range
-emptyRange :: DiscreteOrdered v => Range v
+emptyRange :: Range v
 emptyRange = Range BoundaryAboveAll BoundaryBelowAll
 
 
 -- | The full range.  All values are within it.
-fullRange :: DiscreteOrdered v => Range v
+fullRange :: Range v
 fullRange = Range BoundaryBelowAll BoundaryAboveAll
 
 
 -- | A range containing a single value
-singletonRange :: DiscreteOrdered v => v -> Range v
+singletonRange :: v -> Range v
 singletonRange v = Range (BoundaryBelow v) (BoundaryAbove v)
 
 
