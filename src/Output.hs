@@ -56,94 +56,83 @@ outputDFA target _ _ scheme dfa
     outputCheck   = do_array hexChars16 check_nm table_size check
     outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
+    formatArray :: String -> Int -> [ShowS] -> ShowS
+    formatArray constructFunction size contents =
+        str constructFunction
+      . str " (0 :: Int, " . shows size . str ")\n"
+      . str "  [ "
+      . interleave_shows (str "\n  , ") contents
+      . str "\n  ]"
+
     do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $
      case target of
       GhcTarget ->
           str nm . str " :: AlexAddr\n"
-        . str nm . str " = AlexA# \""
-        . str (hex_chars ints)
-        . str "\"#\n"
+        . str nm . str " = AlexA#\n"
+        . str "  \"" . str (hex_chars ints) . str "\"#\n"
 
       _ ->
           str nm . str " :: Array Int Int\n"
-        . str nm . str " = listArray (0," . shows upper_bound
-        . str ") [" . interleave_shows (char ',') (map shows ints)
-        . str "]\n"
+        . str nm . str " = "
+        . formatArray "listArray" upper_bound (map shows ints)
+        . nl
 
+    outputAccept :: ShowS
     outputAccept =
-        -- Don't emit explicit type signature as it contains unknown user type,
-        -- see: https://github.com/simonmar/alex/issues/98
-        -- str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy . str ")\n"
-        str accept_nm . str " = listArray (0::Int," . shows n_states . str ") ["
-        . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
-        . str "]\n"
+      -- Don't emit explicit type signature as it contains unknown user type,
+      -- see: https://github.com/simonmar/alex/issues/98
+      -- str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy . str ")\n"
+        str accept_nm . str " = "
+      . formatArray "listArray" n_states (snd (mapAccumR outputAccs 0 accept))
+      . nl
 
     gscanActionType res =
         str "AlexPosn -> Char -> String -> Int -> ((Int, state) -> "
       . str res . str ") -> (Int, state) -> " . str res
 
-    outputActions
-        = let
-            (nacts, acts) = mapAccumR outputActs 0 accept
-          in case scheme of
+    outputActions = signature . body
+      where
+        (nacts, acts) = mapAccumR outputActs 0 accept
+        actionsArray :: ShowS
+        actionsArray = formatArray "array" nacts (concat acts)
+        body :: ShowS
+        body = str actions_nm . str " = " . actionsArray . nl
+        signature :: ShowS
+        signature = case scheme of
           Default { defaultTypeInfo = Just (Nothing, actionty) } ->
               str actions_nm . str " :: Array Int (" . str actionty . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (" . str actionty . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
             . gscanActionType toktype . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int ("
             . gscanActionType toktype . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Monad { monadByteString = isByteString,
                   monadTypeInfo = Just (Nothing, toktype) } ->
             let
@@ -151,9 +140,6 @@ outputDFA target _ _ scheme dfa
             in
               str actions_nm . str " :: Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Monad { monadByteString = isByteString,
                   monadTypeInfo = Just (Just tyclasses, toktype) } ->
             let
@@ -162,15 +148,11 @@ outputDFA target _ _ scheme dfa
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           _ ->
               -- No type signature: we don't know what the type of the actions is.
               -- str accept_nm . str " :: Array Int (Accept Code)\n"
-              str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
+              id
+
 
     outputSigs
         = case scheme of
