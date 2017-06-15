@@ -24,7 +24,7 @@ import Data.Array.Unboxed ( UArray, elems, (!), array, listArray )
 import Data.Maybe (isJust)
 import Data.Bits
 import Data.Char ( ord, chr )
-import Data.List ( maximumBy, sortBy, groupBy, mapAccumR )
+import Data.List ( maximumBy, sortBy, groupBy, mapAccumR, intercalate )
 
 -- -----------------------------------------------------------------------------
 -- Printing the output
@@ -552,27 +552,60 @@ findFstFreeSlot table n = do
 -- Convert an integer to a 16-bit number encoded in \xNN\xNN format suitable
 -- for placing in a string (copied from Happy's ProduceCode.lhs)
 
+-- | Lay out string literal consisting of hexadecimal characters into columns
+-- of specified width.
+concatInChunks :: Int -> [HexChar] -> String
+concatInChunks width =
+  -- Take care to not use split string syntax, e.g.
+  -- x = "foo\
+  --     \bar"
+  -- because it does not play well with the preprocessor, which is always
+  -- enabled in the generated file.
+  intercalate "\\\n" .
+  map (concatMap unHexChar) .
+  takeBy width
+
+chunkSize :: Int
+chunkSize = 19
+
 hexChars16 :: [Int] -> String
-hexChars16 acts = concat (map conv16 acts)
+hexChars16 acts =
+  concatInChunks chunkSize $ concatMap conv16 acts
   where
+    conv16 :: Int -> [HexChar]
     conv16 i | i > 0x7fff || i < -0x8000
                 = error ("Internal error: hexChars16: out of range: " ++ show i)
              | otherwise
                 = hexChar16 i
 
 hexChars32 :: [Int] -> String
-hexChars32 acts = concat (map conv32 acts)
+hexChars32 acts =
+  concatInChunks chunkSize $ concatMap conv32 acts
   where
-    conv32 i = hexChar16 (i .&. 0xffff) ++
-                hexChar16 ((i `shiftR` 16) .&. 0xffff)
+    conv32 :: Int -> [HexChar]
+    conv32 i =
+      hexChar16 (i .&. 0xffff) ++
+      hexChar16 ((i `shiftR` 16) .&. 0xffff)
 
-hexChar16 :: Int -> String
-hexChar16 i = toHex (i .&. 0xff)
-                 ++ toHex ((i `shiftR` 8) .&. 0xff)  -- force little-endian
+hexChar16 :: Int -> [HexChar]
+hexChar16 i =
+  [ toHex (i .&. 0xff)
+  , toHex ((i `shiftR` 8) .&. 0xff)  -- force little-endian
+  ]
 
-toHex :: Int -> String
-toHex i = ['\\','x', hexDig (i `div` 16), hexDig (i `mod` 16)]
+newtype HexChar = HexChar { unHexChar :: String }
+
+toHex :: Int -> HexChar
+toHex i = HexChar ['\\','x', hexDig (i `div` 16), hexDig (i `mod` 16)]
 
 hexDig :: Int -> Char
 hexDig i | i <= 9    = chr (i + ord '0')
          | otherwise = chr (i - 10 + ord 'a')
+
+takeBy :: Int -> [a] -> [[a]]
+takeBy n = go
+  where
+    go [] = []
+    go xs = ys : go ys'
+      where
+        (ys, ys') = splitAt n xs
