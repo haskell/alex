@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- Util.hs, part of Alex
 --
 -- (c) Simon Marlow 2003
@@ -8,12 +8,26 @@
 --
 -- ----------------------------------------------------------------------------}
 
-module Util where
+module Util
+  ( str
+  , char
+  , nl
+  , paren
+  , brack
+  , interleave_shows
+  , space
+  , cjustify
+  , ljustify
+  , rjustify
+  , spaces
+  , hline
+  ) where
 
 -- Pretty-printing utilities
 
 str :: String -> String -> String
 str = showString
+
 char :: Char -> String -> String
 char c = (c :)
 
@@ -35,8 +49,9 @@ space = char ' '
 
 cjustify, ljustify, rjustify :: Int -> String -> String
 cjustify n s = spaces halfm ++ s ++ spaces (m - halfm)
-               where m     = n - length s
-                     halfm = m `div` 2
+  where
+    m     = n - length s
+    halfm = m `div` 2
 ljustify n s = s ++ spaces (max 0 (n - length s))
 rjustify n s = spaces (n - length s) ++ s
 
