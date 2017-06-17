@@ -538,7 +538,16 @@ findFstFreeSlot table n = do
 -- of specified width.
 concatInChunks :: Int -> [HexChar] -> String
 concatInChunks width =
-  -- Take care to not use split string syntax, e.g.
+  -- The string literal is layed out using preprocessor continuation lines.
+  -- This way the string literal will be reassembled by the preprocessor
+  -- into single-line literal and that's what ghc will see.
+  --
+  -- E.g. string "foobar" with width 2 will be layed out as:
+  -- "fo\
+  -- ob\
+  -- ar"
+  --
+  -- NB Take care to not use split string syntax, e.g.
   -- x = "foo\
   --     \bar"
   -- because it does not play well with the preprocessor, which is always
