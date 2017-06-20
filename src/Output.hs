@@ -24,7 +24,7 @@ import Data.Array.Unboxed ( UArray, elems, (!), array, listArray )
 import Data.Maybe (isJust)
 import Data.Bits
 import Data.Char ( ord, chr )
-import Data.List ( maximumBy, sortBy, groupBy, mapAccumR )
+import Data.List ( maximumBy, sortBy, groupBy, mapAccumR, intercalate )
 
 -- -----------------------------------------------------------------------------
 -- Printing the output
@@ -56,94 +56,83 @@ outputDFA target _ _ scheme dfa
     outputCheck   = do_array hexChars16 check_nm table_size check
     outputDefault = do_array hexChars16 deflt_nm n_states   deflt
 
+    formatArray :: String -> Int -> [ShowS] -> ShowS
+    formatArray constructFunction size contents =
+        str constructFunction
+      . str " (0 :: Int, " . shows size . str ")\n"
+      . str "  [ "
+      . interleave_shows (str "\n  , ") contents
+      . str "\n  ]"
+
     do_array hex_chars nm upper_bound ints = -- trace ("do_array: " ++ nm) $
      case target of
       GhcTarget ->
           str nm . str " :: AlexAddr\n"
-        . str nm . str " = AlexA# \""
-        . str (hex_chars ints)
-        . str "\"#\n"
+        . str nm . str " = AlexA#\n"
+        . str "  \"" . str (hex_chars ints) . str "\"#\n"
 
       _ ->
           str nm . str " :: Array Int Int\n"
-        . str nm . str " = listArray (0," . shows upper_bound
-        . str ") [" . interleave_shows (char ',') (map shows ints)
-        . str "]\n"
+        . str nm . str " = "
+        . formatArray "listArray" upper_bound (map shows ints)
+        . nl
 
+    outputAccept :: ShowS
     outputAccept =
-        -- Don't emit explicit type signature as it contains unknown user type,
-        -- see: https://github.com/simonmar/alex/issues/98
-        -- str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy . str ")\n"
-        str accept_nm . str " = listArray (0::Int," . shows n_states . str ") ["
-        . interleave_shows (char ',') (snd (mapAccumR outputAccs 0 accept))
-        . str "]\n"
+      -- Don't emit explicit type signature as it contains unknown user type,
+      -- see: https://github.com/simonmar/alex/issues/98
+      -- str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy . str ")\n"
+        str accept_nm . str " = "
+      . formatArray "listArray" n_states (snd (mapAccumR outputAccs 0 accept))
+      . nl
 
     gscanActionType res =
         str "AlexPosn -> Char -> String -> Int -> ((Int, state) -> "
       . str res . str ") -> (Int, state) -> " . str res
 
-    outputActions
-        = let
-            (nacts, acts) = mapAccumR outputActs 0 accept
-          in case scheme of
+    outputActions = signature . body
+      where
+        (nacts, acts) = mapAccumR outputActs 0 accept
+        actionsArray :: ShowS
+        actionsArray = formatArray "array" nacts (concat acts)
+        body :: ShowS
+        body = str actions_nm . str " = " . actionsArray . nl
+        signature :: ShowS
+        signature = case scheme of
           Default { defaultTypeInfo = Just (Nothing, actionty) } ->
               str actions_nm . str " :: Array Int (" . str actionty . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (" . str actionty . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
             . gscanActionType toktype . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int ("
             . gscanActionType toktype . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Posn { posnByteString = isByteString,
                  posnTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (AlexPosn -> "
             . str (strtype isByteString) . str " -> " . str toktype
             . str ")\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Monad { monadByteString = isByteString,
                   monadTypeInfo = Just (Nothing, toktype) } ->
             let
@@ -151,9 +140,6 @@ outputDFA target _ _ scheme dfa
             in
               str actions_nm . str " :: Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           Monad { monadByteString = isByteString,
                   monadTypeInfo = Just (Just tyclasses, toktype) } ->
             let
@@ -162,15 +148,11 @@ outputDFA target _ _ scheme dfa
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
-            . str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
           _ ->
               -- No type signature: we don't know what the type of the actions is.
               -- str accept_nm . str " :: Array Int (Accept Code)\n"
-              str actions_nm . str " = array (0::Int," . shows nacts
-            . str ") [" . interleave_shows (char ',') (concat acts)
-            . str "]\n"
+              id
+
 
     outputSigs
         = case scheme of
@@ -552,27 +534,69 @@ findFstFreeSlot table n = do
 -- Convert an integer to a 16-bit number encoded in \xNN\xNN format suitable
 -- for placing in a string (copied from Happy's ProduceCode.lhs)
 
+-- | Lay out string literal consisting of hexadecimal characters into columns
+-- of specified width.
+concatInChunks :: Int -> [HexChar] -> String
+concatInChunks width =
+  -- A string literal is laid out using preprocessor continuation lines.
+  -- This way the string literal will be reassembled by the preprocessor
+  -- into single-line literal and that's what ghc will see.
+  --
+  -- E.g. string "foobar" with width 2 will be laid out as:
+  -- "fo\
+  -- ob\
+  -- ar"
+  --
+  -- NB Take care to not use split string syntax, e.g.
+  -- x = "foo\
+  --     \bar"
+  -- because it does not play well with the preprocessor, which is always
+  -- enabled in the generated file.
+  intercalate "\\\n" .
+  map (concatMap unHexChar) .
+  takeBy width
+
+chunkSize :: Int
+chunkSize = 19
+
 hexChars16 :: [Int] -> String
-hexChars16 acts = concat (map conv16 acts)
+hexChars16 acts =
+  concatInChunks chunkSize $ concatMap conv16 acts
   where
+    conv16 :: Int -> [HexChar]
     conv16 i | i > 0x7fff || i < -0x8000
                 = error ("Internal error: hexChars16: out of range: " ++ show i)
              | otherwise
                 = hexChar16 i
 
 hexChars32 :: [Int] -> String
-hexChars32 acts = concat (map conv32 acts)
+hexChars32 acts =
+  concatInChunks chunkSize $ concatMap conv32 acts
   where
-    conv32 i = hexChar16 (i .&. 0xffff) ++
-                hexChar16 ((i `shiftR` 16) .&. 0xffff)
+    conv32 :: Int -> [HexChar]
+    conv32 i =
+      hexChar16 (i .&. 0xffff) ++
+      hexChar16 ((i `shiftR` 16) .&. 0xffff)
 
-hexChar16 :: Int -> String
-hexChar16 i = toHex (i .&. 0xff)
-                 ++ toHex ((i `shiftR` 8) .&. 0xff)  -- force little-endian
+hexChar16 :: Int -> [HexChar]
+hexChar16 i =
+  [ toHex (i .&. 0xff)
+  , toHex ((i `shiftR` 8) .&. 0xff)  -- force little-endian
+  ]
 
-toHex :: Int -> String
-toHex i = ['\\','x', hexDig (i `div` 16), hexDig (i `mod` 16)]
+newtype HexChar = HexChar { unHexChar :: String }
+
+toHex :: Int -> HexChar
+toHex i = HexChar ['\\','x', hexDig (i `div` 16), hexDig (i `mod` 16)]
 
 hexDig :: Int -> Char
 hexDig i | i <= 9    = chr (i + ord '0')
          | otherwise = chr (i - 10 + ord 'a')
+
+takeBy :: Int -> [a] -> [[a]]
+takeBy n = go
+  where
+    go [] = []
+    go xs = ys : go ys'
+      where
+        (ys, ys') = splitAt n xs

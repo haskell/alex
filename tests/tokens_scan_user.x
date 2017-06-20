@@ -11,7 +11,7 @@ $ws    = [\ \t\n]
 
 tokens :-
 
-  5 / {\u _ibt _l _iat -> u == FiveIsMagic} { \s -> TFive (head s) }
+  5 / {\ u _ibt _l _iat -> u == FiveIsMagic} { \s -> TFive (head s) }
   $digit { \s -> TDigit (head s) }
   $alpha { \s -> TAlpha (head s) }
   $ws    { \s -> TWSpace (head s) }
