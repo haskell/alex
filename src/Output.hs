@@ -538,9 +538,9 @@ findFstFreeSlot table n = do
 -- of specified width.
 concatInChunks :: Int -> [HexChar] -> String
 concatInChunks width =
-  -- A string literal is laid out using preprocessor continuation lines.
+  -- The string literal is laid out using preprocessor continuation lines.
   -- This way the string literal will be reassembled by the preprocessor
-  -- into single-line literal and that's what ghc will see.
+  -- into a single-line literal and that's what ghc will see.
   --
   -- E.g. string "foobar" with width 2 will be laid out as:
   -- "fo\
