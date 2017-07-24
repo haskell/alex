@@ -429,7 +429,7 @@ main = do
 
 <programlisting><replaceable>regexp</replaceable>   { <replaceable>code</replaceable> }</programlisting>
 
-    <para>The meaning of a this rule is "if the input matches
+    <para>The meaning of this rule is "if the input matches
     <replaceable>regexp</replaceable>, then return
     <replaceable>code</replaceable>".  The code part along with the
     braces can be replaced by simply
@@ -475,7 +475,7 @@ main = do
 
 <screen>$ alex Tokens.x</screen>
 
-    <para>If the module needed to be placed in different file,
+    <para>If the module needed to be placed in a different file,
     <literal>Main.hs</literal> for example, then the output filename
     can be specified using the <option>-o</option> option:</para>
 
@@ -1455,7 +1455,7 @@ token t input len = return (t input len)</programlisting>
     <para>The generated code is the same as in the <literal>monad</literal>
     wrapper, except in 3 places:</para>
     <para>1) The definition of the general state, which now refers to a
-    type (<literal>AlexUserState</literal>) that must be defined in the Alex file.</para>
+    type <literal>AlexUserState</literal> that must be defined in the Alex file.</para>
 
 <programlisting>
 data AlexState = AlexState {
