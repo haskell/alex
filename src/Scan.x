@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
---		    ALEX SCANNER AND LITERATE PREPROCESSOR
+--                  ALEX SCANNER AND LITERATE PREPROCESSOR
 --
 -- This Script defines the grammar used to generate the Alex scanner and a
 -- preprocessing scanner for dealing with literate scripts.  The actions for
@@ -13,7 +13,7 @@
 {
 {-# OPTIONS_GHC -w #-}
 
-module Scan(lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn) where
+module Scan (lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn) where
 
 import Data.Char
 import ParseMonad
@@ -42,40 +42,40 @@ $nonspecial = $graphic # [$special \%]
 
 alex :-
 
-@ws				{ skip }	-- white space; ignore
+@ws                             { skip }     -- white space; ignore
 
-<0> \" [^\"]* \"		{ string }
-<0> (@id @ws?)? \:\-		{ bind }
+<0> \" [^\"]* \"                { string }
+<0> (@id @ws?)? \:\-            { bind }
 <0> \{ / (\n | [^$digit])       { code }
-<0> $special			{ special }  -- note: matches {
-<0> \% "wrapper"		{ wrapper }
-<0> \% "encoding"		{ encoding }
+<0> $special                    { special }  -- note: matches {
+<0> \% "wrapper"                { wrapper }
+<0> \% "encoding"               { encoding }
 <0> \% "action"                 { actionty }
 <0> \% "token"                  { tokenty }
 <0> \% "typeclass"              { typeclass }
 
-<0> \\ $digit+			{ decch }
-<0> \\ x $hexdig+		{ hexch }
-<0> \\ o $octal+		{ octch }
-<0> \\ $printable		{ escape }
-<0> $nonspecial # [\<]		{ char }
-<0> @smac			{ smac }
-<0> @rmac			{ rmac }
+<0> \\ $digit+                  { decch }
+<0> \\ x $hexdig+               { hexch }
+<0> \\ o $octal+                { octch }
+<0> \\ $printable               { escape }
+<0> $nonspecial # [\<]          { char }
+<0> @smac                       { smac }
+<0> @rmac                       { rmac }
 
-<0> @smac @ws? \=		{ smacdef }
-<0> @rmac @ws? \=		{ rmacdef }
+<0> @smac @ws? \=               { smacdef }
+<0> @rmac @ws? \=               { rmacdef }
 
 -- identifiers are allowed to be unquoted in startcode lists
-<0> 		\< 		{ special `andBegin` startcodes }
-<startcodes>	0		{ zero }
-<startcodes>	@id		{ startcode }
-<startcodes>	\,		{ special }
-<startcodes> 	\> 		{ special `andBegin` afterstartcodes }
+<0>             \<              { special `andBegin` startcodes }
+<startcodes>    0               { zero }
+<startcodes>    @id             { startcode }
+<startcodes>    \,              { special }
+<startcodes>    \>              { special `andBegin` afterstartcodes }
 
 -- After a <..> startcode sequence, we can have a {...} grouping of rules,
 -- so don't try to interpret the opening { as a code block.
 <afterstartcodes> \{ (\n | [^$digit ])  { special `andBegin` 0 }
-<afterstartcodes> ()		{ skip `andBegin` 0 }  -- note: empty pattern
+<afterstartcodes> ()            { skip `andBegin` 0 }  -- note: empty pattern
 {
 
 -- -----------------------------------------------------------------------------
@@ -87,25 +87,25 @@ data Token = T AlexPosn Tkn
 tokPosn (T p _) = p
 
 data Tkn
- = SpecialT Char
- | CodeT String
- | ZeroT
- | IdT String
- | StringT String
- | BindT String
- | CharT Char
- | SMacT String
- | RMacT String
- | SMacDefT String
- | RMacDefT String
- | NumT Int
- | WrapperT
- | EncodingT
- | ActionTypeT
- | TokenTypeT
- | TypeClassT
- | EOFT
- deriving Show
+  = SpecialT Char
+  | CodeT String
+  | ZeroT
+  | IdT String
+  | StringT String
+  | BindT String
+  | CharT Char
+  | SMacT String
+  | RMacT String
+  | SMacDefT String
+  | RMacDefT String
+  | NumT Int
+  | WrapperT
+  | EncodingT
+  | ActionTypeT
+  | TokenTypeT
+  | TypeClassT
+  | EOFT
+  deriving Show
 
 -- -----------------------------------------------------------------------------
 -- Token functions
@@ -141,15 +141,15 @@ mac ln (_ : str) = take (ln-1) str
 macdef ln (_ : str) = takeWhile (not.isSpace) str
 
 esc (_ : x : _)  =
- case x of
-   'a' -> '\a'
-   'b' -> '\b'
-   'f' -> '\f'
-   'n' -> '\n'
-   'r' -> '\r'
-   't' -> '\t'
-   'v' -> '\v'
-   c   ->  c
+  case x of
+    'a' -> '\a'
+    'b' -> '\b'
+    'f' -> '\f'
+    'n' -> '\n'
+    'r' -> '\r'
+    't' -> '\t'
+    'v' -> '\v'
+    c   ->  c
 
 parseInt :: Int -> String -> Int
 parseInt radix ds = foldl1 (\n d -> n * radix + d) (map digitToInt ds)
@@ -159,49 +159,47 @@ parseInt radix ds = foldl1 (\n d -> n * radix + d) (map digitToInt ds)
 -- literals.  We do an approximate job (doing it properly requires
 -- implementing a large chunk of the Haskell lexical syntax).
 
-code (p,_,inp) len = do
- inp <- getInput
- go inp 1 ""
- where
-  go inp 0 cs = do
-    setInput inp
-    return (T p (CodeT (reverse (tail cs))))
-  go inp n cs = do
-    case alexGetChar inp of
-	Nothing  -> err inp
-	Just (c,inp)   ->
-	  case c of
-		'{'  -> go inp (n+1) (c:cs)
-		'}'  -> go inp (n-1) (c:cs)
-		'\'' -> go_char inp n (c:cs)
-		'\"' -> go_str inp n (c:cs) '\"'
-		c    -> go inp n (c:cs)
+code (p,_,_inp) len = do
+  inp <- getInput
+  go inp 1 ""
+  where
+    go inp 0 cs = do
+      setInput inp
+      return (T p (CodeT (reverse (tail cs))))
+    go inp n cs = do
+      case alexGetChar inp of
+        Nothing      -> err inp
+        Just (c,inp) ->
+          case c of
+            '{'  -> go inp (n+1) (c:cs)
+            '}'  -> go inp (n-1) (c:cs)
+            '\'' -> go_char inp n (c:cs)
+            '\"' -> go_str inp n (c:cs) '\"'
+            c    -> go inp n (c:cs)
 
-	-- try to catch occurrences of ' within an identifier
-  go_char inp n (c1:c2:cs) | isAlphaNum c2 = go inp n (c1:c2:cs)
-  go_char inp n cs = go_str inp n cs '\''
+    -- try to catch occurrences of ' within an identifier
+    go_char inp n (c1:c2:cs) | isAlphaNum c2 = go inp n (c1:c2:cs)
+    go_char inp n cs = go_str inp n cs '\''
 
-  go_str inp n cs end = do
-    case alexGetChar inp of
-	Nothing -> err inp
-	Just (c,inp)
-	  | c == end  -> go inp n (c:cs)
-	  | otherwise ->
-		case c of
-		   '\\' -> case alexGetChar inp of
-			     Nothing -> err inp
-			     Just (d,inp)  -> go_str inp n (d:c:cs) end
-		   c -> go_str inp n (c:cs) end
+    go_str inp n cs end = do
+      case alexGetChar inp of
+          Nothing -> err inp
+          Just (c,inp)
+            | c == end  -> go inp n (c:cs)
+            | otherwise ->
+              case c of
+                '\\' -> case alexGetChar inp of
+                          Nothing      -> err inp
+                          Just (d,inp) -> go_str inp n (d:c:cs) end
+                c -> go_str inp n (c:cs) end
 
-  err inp = do setInput inp; lexError "lexical error in code fragment"
-
-
+    err inp = do setInput inp; lexError "lexical error in code fragment"
 
 lexError s = do
   (p,_,_,input) <- getInput
   failP (s ++ (if (not (null input))
-		  then " at " ++ show (head input)
-		  else " at end of file"))
+                  then " at " ++ show (head input)
+                  else " at end of file"))
 
 lexer :: (Token -> P a) -> P a
 lexer cont = lexToken >>= cont
@@ -214,11 +212,11 @@ lexToken = do
     AlexEOF -> return (T p EOFT)
     AlexError _ -> lexError "lexical error"
     AlexSkip inp1 len -> do
-	setInput inp1
-	lexToken
+      setInput inp1
+      lexToken
     AlexToken inp1 len t -> do
-	setInput inp1
-	t (p,c,s) len
+      setInput inp1
+      t (p,c,s) len
 
 type Action = (AlexPosn,Char,String) -> Int -> P Token
 
