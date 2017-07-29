@@ -11,8 +11,6 @@
 -------------------------------------------------------------------------------
 
 {
-{-# OPTIONS_GHC -w #-}
-
 module Scan (lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn) where
 
 import Data.Char
@@ -110,38 +108,47 @@ data Tkn
 -- -----------------------------------------------------------------------------
 -- Token functions
 
-special   (p,_,str) ln = return $ T p (SpecialT  (head str))
-zero      (p,_,str) ln = return $ T p ZeroT
+special, zero, string, bind, escape, decch, hexch, octch, char :: Action
+smac, rmac, smacdef, rmacdef, startcode, wrapper, encoding :: Action
+actionty, tokenty, typeclass :: Action
+special   (p,_,str) _  = return $ T p (SpecialT  (head str))
+zero      (p,_,_)   _  = return $ T p ZeroT
 string    (p,_,str) ln = return $ T p (StringT (extract ln str))
-bind      (p,_,str) ln = return $ T p (BindT (takeWhile isIdChar str))
-escape    (p,_,str) ln = return $ T p (CharT (esc str))
+bind      (p,_,str) _  = return $ T p (BindT (takeWhile isIdChar str))
+escape    (p,_,str) _  = return $ T p (CharT (esc str))
 decch     (p,_,str) ln = return $ T p (CharT (do_ech 10 ln (take (ln-1) (tail str))))
 hexch     (p,_,str) ln = return $ T p (CharT (do_ech 16 ln (take (ln-2) (drop 2 str))))
 octch     (p,_,str) ln = return $ T p (CharT (do_ech 8  ln (take (ln-2) (drop 2 str))))
-char      (p,_,str) ln = return $ T p (CharT (head str))
+char      (p,_,str) _  = return $ T p (CharT (head str))
 smac      (p,_,str) ln = return $ T p (SMacT (mac ln str))
 rmac      (p,_,str) ln = return $ T p (RMacT (mac ln str))
 smacdef   (p,_,str) ln = return $ T p (SMacDefT (macdef ln str))
 rmacdef   (p,_,str) ln = return $ T p (RMacDefT (macdef ln str))
 startcode (p,_,str) ln = return $ T p (IdT (take ln str))
-wrapper   (p,_,str) ln = return $ T p WrapperT
-encoding  (p,_,str) ln = return $ T p EncodingT
-actionty  (p,_,str) ln = return $ T p ActionTypeT
-tokenty   (p,_,str) ln = return $ T p TokenTypeT
-typeclass (p,_,str) ln = return $ T p TypeClassT
+wrapper   (p,_,_)   _  = return $ T p WrapperT
+encoding  (p,_,_)   _  = return $ T p EncodingT
+actionty  (p,_,_)   _  = return $ T p ActionTypeT
+tokenty   (p,_,_)   _  = return $ T p TokenTypeT
+typeclass (p,_,_)   _  = return $ T p TypeClassT
 
+isIdChar :: Char -> Bool
 isIdChar c = isAlphaNum c || c `elem` "_'"
 
+extract :: Int -> String -> String
 extract ln str = take (ln-2) (tail str)
 
-do_ech radix ln str = chr (parseInt radix str)
+do_ech :: Int -> Int -> String -> Char
+do_ech radix _ln str = chr (parseInt radix str)
 
-mac ln (_ : str) = take (ln-1) str
+mac :: Int -> String -> String
+mac ln str = take (ln-1) $ tail str
 
-macdef ln (_ : str) = takeWhile (not.isSpace) str
+macdef :: Int -> String -> String
+macdef _ln str = takeWhile (not.isSpace) $ tail str
 
-esc (_ : x : _)  =
-  case x of
+esc :: String -> Char
+esc str =
+  case head $ tail str of
     'a' -> '\a'
     'b' -> '\b'
     'f' -> '\f'
@@ -159,44 +166,49 @@ parseInt radix ds = foldl1 (\n d -> n * radix + d) (map digitToInt ds)
 -- literals.  We do an approximate job (doing it properly requires
 -- implementing a large chunk of the Haskell lexical syntax).
 
-code (p,_,_inp) len = do
-  inp <- getInput
-  go inp 1 ""
+code :: Action
+code (p,_,_inp) _ = do
+  currentInput <- getInput
+  go currentInput 1 ""
   where
+    go :: AlexInput -> Int -> String -> P Token
     go inp 0 cs = do
       setInput inp
       return (T p (CodeT (reverse (tail cs))))
     go inp n cs = do
       case alexGetChar inp of
-        Nothing      -> err inp
-        Just (c,inp) ->
+        Nothing       -> err inp
+        Just (c,inp2) ->
           case c of
-            '{'  -> go inp (n+1) (c:cs)
-            '}'  -> go inp (n-1) (c:cs)
-            '\'' -> go_char inp n (c:cs)
-            '\"' -> go_str inp n (c:cs) '\"'
-            c    -> go inp n (c:cs)
+            '{'  -> go inp2 (n+1) (c:cs)
+            '}'  -> go inp2 (n-1) (c:cs)
+            '\'' -> go_char inp2 n (c:cs)
+            '\"' -> go_str inp2 n (c:cs) '\"'
+            c2   -> go inp2 n (c2:cs)
 
     -- try to catch occurrences of ' within an identifier
+    go_char :: AlexInput -> Int -> String -> P Token
     go_char inp n (c1:c2:cs) | isAlphaNum c2 = go inp n (c1:c2:cs)
     go_char inp n cs = go_str inp n cs '\''
 
+    go_str :: AlexInput -> Int -> String -> Char -> P Token
     go_str inp n cs end = do
       case alexGetChar inp of
           Nothing -> err inp
-          Just (c,inp)
-            | c == end  -> go inp n (c:cs)
+          Just (c,inp2)
+            | c == end  -> go inp2 n (c:cs)
             | otherwise ->
               case c of
-                '\\' -> case alexGetChar inp of
-                          Nothing      -> err inp
-                          Just (d,inp) -> go_str inp n (d:c:cs) end
-                c -> go_str inp n (c:cs) end
+                '\\' -> case alexGetChar inp2 of
+                          Nothing       -> err inp2
+                          Just (d,inp3) -> go_str inp3 n (d:c:cs) end
+                c2   -> go_str inp2 n (c2:cs) end
 
     err inp = do setInput inp; lexError "lexical error in code fragment"
 
+lexError :: String -> P a
 lexError s = do
-  (p,_,_,input) <- getInput
+  (_,_,_,input) <- getInput
   failP (s ++ (if (not (null input))
                   then " at " ++ show (head input)
                   else " at end of file"))
@@ -211,7 +223,7 @@ lexToken = do
   case alexScan inp sc of
     AlexEOF -> return (T p EOFT)
     AlexError _ -> lexError "lexical error"
-    AlexSkip inp1 len -> do
+    AlexSkip inp1 _ -> do
       setInput inp1
       lexToken
     AlexToken inp1 len t -> do
