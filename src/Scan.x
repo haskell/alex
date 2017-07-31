@@ -143,8 +143,9 @@ do_ech radix _ln str = chr (parseInt radix str)
 mac :: Int -> String -> String
 mac ln str = take (ln-1) $ tail str
 
+-- TODO : replace not . isSpace with (\c -> not (isSpace c) && c /= '=')
 macdef :: Int -> String -> String
-macdef _ln str = takeWhile (not.isSpace) $ tail str
+macdef _ln str = takeWhile (\c -> not (isSpace c) && c /= '=') $ tail str
 
 esc :: String -> Char
 esc str =

@@ -5,8 +5,8 @@ import System.Exit
 
 %wrapper "basic"
 
-$digit = 0-9			-- digits
-$alpha = [a-zA-Z]		-- alphabetic characters
+$digit=0-9                      -- digits
+$alpha = [a-zA-Z]               -- alphabetic characters
 
 tokens :-
 
