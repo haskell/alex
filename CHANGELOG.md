@@ -1,3 +1,9 @@
+## Changes in development version:
+
+ * Manage line length in generated files [GH-84]
+ * Fix issue when identifier with multiple single quotes, e.g. `foo''` was used
+ * Allow omitting spaces around `=` in macro definitions
+
 ## Changes in 3.2.1:
 
  * Fix build problem with GHC; add new test tokens_scan_user.x
