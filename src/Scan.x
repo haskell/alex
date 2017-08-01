@@ -187,10 +187,13 @@ code (p,_,_inp) _ = do
             '\"' -> go_str inp2 n (c:cs) '\"'
             c2   -> go inp2 n (c2:cs)
 
-    -- try to catch occurrences of ' within an identifier
     go_char :: AlexInput -> Int -> String -> P Token
-    go_char inp n (c1:c2:cs) | isAlphaNum c2 = go inp n (c1:c2:cs)
-    go_char inp n cs = go_str inp n cs '\''
+    -- try to catch mupltiple occurrences of ' at identifier end
+    go_char inp n cs@('\'':'\'':_) = go inp n cs
+    -- try to catch occurrences of ' within an identifier
+    go_char inp n cs@('\'':c2:_)
+      | isAlphaNum c2              = go inp n cs
+    go_char inp n cs               = go_str inp n cs '\''
 
     go_str :: AlexInput -> Int -> String -> Char -> P Token
     go_str inp n cs end = do
