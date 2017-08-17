@@ -188,7 +188,7 @@ code (p,_,_inp) _ = do
             c2   -> go inp2 n (c2:cs)
 
     go_char :: AlexInput -> Int -> String -> P Token
-    -- try to catch mupltiple occurrences of ' at identifier end
+    -- try to catch multiple occurrences of ' at identifier end
     go_char inp n cs@('\'':'\'':_) = go inp n cs
     -- try to catch occurrences of ' within an identifier
     go_char inp n cs@('\'':c2:_)
