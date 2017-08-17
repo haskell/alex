@@ -5,8 +5,8 @@ import System.Exit
 
 %wrapper "basic"
 
-$digit = 0-9			-- digits
-$alpha = [a-zA-Z]		-- alphabetic characters
+$digit=0-9                      -- digits
+$alpha = [a-zA-Z]               -- alphabetic characters
 
 tokens :-
 
@@ -38,6 +38,10 @@ main = if test1 /= result1 then exitFailure
 			   else exitWith ExitSuccess
 
 test1 = alexScanTokens "  let in 012334\n=+*foo bar__'"
-result1 = [Let,In,Int 12334,Sym '=',Sym '+',Sym '*',Var "foo",Var "bar__'"]
+result1 = identifierWithLotsOfQuotes''
+
+identifierWithLotsOfQuotes'' :: [Token]
+identifierWithLotsOfQuotes'' =
+  [Let,In,Int 12334,Sym '=',Sym '+',Sym '*',Var "foo",Var "bar__'"]
 
 }
