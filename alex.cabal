@@ -110,6 +110,7 @@ executable alex
         Map
         NFA
         Output
+        Paths_alex
         Parser
         ParseMonad
         Scan
