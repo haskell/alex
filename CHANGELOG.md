@@ -1,8 +1,10 @@
-## Changes in development version:
+## Changes in 3.2.2:
 
  * Manage line length in generated files [GH-84]
  * Fix issue when identifier with multiple single quotes, e.g. `foo''` was used
  * Allow omitting spaces around `=` in macro definitions
+ * Include pre-generated Parser.hs and Scan.hs in the Hackage upload, to
+   make bootstrapping easier.
 
 ## Changes in 3.2.1:
 
