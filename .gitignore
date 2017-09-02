@@ -33,6 +33,7 @@
 /AlexWrapper-posn-bytestring
 /AlexWrapper-strict-bytestring
 /dist
+/dist-newstyle
 /doc/alex.1
 /doc/alex.pdf
 /doc/alex/*.html

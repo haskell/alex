@@ -47,10 +47,10 @@ extra-source-files:
         examples/words.x
         examples/words_monad.x
         examples/words_posn.x
-        src/Parser.y
-        src/Scan.hs
+        src/Parser.y.boot
+        src/Scan.x.boot
         src/ghc_hooks.c
-        templates/GenericTemplate.hs
+         templates/GenericTemplate.hs
         templates/wrappers.hs
         tests/Makefile
         tests/simple.x
