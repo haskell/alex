@@ -19,4 +19,4 @@ script:
  - cabal-1.24 configure --enable-tests
  - cabal-1.24 build
  - dist/build/tests/tests
- - cabal-1.24 sdist
+ - make sdist
