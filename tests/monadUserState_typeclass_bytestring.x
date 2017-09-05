@@ -66,7 +66,7 @@ idtoken n (_, _, s, _) len =
 data Token s = Id Int s | EOF deriving Eq
 
 lex :: Read s => Lazy.ByteString -> Either String [Token s]
-lex input =
+lex inp =
   let
     lexAll =
       do
@@ -78,7 +78,7 @@ lex input =
               rest <- lexAll
               return (tok : rest)
   in
-    runAlex input lexAll
+    runAlex inp lexAll
 
 input = "abab\ndddc.fff\ngh\nijji.\nllmnm\noop.rq0tsst\n3uuvu.5xxw"
 

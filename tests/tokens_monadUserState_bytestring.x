@@ -47,11 +47,11 @@ type AlexUserState = ()
 alexInitUserState = ()
 
 scanner str = runAlex str $ do
-  let loop = do tok <- alexMonadScan
-                if tok == EOF
-			then return [tok]
+  let loop = do tk <- alexMonadScan
+                if tk == EOF
+                        then return [tk]
 			else do toks <- loop
-				return (tok:toks)
+                                return (tk:toks)
   loop
 
 test1 = case scanner "  let in 012334\n=+*foo bar__'" of

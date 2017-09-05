@@ -115,13 +115,13 @@ data AlexReturn a
   | AlexToken  !AlexInput !Int a
 
 -- alexScan :: AlexInput -> StartCode -> AlexReturn a
-alexScan input IBOX(sc)
-  = alexScanUser undefined input IBOX(sc)
+alexScan input__ IBOX(sc)
+  = alexScanUser undefined input__ IBOX(sc)
 
-alexScanUser user input IBOX(sc)
-  = case alex_scan_tkn user input ILIT(0) input sc AlexNone of
-  (AlexNone, input') ->
-    case alexGetByte input of
+alexScanUser user__ input__ IBOX(sc)
+  = case alex_scan_tkn user__ input__ ILIT(0) input__ sc AlexNone of
+  (AlexNone, input__') ->
+    case alexGetByte input__ of
       Nothing ->
 #ifdef ALEX_DEBUG
                                    trace ("End of input.") $
@@ -131,32 +131,32 @@ alexScanUser user input IBOX(sc)
 #ifdef ALEX_DEBUG
                                    trace ("Error.") $
 #endif
-                                   AlexError input'
+                                   AlexError input__'
 
-  (AlexLastSkip input'' len, _) ->
+  (AlexLastSkip input__'' len, _) ->
 #ifdef ALEX_DEBUG
     trace ("Skipping.") $
 #endif
-    AlexSkip input'' len
+    AlexSkip input__'' len
 
-  (AlexLastAcc k input''' len, _) ->
+  (AlexLastAcc k input__''' len, _) ->
 #ifdef ALEX_DEBUG
     trace ("Accept.") $
 #endif
-    AlexToken input''' len (alex_actions ! k)
+    AlexToken input__''' len (alex_actions ! k)
 
 
 -- Push the input through the DFA, remembering the most recent accepting
 -- state it encountered.
 
-alex_scan_tkn user orig_input len input s last_acc =
-  input `seq` -- strict in the input
+alex_scan_tkn user__ orig_input len input__ s last_acc =
+  input__ `seq` -- strict in the input
   let
   new_acc = (check_accs (alex_accept `quickIndex` IBOX(s)))
   in
   new_acc `seq`
-  case alexGetByte input of
-     Nothing -> (new_acc, input)
+  case alexGetByte input__ of
+     Nothing -> (new_acc, input__)
      Just (c, new_input) ->
 #ifdef ALEX_DEBUG
       trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
@@ -172,26 +172,26 @@ alex_scan_tkn user orig_input len input s last_acc =
                           else alexIndexInt16OffAddr alex_deflt s
         in
         case new_s of
-            ILIT(-1) -> (new_acc, input)
+            ILIT(-1) -> (new_acc, input__)
                 -- on an error, we want to keep the input *before* the
                 -- character that failed, not after.
-            _ -> alex_scan_tkn user orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
+            _ -> alex_scan_tkn user__ orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
                                                 -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
                         new_input new_s new_acc
       }
   where
         check_accs (AlexAccNone) = last_acc
-        check_accs (AlexAcc a  ) = AlexLastAcc a input IBOX(len)
-        check_accs (AlexAccSkip) = AlexLastSkip  input IBOX(len)
+        check_accs (AlexAcc a  ) = AlexLastAcc a input__ IBOX(len)
+        check_accs (AlexAccSkip) = AlexLastSkip  input__ IBOX(len)
 #ifndef ALEX_NOPRED
         check_accs (AlexAccPred a predx rest)
-           | predx user orig_input IBOX(len) input
-           = AlexLastAcc a input IBOX(len)
+           | predx user__ orig_input IBOX(len) input__
+           = AlexLastAcc a input__ IBOX(len)
            | otherwise
            = check_accs rest
         check_accs (AlexAccSkipPred predx rest)
-           | predx user orig_input IBOX(len) input
-           = AlexLastSkip input IBOX(len)
+           | predx user__ orig_input IBOX(len) input__
+           = AlexLastSkip input__ IBOX(len)
            | otherwise
            = check_accs rest
 #endif
@@ -214,20 +214,20 @@ type AlexAccPred user = user -> AlexInput -> Int -> AlexInput -> Bool
 -- -----------------------------------------------------------------------------
 -- Predicates on a rule
 
-alexAndPred p1 p2 user in1 len in2
-  = p1 user in1 len in2 && p2 user in1 len in2
+alexAndPred p1 p2 user__ in1 len in2
+  = p1 user__ in1 len in2 && p2 user__ in1 len in2
 
 --alexPrevCharIsPred :: Char -> AlexAccPred _
-alexPrevCharIs c _ input _ _ = c == alexInputPrevChar input
+alexPrevCharIs c _ input__ _ _ = c == alexInputPrevChar input__
 
-alexPrevCharMatches f _ input _ _ = f (alexInputPrevChar input)
+alexPrevCharMatches f _ input__ _ _ = f (alexInputPrevChar input__)
 
 --alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _
-alexPrevCharIsOneOf arr _ input _ _ = arr ! alexInputPrevChar input
+alexPrevCharIsOneOf arr _ input__ _ _ = arr ! alexInputPrevChar input__
 
 --alexRightContext :: Int -> AlexAccPred _
-alexRightContext IBOX(sc) user _ _ input =
-     case alex_scan_tkn user input ILIT(0) input sc AlexNone of
+alexRightContext IBOX(sc) user__ _ _ input__ =
+     case alex_scan_tkn user__ input__ ILIT(0) input__ sc AlexNone of
           (AlexNone, _) -> False
           _ -> True
         -- TODO: there's no need to find the longest

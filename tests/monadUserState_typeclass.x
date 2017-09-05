@@ -60,7 +60,7 @@ idtoken n (_, _, _, s) len = return (Id n (read ("\"" ++ take len s ++ "\"")))
 data Token s = Id Int s | EOF deriving Eq
 
 lex :: Read s => String -> Either String [Token s]
-lex input =
+lex inp =
   let
     lexAll =
       do
@@ -72,7 +72,7 @@ lex input =
               rest <- lexAll
               return (tok : rest)
   in
-    runAlex input lexAll
+    runAlex inp lexAll
 
 input = "abab\ndddc.fff\ngh\nijji.\nllmnm\noop.rq0tsst\n3uuvu.5xxw"
 
