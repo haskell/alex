@@ -1,3 +1,7 @@
+## Changes in 3.2.3:
+
+ * fix issue when using ccphs (#116)
+
 ## Changes in 3.2.2:
 
  * Manage line length in generated files [GH-84]
