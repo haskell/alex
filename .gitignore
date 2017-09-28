@@ -50,3 +50,6 @@
 /tests/*.[gn].hs
 /tests/*.[gn].bin
 /tests/*.[gn].exe
+.cabal-sandbox
+.stack-work
+cabal.sandbox.config
