@@ -1,3 +1,4 @@
+cabal-version: >= 1.8
 name: alex
 version: 3.2.3
 -- don't forget updating changelog.md!
@@ -18,8 +19,26 @@ description:
   lex or flex for C/C++.
 
 category: Development
-cabal-version: >= 1.8
-build-type: Custom
+build-type: Simple
+
+data-dir: data/
+
+data-files:
+        AlexTemplate
+        AlexTemplate-ghc
+        AlexTemplate-ghc-nopred
+        AlexTemplate-ghc-debug
+        AlexTemplate-debug
+        AlexWrapper-basic
+        AlexWrapper-basic-bytestring
+        AlexWrapper-strict-bytestring
+        AlexWrapper-posn
+        AlexWrapper-posn-bytestring
+        AlexWrapper-monad
+        AlexWrapper-monad-bytestring
+        AlexWrapper-monadUserState
+        AlexWrapper-monadUserState-bytestring
+        AlexWrapper-gscan
 
 extra-source-files:
         CHANGELOG.md
@@ -50,7 +69,7 @@ extra-source-files:
         src/Parser.y.boot
         src/Scan.x.boot
         src/ghc_hooks.c
-         templates/GenericTemplate.hs
+        templates/GenericTemplate.hs
         templates/wrappers.hs
         tests/Makefile
         tests/simple.x
@@ -126,4 +145,7 @@ executable alex
 test-suite tests
   type: exitcode-stdio-1.0
   main-is: test.hs
+  -- This line is important as it ensures that the local `exe:alex` component declared above is built before the test-suite component is invoked, as well as making sure that `alex` is made available on $PATH and `$alex_datadir` is set accordingly before invoking `test.hs`
+  build-tools: alex
+
   build-depends: base, process

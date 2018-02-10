@@ -13,6 +13,7 @@ sdist ::
 	$(ALEX) $(ALEX_OPTS) src/Scan.x -o src/Scan.hs
 	mv src/Parser.y src/Parser.y.boot
 	mv src/Scan.x src/Scan.x.boot
+	cabal new-run gen-alex-sdist
 	cabal sdist
 	git checkout .
 	git clean -f

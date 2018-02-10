@@ -1,0 +1,15 @@
+cabal-version:       1.12
+name:                gen-alex-sdist
+version:             0
+synopsis:            Tool for generating `alex` sdist
+category:            Development
+build-type:          Simple
+
+executable gen-alex-sdist
+  default-language:    Haskell2010
+  main-is:             Main.hs
+  build-depends:       base                    < 5
+                     , cpphs      >= 1.20.8 && < 1.21
+                     , directory               < 1.4
+                     , process                 < 1.7
+                     , filepath                < 1.5

@@ -1,4 +1,6 @@
-ALEX=../dist/build/alex/alex
+# NOTE: `cabal` will take care to build the local `alex` executable and place it into $PATH for us to pick up
+ALEX:=$(shell which alex)
+# NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
 HC=ghc
 HC_OPTS=-Wall -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
 
@@ -36,7 +38,9 @@ TESTS = \
         tokens_strict_bytestring.x \
         unicode.x
 
-TEST_ALEX_OPTS = --template=..
+# NOTE: `cabal` will set the `alex_datadir` env-var accordingly before invoking the test-suite
+#TEST_ALEX_OPTS = --template=../data/
+TEST_ALEX_OPTS=
 
 %.n.hs : %.x
 	$(ALEX) $(TEST_ALEX_OPTS) $< -o $@
@@ -62,6 +66,7 @@ all :: $(ALL_TESTS)
 clean:
 	rm -f $(CLEAN_FILES)
 
+# NOTE: The `../dist` path belows don't aren't accurate anymore for recent cabals
 interact:
 	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception
 # -args='--template=.. simple.x -o simple.n.hs'
