@@ -1,6 +1,6 @@
 ## Changes in 3.2.3:
 
- * fix issue when using ccphs (#116)
+ * fix issue when using cpphs (#116)
 
 ## Changes in 3.2.2:
 
