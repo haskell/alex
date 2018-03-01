@@ -55,7 +55,7 @@ they're in your `$PATH` for the next steps!).
 
 ### Variant A
 
-First you need to generate the pre-processed the templates via
+First you need to generate the pre-processed templates via
 
     $ cabal new-run gen-alex-sdist
 
