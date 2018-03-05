@@ -3,6 +3,7 @@
 *~
 *.o
 *.info
+/.ghc.environment.*
 /AlexTemplate-debug.bak
 /AlexTemplate-ghc-debug.bak
 /AlexTemplate-ghc.bak
@@ -32,6 +33,7 @@
 /AlexWrapper-posn
 /AlexWrapper-posn-bytestring
 /AlexWrapper-strict-bytestring
+/data/
 /dist
 /dist-newstyle
 /doc/alex.1
