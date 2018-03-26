@@ -114,8 +114,6 @@ executable alex
     build-depends: base >= 1.0
 
   build-depends: base < 5
-  -- build-depends: Ranged-sets
-  build-depends: QuickCheck >=2
 
   extensions: CPP
   ghc-options: -Wall -rtsopts

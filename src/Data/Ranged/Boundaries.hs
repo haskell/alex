@@ -19,9 +19,8 @@ module Data.Ranged.Boundaries (
    (/>/)
 ) where
 
-import Data.Ratio
-import Data.Word
-import Test.QuickCheck
+import           Data.Ratio
+import           Data.Word
 
 infix 4 />/
 
@@ -168,10 +167,10 @@ data Boundary a =
 
 -- | True if the value is above the boundary, false otherwise.
 above :: Ord v => Boundary v -> v -> Bool
-above (BoundaryAbove b) v    = v > b
-above (BoundaryBelow b) v    = v >= b
-above BoundaryAboveAll _     = False
-above BoundaryBelowAll _     = True
+above (BoundaryAbove b) v = v > b
+above (BoundaryBelow b) v = v >= b
+above BoundaryAboveAll _  = False
+above BoundaryBelowAll _  = True
 
 -- | Same as 'above', but with the arguments reversed for more intuitive infix
 -- usage.
@@ -210,26 +209,8 @@ instance (DiscreteOrdered a) => Ord (Boundary a) where
          BoundaryAboveAll ->
             case boundary2 of
                BoundaryAboveAll -> EQ
-               _        -> GT
+               _                -> GT
          BoundaryBelowAll ->
             case boundary2 of
                BoundaryBelowAll -> EQ
-               _        -> LT
-
--- QuickCheck Generator
-
-instance Arbitrary a => Arbitrary (Boundary a) where
-   arbitrary = frequency [
-      (1, return BoundaryAboveAll),
-      (1, return BoundaryBelowAll),
-      (18, do
-         v <- arbitrary
-         oneof [return $ BoundaryAbove v, return $ BoundaryBelow v]
-      )]
-
-instance CoArbitrary a => CoArbitrary (Boundary a) where
-   coarbitrary BoundaryBelowAll   = variant (0 :: Int)
-   coarbitrary BoundaryAboveAll   = variant (1 :: Int)
-   coarbitrary (BoundaryBelow v)  = variant (2 :: Int) . coarbitrary v
-   coarbitrary (BoundaryAbove v)  = variant (3 :: Int) . coarbitrary v
-
+               _                -> LT
