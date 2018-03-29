@@ -78,6 +78,9 @@ new-run gen-alex-sdist` pre-preprocessing step):
     $ make sdist
     $ cabal install dist/alex-*.tar.gz
 
+For convenience, there's also a `make sdist-test` target which builds the
+source source tarball and runs the test-suite from within the source dist.
+
 ## Contributing & Reporting Issues
 
 Please report any bugs or comments at  https://github.com/simonmar/alex/issues
