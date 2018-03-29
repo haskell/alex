@@ -21,8 +21,4 @@ install:
 
 script:
  - make sdist
- - cd dist
- - tar xvzf alex-*.tar.gz
- - cd alex-*/
- - "echo 'packages: .' > cabal.project"
- - cabal new-test --enable-tests
+ - make sdist-test-only
