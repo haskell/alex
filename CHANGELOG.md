@@ -1,3 +1,9 @@
+## Changes in 3.2.4:
+
+ * Remove dependency on QuickCheck
+ * Change the way that bootstrapping is done: see README.md for build
+   instructions
+
 ## Changes in 3.2.3:
 
  * fix issue when using cpphs (#116)
