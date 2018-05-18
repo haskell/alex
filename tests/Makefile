@@ -1,5 +1,16 @@
-# NOTE: `cabal` will take care to build the local `alex` executable and place it into $PATH for us to pick up
-ALEX:=$(shell which alex)
+# NOTE: `cabal test` will take care to build the local `alex`
+# executable and place it into $PATH for us to pick up.  
+# 
+# If it doesn't look like the alex binary in $PATH comes from the
+# build tree, then we'll fall back to pointing to
+# ../dist/build/alex/alex to support running tests via "runghc
+# Setup.hs test".
+#
+ALEX=$(shell which alex)
+ifeq "$(filter $(dir $(shell pwd))%,$(ALEX))" ""
+ALEX=../dist/build/alex/alex
+endif
+
 # NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
 HC=ghc
 HC_OPTS=-Wall -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
