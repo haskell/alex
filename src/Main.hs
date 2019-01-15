@@ -361,13 +361,13 @@ always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
                  "#endif\n" ++
                  "#if __GLASGOW_HASKELL__ >= 503\n" ++
                  "import Data.Array\n" ++
-                 "import Data.Array.Base (unsafeAt)\n" ++
                  "#else\n" ++
                  "import Array\n" ++
                  "#endif\n"
 
 import_glaexts :: String
 import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
+                 "import Data.Array.Base (unsafeAt)\n" ++
                  "import GHC.Exts\n" ++
                  "#else\n" ++
                  "import GlaExts\n" ++
