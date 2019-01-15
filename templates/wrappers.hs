@@ -154,7 +154,7 @@ alexStartPos :: AlexPosn
 alexStartPos = AlexPn 0 1 1
 
 alexMove :: AlexPosn -> Char -> AlexPosn
-alexMove (AlexPn a l c) '\t' = AlexPn (a+1)  l     (((c+alex_tab_size-1) `div` alex_tab_size)*alex_tab_size+1)
+alexMove (AlexPn a l c) '\t' = AlexPn (a+1)  l     (c+alex_tab_size-((c-1) `mod` alex_tab_size))
 alexMove (AlexPn a l _) '\n' = AlexPn (a+1) (l+1)   1
 alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 #endif
