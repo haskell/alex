@@ -282,14 +282,10 @@ alexMonadScan = do
 #ifndef ALEX_MONAD_BYTESTRING
     AlexToken inp__' len action -> do
 #else /* ALEX_MONAD_BYTESTRING */
-    AlexToken inp__'@(_,_,_,n') _ action -> do
+    AlexToken inp__'@(_,_,_,n') _ action -> let len = n'-n in do
 #endif /* ALEX_MONAD_BYTESTRING */
         alexSetInput inp__'
         action (ignorePendingBytes inp__) len
-#ifdef ALEX_MONAD_BYTESTRING
-      where
-        len = n'-n
-#endif /* ALEX_MONAD_BYTESTRING */
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
