@@ -6,7 +6,6 @@
 
 #if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING)
 import Control.Applicative as App (Applicative (..))
-import qualified Control.Monad (ap)
 #endif
 
 import Data.Word (Word8)
@@ -207,26 +206,17 @@ runAlex input__ (Alex f)
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
 
 instance Functor Alex where
-#ifndef ALEX_MONAD_BYTESTRING
   fmap f a = Alex $ \s -> case unAlex a s of
                             Left msg -> Left msg
                             Right (s', a') -> Right (s', f a')
-#else /* ALEX_MONAD_BYTESTRING */
-  fmap f m = do x <- m; return (f x)
-#endif /* ALEX_MONAD_BYTESTRING */
 
 instance Applicative Alex where
-#ifndef ALEX_MONAD_BYTESTRING
   pure a   = Alex $ \s -> Right (s, a)
   fa <*> a = Alex $ \s -> case unAlex fa s of
                             Left msg -> Left msg
                             Right (s', f) -> case unAlex a s' of
                                                Left msg -> Left msg
                                                Right (s'', b) -> Right (s'', f b)
-#else /* ALEX_MONAD_BYTESTRING */
-  pure a = Alex $ \s -> Right (s,a)
-  (<*>) = Control.Monad.ap
-#endif /* ALEX_MONAD_BYTESTRING */
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of
