@@ -166,14 +166,13 @@ data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
 #ifndef ALEX_MONAD_BYTESTRING
         alex_inp :: String,     -- the current input
+        alex_chr :: !Char,      -- the character before the input
+        alex_bytes :: [Byte],
 #else /* ALEX_MONAD_BYTESTRING */
         alex_bpos:: !Int64,     -- bytes consumed so far
         alex_inp :: ByteString.ByteString,      -- the current input
-#endif /* ALEX_MONAD_BYTESTRING */
         alex_chr :: !Char,      -- the character before the input
-#ifndef ALEX_MONAD_BYTESTRING
-        alex_bytes :: [Byte],
-#endif /* ! ALEX_MONAD_BYTESTRING */
+#endif /* ALEX_MONAD_BYTESTRING */
         alex_scd :: !Int        -- the current startcode
 #ifdef ALEX_MONAD_USER_STATE
       , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
@@ -184,19 +183,16 @@ data AlexState = AlexState {
 
 #ifndef ALEX_MONAD_BYTESTRING
 runAlex :: String -> Alex a -> Either String a
+runAlex input__ (Alex f)
+   = case f (AlexState {alex_bytes = [],
 #else /* ALEX_MONAD_BYTESTRING */
 runAlex :: ByteString.ByteString -> Alex a -> Either String a
-#endif /* ALEX_MONAD_BYTESTRING */
 runAlex input__ (Alex f)
-   = case f (AlexState {alex_pos = alexStartPos,
-#ifdef ALEX_MONAD_BYTESTRING
-                        alex_bpos = 0,
+   = case f (AlexState {alex_bpos = 0,
 #endif /* ALEX_MONAD_BYTESTRING */
+                        alex_pos = alexStartPos,
                         alex_inp = input__,
                         alex_chr = '\n',
-#ifndef ALEX_MONAD_BYTESTRING
-                        alex_bytes = [],
-#endif /* ! ALEX_MONAD_BYTESTRING */
 #ifdef ALEX_MONAD_USER_STATE
                         alex_ust = alexInitUserState,
 #endif
@@ -256,16 +252,14 @@ alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
 alexSetStartCode :: Int -> Alex ()
 alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 
-#ifndef ALEX_MONAD_BYTESTRING
-#ifdef ALEX_MONAD_USER_STATE
+#if !defined(ALEX_MONAD_BYTESTRING) && defined(ALEX_MONAD_USER_STATE)
 alexGetUserState :: Alex AlexUserState
 alexGetUserState = Alex $ \s@AlexState{alex_ust=ust} -> Right (s,ust)
 
 alexSetUserState :: AlexUserState -> Alex ()
 alexSetUserState ss = Alex $ \s -> Right (s{alex_ust=ss}, ())
-#endif
+#endif /* !defined(ALEX_MONAD_BYTESTRING) && defined(ALEX_MONAD_USER_STATE) */
 
-#endif /* ! ALEX_MONAD_BYTESTRING */
 alexMonadScan = do
 #ifndef ALEX_MONAD_BYTESTRING
   inp__ <- alexGetInput
