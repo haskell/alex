@@ -160,14 +160,21 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 #endif
 
 -- -----------------------------------------------------------------------------
--- Default monad
+-- Monad (default and with ByteString input)
 
-#ifdef ALEX_MONAD
+#if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING)
 data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
+#ifndef ALEX_MONAD_BYTESTRING
         alex_inp :: String,     -- the current input
+#else /* ALEX_MONAD_BYTESTRING */
+        alex_bpos:: !Int64,     -- bytes consumed so far
+        alex_inp :: ByteString.ByteString,      -- the current input
+#endif /* ALEX_MONAD_BYTESTRING */
         alex_chr :: !Char,      -- the character before the input
+#ifndef ALEX_MONAD_BYTESTRING
         alex_bytes :: [Byte],
+#endif /* ! ALEX_MONAD_BYTESTRING */
         alex_scd :: !Int        -- the current startcode
 #ifdef ALEX_MONAD_USER_STATE
       , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
@@ -176,12 +183,21 @@ data AlexState = AlexState {
 
 -- Compile with -funbox-strict-fields for best results!
 
+#ifndef ALEX_MONAD_BYTESTRING
 runAlex :: String -> Alex a -> Either String a
+#else /* ALEX_MONAD_BYTESTRING */
+runAlex :: ByteString.ByteString -> Alex a -> Either String a
+#endif /* ALEX_MONAD_BYTESTRING */
 runAlex input__ (Alex f)
    = case f (AlexState {alex_pos = alexStartPos,
+#ifdef ALEX_MONAD_BYTESTRING
+                        alex_bpos = 0,
+#endif /* ALEX_MONAD_BYTESTRING */
                         alex_inp = input__,
                         alex_chr = '\n',
+#ifndef ALEX_MONAD_BYTESTRING
                         alex_bytes = [],
+#endif /* ! ALEX_MONAD_BYTESTRING */
 #ifdef ALEX_MONAD_USER_STATE
                         alex_ust = alexInitUserState,
 #endif
@@ -191,17 +207,26 @@ runAlex input__ (Alex f)
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
 
 instance Functor Alex where
+#ifndef ALEX_MONAD_BYTESTRING
   fmap f a = Alex $ \s -> case unAlex a s of
                             Left msg -> Left msg
                             Right (s', a') -> Right (s', f a')
+#else /* ALEX_MONAD_BYTESTRING */
+  fmap f m = do x <- m; return (f x)
+#endif /* ALEX_MONAD_BYTESTRING */
 
 instance Applicative Alex where
+#ifndef ALEX_MONAD_BYTESTRING
   pure a   = Alex $ \s -> Right (s, a)
   fa <*> a = Alex $ \s -> case unAlex fa s of
                             Left msg -> Left msg
                             Right (s', f) -> case unAlex a s' of
                                                Left msg -> Left msg
                                                Right (s'', b) -> Right (s'', f b)
+#else /* ALEX_MONAD_BYTESTRING */
+  pure a = Alex $ \s -> Right (s,a)
+  (<*>) = Control.Monad.ap
+#endif /* ALEX_MONAD_BYTESTRING */
 
 instance Monad Alex where
   m >>= k  = Alex $ \s -> case unAlex m s of
@@ -211,12 +236,25 @@ instance Monad Alex where
 
 alexGetInput :: Alex AlexInput
 alexGetInput
+#ifndef ALEX_MONAD_BYTESTRING
  = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} ->
         Right (s, (pos,c,bs,inp__))
+#else /* ALEX_MONAD_BYTESTRING */
+ = Alex $ \s@AlexState{alex_pos=pos,alex_bpos=bpos,alex_chr=c,alex_inp=inp__} ->
+        Right (s, (pos,c,inp__,bpos))
+#endif /* ALEX_MONAD_BYTESTRING */
 
 alexSetInput :: AlexInput -> Alex ()
+#ifndef ALEX_MONAD_BYTESTRING
 alexSetInput (pos,c,bs,inp__)
  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
+#else /* ALEX_MONAD_BYTESTRING */
+alexSetInput (pos,c,inp__,bpos)
+ = Alex $ \s -> case s{alex_pos=pos,
+                       alex_bpos=bpos,
+                       alex_chr=c,
+                       alex_inp=inp__} of
+#endif /* ALEX_MONAD_BYTESTRING */
                   state__@(AlexState{}) -> Right (state__, ())
 
 alexError :: String -> Alex a
@@ -228,6 +266,7 @@ alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
 alexSetStartCode :: Int -> Alex ()
 alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
 
+#ifndef ALEX_MONAD_BYTESTRING
 #ifdef ALEX_MONAD_USER_STATE
 alexGetUserState :: Alex AlexUserState
 alexGetUserState = Alex $ \s@AlexState{alex_ust=ust} -> Right (s,ust)
@@ -236,111 +275,13 @@ alexSetUserState :: AlexUserState -> Alex ()
 alexSetUserState ss = Alex $ \s -> Right (s{alex_ust=ss}, ())
 #endif
 
+#endif /* ! ALEX_MONAD_BYTESTRING */
 alexMonadScan = do
+#ifndef ALEX_MONAD_BYTESTRING
   inp__ <- alexGetInput
-  sc <- alexGetStartCode
-  case alexScan inp__ sc of
-    AlexEOF -> alexEOF
-    AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
-    AlexSkip  inp__' _len -> do
-        alexSetInput inp__'
-        alexMonadScan
-    AlexToken inp__' len action -> do
-        alexSetInput inp__'
-        action (ignorePendingBytes inp__) len
-
--- -----------------------------------------------------------------------------
--- Useful token actions
-
-type AlexAction result = AlexInput -> Int -> Alex result
-
--- just ignore this token and scan another one
--- skip :: AlexAction result
-skip _input _len = alexMonadScan
-
--- ignore this token, but set the start code to a new value
--- begin :: Int -> AlexAction result
-begin code _input _len = do alexSetStartCode code; alexMonadScan
-
--- perform an action for this token, and set the start code to a new value
-andBegin :: AlexAction result -> Int -> AlexAction result
-(action `andBegin` code) input__ len = do
-  alexSetStartCode code
-  action input__ len
-
-token :: (AlexInput -> Int -> token) -> AlexAction token
-token t input__ len = return (t input__ len)
-#endif /* ALEX_MONAD */
-
-
--- -----------------------------------------------------------------------------
--- Monad (with ByteString input)
-
-#ifdef ALEX_MONAD_BYTESTRING
-data AlexState = AlexState {
-        alex_pos :: !AlexPosn,  -- position at current input location
-        alex_bpos:: !Int64,     -- bytes consumed so far
-        alex_inp :: ByteString.ByteString,      -- the current input
-        alex_chr :: !Char,      -- the character before the input
-        alex_scd :: !Int        -- the current startcode
-#ifdef ALEX_MONAD_USER_STATE
-      , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
-#endif
-    }
-
--- Compile with -funbox-strict-fields for best results!
-
-runAlex :: ByteString.ByteString -> Alex a -> Either String a
-runAlex input__ (Alex f)
-   = case f (AlexState {alex_pos = alexStartPos,
-                        alex_bpos = 0,
-                        alex_inp = input__,
-                        alex_chr = '\n',
-#ifdef ALEX_MONAD_USER_STATE
-                        alex_ust = alexInitUserState,
-#endif
-                        alex_scd = 0}) of Left msg -> Left msg
-                                          Right ( _, a ) -> Right a
-
-newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
-
-instance Functor Alex where
-  fmap f m = do x <- m; return (f x)
-
-instance Applicative Alex where
-  pure a = Alex $ \s -> Right (s,a)
-  (<*>) = Control.Monad.ap
-
-instance Monad Alex where
-  m >>= k  = Alex $ \s -> case unAlex m s of
-                                Left msg -> Left msg
-                                Right (s',a) -> unAlex (k a) s'
-  return = App.pure
-
-alexGetInput :: Alex AlexInput
-alexGetInput
- = Alex $ \s@AlexState{alex_pos=pos,alex_bpos=bpos,alex_chr=c,alex_inp=inp__} ->
-        Right (s, (pos,c,inp__,bpos))
-
-alexSetInput :: AlexInput -> Alex ()
-alexSetInput (pos,c,inp__,bpos)
- = Alex $ \s -> case s{alex_pos=pos,
-                       alex_bpos=bpos,
-                       alex_chr=c,
-                       alex_inp=inp__} of
-                  state__@(AlexState{}) -> Right (state__, ())
-
-alexError :: String -> Alex a
-alexError message = Alex $ const $ Left message
-
-alexGetStartCode :: Alex Int
-alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
-
-alexSetStartCode :: Int -> Alex ()
-alexSetStartCode sc = Alex $ \s -> Right (s{alex_scd=sc}, ())
-
-alexMonadScan = do
+#else /* ALEX_MONAD_BYTESTRING */
   inp__@(_,_,_,n) <- alexGetInput
+#endif /* ALEX_MONAD_BYTESTRING */
   sc <- alexGetStartCode
   case alexScan inp__ sc of
     AlexEOF -> alexEOF
@@ -348,16 +289,26 @@ alexMonadScan = do
     AlexSkip  inp__' _len -> do
         alexSetInput inp__'
         alexMonadScan
+#ifndef ALEX_MONAD_BYTESTRING
+    AlexToken inp__' len action -> do
+#else /* ALEX_MONAD_BYTESTRING */
     AlexToken inp__'@(_,_,_,n') _ action -> do
+#endif /* ALEX_MONAD_BYTESTRING */
         alexSetInput inp__'
         action (ignorePendingBytes inp__) len
+#ifdef ALEX_MONAD_BYTESTRING
       where
         len = n'-n
+#endif /* ALEX_MONAD_BYTESTRING */
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
 
+#ifndef ALEX_MONAD_BYTESTRING
+type AlexAction result = AlexInput -> Int -> Alex result
+#else /* ALEX_MONAD_BYTESTRING */
 type AlexAction result = AlexInput -> Int64 -> Alex result
+#endif /* ALEX_MONAD_BYTESTRING */
 
 -- just ignore this token and scan another one
 -- skip :: AlexAction result
@@ -373,9 +324,13 @@ andBegin :: AlexAction result -> Int -> AlexAction result
   alexSetStartCode code
   action input__ len
 
+#ifndef ALEX_MONAD_BYTESTRING
+token :: (AlexInput -> Int -> token) -> AlexAction token
+#else /* ALEX_MONAD_BYTESTRING */
 token :: (AlexInput -> Int64 -> token) -> AlexAction token
-token t input__ len = return (t input__ len)
 #endif /* ALEX_MONAD_BYTESTRING */
+token t input__ len = return (t input__ len)
+#endif /* defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING) */
 
 
 -- -----------------------------------------------------------------------------
