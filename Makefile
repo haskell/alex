@@ -7,6 +7,8 @@ ALEX = alex
 ALEX_OPTS = -g
 ALEX_VER = `awk '/^version:/ { print $$2 }' alex.cabal`
 
+SDIST_DIR=dist-newstyle/sdist
+
 sdist ::
 	@case "`$(CABAL) --numeric-version`" in \
 		2.[2-9].* | [3-9].* ) ;; \
@@ -22,8 +24,8 @@ sdist ::
 	mv src/Parser.y src/Parser.y.boot
 	mv src/Scan.x src/Scan.x.boot
 	$(CABAL) new-run gen-alex-sdist
-	$(CABAL) sdist
-	@if [ ! -f "dist/alex-$(ALEX_VER).tar.gz" ]; then \
+	$(CABAL) new-sdist
+	@if [ ! -f "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" ]; then \
 		echo "Error: source tarball not found: dist/alex-$(ALEX_VER).tar.gz"; \
 		exit 1; \
 	fi
@@ -31,17 +33,17 @@ sdist ::
 	git clean -f
 
 sdist-test :: sdist sdist-test-only
-	@rm -rf "dist/alex-$(ALEX_VER)/"
+	@rm -rf "${SDIST_DIR}/alex-${ALEX_VER}/"
 
 sdist-test-only ::
-	@if [ ! -f "dist/alex-$(ALEX_VER).tar.gz" ]; then \
-		echo "Error: source tarball not found: dist/alex-$(ALEX_VER).tar.gz"; \
+	@if [ ! -f "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" ]; then \
+		echo "Error: source tarball not found: ${SDIST_DIR}/alex-$(ALEX_VER).tar.gz"; \
 		exit 1; \
 	fi
-	rm -rf "dist/alex-$(ALEX_VER)/"
-	tar -xf "dist/alex-$(ALEX_VER).tar.gz" -C dist/
-	echo "packages: ." > "dist/alex-$(ALEX_VER)/cabal.project"
-	cd "dist/alex-$(ALEX_VER)/" && cabal new-test --enable-tests all
+	rm -rf "${SDIST_DIR}/alex-$(ALEX_VER)/"
+	tar -xf "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" -C ${SDIST_DIR}/
+	echo "packages: ." > "${SDIST_DIR}/alex-$(ALEX_VER)/cabal.project"
+	cd "${SDIST_DIR}/alex-$(ALEX_VER)/" && cabal new-test --enable-tests all
 	@echo ""
-	@echo "Success! dist/alex-$(ALEX_VER).tar.gz is ready for distribution!"
+	@echo "Success! ${SDIST_DIR}/alex-$(ALEX_VER).tar.gz is ready for distribution!"
 	@echo ""
