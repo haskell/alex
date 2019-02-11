@@ -52,7 +52,8 @@ tokens :-
 
 -- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
 utf8Encode' :: Char -> (Word8, [Word8])
-utf8Encode' c = (fromIntegral x, map fromIntegral xs)
+utf8Encode' c = case go (ord c) of
+                  (x, xs) -> (fromIntegral x, map fromIntegral xs)
  where
   go oc
    | oc <= 0x7f       = ( oc
@@ -72,7 +73,6 @@ utf8Encode' c = (fromIntegral x, map fromIntegral xs)
                         , 0x80 + ((oc `Data.Bits.shiftR` 6) Data.Bits..&. 0x3f)
                         , 0x80 + oc Data.Bits..&. 0x3f
                         ])
-  (x, xs) = go (ord c)
 
 type Byte = Word8
 
@@ -102,8 +102,8 @@ alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
 alexGetByte (_,_,[],[]) = Nothing
 alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
-                                  (b, bs) = utf8Encode' c
-                              in p' `seq`  Just (b, (p', c, bs, s))
+                              in case utf8Encode' c of
+                                   (b, bs) -> p' `seq`  Just (b, (p', c, bs, s))
 
 data AlexPosn = AlexPn !Int !Int !Int
         deriving (Eq,Show)
