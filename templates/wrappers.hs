@@ -6,6 +6,9 @@
 
 #if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING)
 import Control.Applicative as App (Applicative (..))
+#if __GLASGOW_HASKELL__ >= 800
+import qualified Control.Monad.Fail as Fail
+#endif
 #endif
 
 import Data.Word (Word8)
@@ -219,6 +222,14 @@ instance Monad Alex where
                                 Left msg -> Left msg
                                 Right (s',a) -> unAlex (k a) s'
   return = App.pure
+#if __GLASGOW_HASKELL__ < 800
+  fail = alexError
+#else
+  fail = Fail.fail
+
+instance Fail.MonadFail Alex where
+  fail = alexError
+#endif
 
 alexGetInput :: Alex AlexInput
 alexGetInput
