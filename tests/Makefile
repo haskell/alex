@@ -13,7 +13,7 @@ endif
 
 # NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
 HC=ghc
-HC_OPTS=-Wall -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
+HC_OPTS=-Wall -fwarn-incomplete-uni-patterns -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
 
 .PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 
