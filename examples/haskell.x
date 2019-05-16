@@ -136,9 +136,11 @@ nested_comment _ _ = do
 	    Just (c,input) -> do
               case chr (fromIntegral c) of
 	    	'-' -> do
+                  let temp = input
                   case alexGetByte input of
 		    Nothing  -> err input
                     Just (125,input) -> go (n-1) input
+                    Just (45, input) -> go n temp
                     Just (c,input)   -> go n input
 	     	'\123' -> do
                   case alexGetByte input of
