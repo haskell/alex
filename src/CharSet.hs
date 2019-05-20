@@ -121,7 +121,7 @@ byteRangeToBytePair :: Span [Byte] -> ([Byte],[Byte])
 byteRangeToBytePair (Span x y) = (x,y)
 
 data Span a = Span a a -- lower bound inclusive, higher bound exclusive
-                       -- (SDM: upper bound inclusive, surely??)
+                       -- (SDM: upper bound inclusive, surely?)
 instance Functor Span where
     fmap f (Span x y) = Span (f x) (f y)
 
