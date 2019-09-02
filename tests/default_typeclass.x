@@ -285,7 +285,6 @@ instance (Monad m) => Monad (StateT s m) where
     m >>= k  = StateT $ \s -> do
         (a, s') <- runStateT m s
         runStateT (k a) s'
-    fail str = StateT $ \_ -> fail str
 
 -- | Fetch the current value of the state within the monad.
 get' :: (Monad m) => StateT s m s
