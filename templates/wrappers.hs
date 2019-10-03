@@ -288,7 +288,11 @@ alexMonadScan = do
     AlexEOF -> alexEOF
     AlexError (p@(AlexPn _ line column),x,y,s) -> do
       alexPushError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+#ifndef ALEX_MONAD_BYTESTRING
       alexSetInput (p, x, y, (tail s))
+#else
+      alexSetInput (p, x, y, s-n)
+#endif
       alexMonadScan
     AlexSkip  inp__' _len -> do
         alexSetInput inp__'
