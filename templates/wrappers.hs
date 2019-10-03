@@ -261,7 +261,7 @@ alexPushError message = Alex $ \s@AlexState{alex_errs=errs} -> Right (s{ alex_er
 alexThrowErrors :: Alex ()
 alexThrowErrors = Alex $ \s@AlexState{alex_errs=errs} -> case errs of
   [] -> Right (s, ())
-  _ -> Left $ concatMap (++ "\n") $ reverse errs
+  _ -> Left $ init $ concatMap (++ "\n") $ reverse errs
 
 alexGetStartCode :: Alex Int
 alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
