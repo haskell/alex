@@ -285,14 +285,28 @@ alexMonadScan = do
 #endif /* ALEX_MONAD_BYTESTRING */
   sc <- alexGetStartCode
   case alexScan inp__ sc of
-    AlexEOF -> alexEOF
+    AlexEOF -> do
+      alexThrowErrors
+      alexEOF
+
+#if defined(ALEX_BASIC)
+    AlexError (p@(AlexPn _ line column), x, s) -> do
+#elif !defined(ALEX_MONAD_BYTESTRING)
     AlexError (p@(AlexPn _ line column),x,y,s) -> do
-      alexPushError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
-#ifndef ALEX_MONAD_BYTESTRING
-      alexSetInput (p, x, y, (tail s))
 #else
-      alexSetInput (p, x, y, s-n)
+    AlexError (p@(AlexPn _ line column), x, s, y) -> do
 #endif
+
+      alexPushError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+
+#if defined(ALEX_BASIC)
+      alexSetInput (p, x, tail s)
+#elif !defined(ALEX_MONAD_BYTESTRING)
+      alexSetInput (p, x, y, tail s)
+#else
+      alexSetInput (p, x, ByteString.tail s, y)
+#endif
+
       alexMonadScan
     AlexSkip  inp__' _len -> do
         alexSetInput inp__'
