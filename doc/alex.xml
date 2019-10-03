@@ -1408,6 +1408,13 @@ alexError        :: String -> Alex a
 alexGetStartCode :: Alex Int
 alexSetStartCode :: Int -> Alex ()</programlisting>
 
+	<para>The <literal>monad</literal> wrapper expects that you
+	define a variable <literal>alexEOF</literal> with the following
+	signature:</para>
+
+<programlisting>alexEOF :: Alex result</programlisting>
+
+
 	<para>To invoke a scanner under the <literal>monad</literal>
 	wrapper, use <literal>alexMonadScan</literal>:</para>
 
