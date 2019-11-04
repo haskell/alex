@@ -1,3 +1,7 @@
+## Changes in 3.2.5:
+
+ * Build fixes for GHC 8.8.x
+
 ## Changes in 3.2.4:
 
  * Remove dependency on QuickCheck
