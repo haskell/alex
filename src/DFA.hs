@@ -99,7 +99,7 @@ nfa2dfa scs nfa = mk_int_dfa nfa (nfa2pdfa nfa pdfa (dfa_start_states pdfa))
         n_starts = length scs  -- number of start states
 
 -- `nfa2pdfa' works by taking the next outstanding state set to be considered
--- and and ignoring it if the state is already in the partial DFA, otherwise
+-- and ignoring it if the state is already in the partial DFA, otherwise
 -- generating all possible transitions from it, adding the new state to the
 -- partial DFA and continuing the closure with the extra states.  Note the way
 -- it incorporates the trailing context references into the search (by
