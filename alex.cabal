@@ -21,6 +21,18 @@ description:
 category: Development
 build-type: Simple
 
+-- Keep the contents of `tested-with` in sync with `env` in `.travis.yml`.
+tested-with:
+        GHC == 7.4.2
+        GHC == 7.6.3
+        GHC == 7.8.4
+        GHC == 7.10.3
+        GHC == 8.0.2
+        GHC == 8.2.2
+        GHC == 8.4.4
+        GHC == 8.6.5
+        GHC == 8.8.2
+
 data-dir: data/
 
 data-files:
