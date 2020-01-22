@@ -2,6 +2,7 @@
 
 {-# LANGUAGE PatternGuards       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
 
 module DFAMin (minimizeDFA) where
 
@@ -54,7 +55,7 @@ minimizeDFA  dfa@DFA { dfa_start_states = starts,
       number n (ss:sss) =
         case filter (`IS.member` ss) starts of
           []      -> (n,ss) : number (n+1) sss
-          starts' -> zip starts' (repeat ss) ++ number n sss
+          starts' -> map (,ss) starts' ++ number n sss
           -- if one of the states of the minimized DFA corresponds
           -- to multiple starts states, we just have to duplicate
           -- that state.
