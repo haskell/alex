@@ -13,7 +13,7 @@ import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
-import Data.List as List
+import qualified Data.List as List
 
 
 -- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
@@ -104,7 +104,7 @@ groupEquivStates DFA { dfa_states = statemap }
     -- group the accepting states into equivalence classes
     accept_map :: Map [Accept a] [Int]
     accept_map = {-# SCC "accept_map" #-}
-      foldl' (\m (n,s) -> Map.insertWith (++) (state_acc s) [n] m)
+      List.foldl' (\m (n,s) -> Map.insertWith (++) (state_acc s) [n] m)
              Map.empty
              (Map.toList accepting)
 
