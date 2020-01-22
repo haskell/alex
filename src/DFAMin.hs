@@ -112,7 +112,10 @@ groupEquivStates DFA { dfa_states = statemap }
     accept_groups :: [EquivalenceClass]
     accept_groups = map IS.fromList (Map.elems accept_map)
 
-    init_p = nonaccepting_states : accept_groups
+    init_p, init_q :: [EquivalenceClass]
+    init_p  -- Issue #71: each EquivalenceClass needs to be a non-empty set
+      | IS.null nonaccepting_states = accept_groups
+      | otherwise                   = nonaccepting_states : accept_groups
     init_q = accept_groups
 
     -- map token T to

@@ -40,6 +40,7 @@ TESTS = \
         basic_typeclass_bytestring.x \
         default_typeclass.x \
         gscan_typeclass.x \
+        issue_71.x \
         monad_typeclass.x \
         monad_typeclass_bytestring.x \
         monadUserState_typeclass.x \
