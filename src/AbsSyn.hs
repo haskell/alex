@@ -320,7 +320,7 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 -- generated file.
 
 extractActions :: Scheme -> Scanner -> (Scanner,ShowS)
-extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
+extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str . nl)
  where
   (new_tokens, decls) = unzip (zipWith f (scannerTokens scanner) act_names)
 
@@ -333,61 +333,57 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
       str "AlexPosn -> Char -> String -> Int -> ((Int, state) -> "
     . str res . str ") -> (Int, state) -> " . str res
 
-  mkDecl fun code = case scheme of
-    Default { defaultTypeInfo = Just (Nothing, actionty) } ->
-        str fun . str " :: " . str actionty . str "\n"
-      . str fun . str " = " . str code . nl
-    Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
+  mkDecl  fun code = mkTySig fun
+                   . mkDef fun code
+
+  mkDef   fun code = str fun . str " = " . str code . nl
+
+  mkTySig fun = case scheme of
+    Default { defaultTypeInfo = Just (Nothing, actionty) } -> nl .
+        str fun . str " :: " . str actionty . nl
+    Default { defaultTypeInfo = Just (Just tyclasses, actionty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => " .
-      str actionty . str "\n" .
-      str fun . str " = " . str code . nl
-    GScan { gscanTypeInfo = Just (Nothing, tokenty) } ->
-        str fun . str " :: " . gscanActionType tokenty . str "\n"
-      . str fun . str " = " . str code . nl
-    GScan { gscanTypeInfo = Just (Just tyclasses, tokenty) } ->
+      str actionty . nl
+    GScan { gscanTypeInfo = Just (Nothing, tokenty) } -> nl .
+        str fun . str " :: " . gscanActionType tokenty . nl
+    GScan { gscanTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => " .
-      gscanActionType tokenty . str "\n" .
-      str fun . str " = " . str code . nl
-    Basic { basicStrType = strty, basicTypeInfo = Just (Nothing, tokenty) } ->
+      gscanActionType tokenty . nl
+    Basic { basicStrType = strty, basicTypeInfo = Just (Nothing, tokenty) } -> nl .
       str fun . str " :: " . str (show strty) . str " -> "
-      . str tokenty . str "\n"
-      . str fun . str " = " . str code . nl
+      . str tokenty . nl
     Basic { basicStrType = strty,
-            basicTypeInfo = Just (Just tyclasses, tokenty) } ->
+            basicTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => " .
-      str (show strty) . str " -> " . str tokenty . str "\n" .
-      str fun . str " = " . str code . nl
+      str (show strty) . str " -> " . str tokenty . nl
     Posn { posnByteString = isByteString,
-           posnTypeInfo = Just (Nothing, tokenty) } ->
+           posnTypeInfo = Just (Nothing, tokenty) } -> nl .
       str fun . str " :: AlexPosn -> " . str (strtype isByteString) . str " -> "
-      . str tokenty . str "\n"
-      . str fun . str " = " . str code . nl
+      . str tokenty . nl
     Posn { posnByteString = isByteString,
-           posnTypeInfo = Just (Just tyclasses, tokenty) } ->
+           posnTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => AlexPosn -> " .
-      str (strtype isByteString) . str " -> " . str tokenty . str "\n" .
-      str fun . str " = " . str code . nl
+      str (strtype isByteString) . str " -> " . str tokenty . nl
     Monad { monadByteString = isByteString,
-            monadTypeInfo = Just (Nothing, tokenty) } ->
+            monadTypeInfo = Just (Nothing, tokenty) } -> nl .
       let
         actintty = if isByteString then "Int64" else "Int"
       in
         str fun . str " :: AlexInput -> " . str actintty . str " -> Alex ("
-      . str tokenty . str ")\n"
-      . str fun . str " = " . str code . nl
+      . str tokenty . str ")" . nl
     Monad { monadByteString = isByteString,
-            monadTypeInfo = Just (Just tyclasses, tokenty) } ->
+            monadTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       let
         actintty = if isByteString then "Int64" else "Int"
       in
-        str fun . str " :: (" . str tyclasses . str ") => "
+        str fun . str " :: (" . str tyclasses . str ") =>"
       . str " AlexInput -> " . str actintty
-      . str " -> Alex (" . str tokenty . str ")\n"
-      . str fun . str " = " . str code . nl
-    _ -> str fun . str " = " . str code . nl
+      . str " -> Alex (" . str tokenty . str ")" . nl
+    _ -> id
 
   act_names = map (\n -> "alex_action_" ++ show (n::Int)) [0..]
 
+  decl_str :: ShowS
   decl_str = foldr (.) id [ decl | Just decl <- decls ]
 
 -- -----------------------------------------------------------------------------

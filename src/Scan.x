@@ -175,7 +175,7 @@ code (p,_,_inp) _ = do
     go :: AlexInput -> Int -> String -> P Token
     go inp 0 cs = do
       setInput inp
-      return (T p (CodeT (reverse (tail cs))))
+      return $ T p $ CodeT $ triml $ reverse $ triml $ tail cs
     go inp n cs = do
       case alexGetChar inp of
         Nothing       -> err inp
@@ -209,6 +209,8 @@ code (p,_,_inp) _ = do
                 c2   -> go_str inp2 n (c2:cs) end
 
     err inp = do setInput inp; lexError "lexical error in code fragment"
+
+    triml = dropWhile isSpace
 
 lexError :: String -> P a
 lexError s = do
