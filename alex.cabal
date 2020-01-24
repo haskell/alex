@@ -1,6 +1,6 @@
 cabal-version: >= 1.8
 name: alex
-version: 3.2.5
+version: 3.2.6
 -- don't forget updating changelog.md!
 license: BSD3
 license-file: LICENSE
@@ -23,6 +23,7 @@ build-type: Simple
 
 -- Keep the contents of `tested-with` in sync with `env` in `.travis.yml`.
 tested-with:
+        GHC == 7.0.4
         GHC == 7.4.2
         GHC == 7.6.3
         GHC == 7.8.4

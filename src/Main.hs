@@ -115,7 +115,9 @@ parseScript file prg =
 
         Right script -> return script
 
-alex :: [CLIFlags] -> FilePath -> FilePath
+alex :: [CLIFlags]
+     -> FilePath
+     -> FilePath
      -> (Maybe (AlexPosn, Code), [Directive], Scanner, Maybe (AlexPosn, Code))
      -> IO ()
 alex cli file basename script = do
@@ -148,7 +150,10 @@ alex cli file basename script = do
 
    template_dir  <- templateDir getDataDir cli
 
-   let (maybe_header, directives, scanner1, maybe_footer) = script
+   let maybe_header, maybe_footer :: Maybe (AlexPosn, Code)
+       directives                 :: [Directive]
+       scanner1                   :: Scanner
+       (maybe_header, directives, scanner1, maybe_footer) = script
 
    scheme <- getScheme directives
 
@@ -158,7 +163,12 @@ alex cli file basename script = do
         (\h -> do hClose h; removeFile o_file)
         $ \out_h -> do
 
-   let
+   let   wrapper_name            :: Maybe FilePath
+         scanner2, scanner_final :: Scanner
+         scs                     :: [StartCode]
+         sc_hdr, actions         :: ShowS
+         encodingsScript         :: [Encoding]
+
          wrapper_name = wrapperFile template_dir scheme
          (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
          (scanner_final, actions) = extractActions scheme scanner2

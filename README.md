@@ -9,19 +9,14 @@ documentation, see the doc directory.
 
 - <https://hackage.haskell.org/package/alex>
 
-Alex version 2.0 has changed fairly considerably since version 1.x,
-and the syntax is almost completely different.  For a detailed list of
-changes, see the release notes in the documentation.
+Alex is covered by a BSD-Style licence; see the licence file in
+the `doc` directory for details.
 
-Alex is now covered by a BSD-Style licence; see the licence file in
-the 'doc' directory for details.
+The sources are in the `src` directory and the documentation in the `doc`
+directory; various  examples are in the `examples` subdirectory.
 
-The sources are in the 'src' directory and the documentation in the 'doc'
-directory; various  examples are in the 'examples' subdirectory.
-
-The source code in the 'src' and 'examples' directories is intended
-for a Haskell 98 compiler with hierarchical modules.  It should work
-with GHC >= 5.04.
+The source code in the `src` and `examples` directories is intended to work
+with GHC >= 7.0.
 
 ## Build Instructions
 
@@ -51,7 +46,7 @@ Haskell Platform, or e.g. via (run this outside the Git repository!):
     $ cabal install alex happy
 
 which installs them into `${HOME}/.cabal/bin` by default (make sure
-they're in your `$PATH` for the next steps!).
+they are in your `$PATH` for the next steps!).
 
 ### Variant A
 
@@ -65,7 +60,7 @@ First you need to generate the pre-processed templates via
 And then you can install `alex` simply by invoking
 
     $ cabal install
-    
+
 from inside the Git folder.
 
 ### Variant B
@@ -78,7 +73,7 @@ new-run gen-alex-sdist` pre-preprocessing step):
     $ make sdist
     $ cabal install dist/alex-*.tar.gz
 
-For convenience, there's also a `make sdist-test` target which builds the
+For convenience, there is also a `make sdist-test` target which builds the
 source source tarball and runs the test-suite from within the source dist.
 
 ## Contributing & Reporting Issues
@@ -92,3 +87,5 @@ Chris Dornan:  cdornan@arm.com
 Isaac Jones:   ijones@syntaxpolice.org
 
 Simon Marlow:  simonmar@microsoft.com
+
+and [recent contributors](https://github.com/simonmar/alex/graphs/contributors).

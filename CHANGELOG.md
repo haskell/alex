@@ -1,3 +1,5 @@
+## Changes in 3.2.6:
+
 ## Changes in 3.2.5:
 
  * Build fixes for GHC 8.8.x

@@ -1,6 +1,6 @@
 # NOTE: `cabal test` will take care to build the local `alex`
-# executable and place it into $PATH for us to pick up.  
-# 
+# executable and place it into $PATH for us to pick up.
+#
 # If it doesn't look like the alex binary in $PATH comes from the
 # build tree, then we'll fall back to pointing to
 # ../dist/build/alex/alex to support running tests via "runghc
@@ -13,7 +13,19 @@ endif
 
 # NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
 HC=ghc
-HC_OPTS=-Wall -fwarn-incomplete-uni-patterns -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
+
+# Some GHC warnings are only available from a certain version on
+# Get the GHC version
+GHC_VERSION:=$(shell ghc --numeric-version)
+GHC_VERSION_WORDS=$(subst ., ,$(GHC_VERSION))
+GHC_MAJOR_VERSION=$(word 1,$(GHC_VERSION_WORDS))
+GHC_MINOR_VERSION=$(word 2,$(GHC_VERSION_WORDS))
+# -fwarn-incomplete-uni-patterns only from 7.4
+WARNS_FOR_GHC_GTEQ_7_4=-fwarn-incomplete-uni-patterns
+WARNS_FOR_GHC_LT_7_4=-fno-warn-lazy-unlifted-bindings
+WARNS_DEP_GHC_GTEQ_7_4:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 7 -o $(GHC_MAJOR_VERSION) -ge 7 -a $(GHC_MINOR_VERSION) -ge 4 ]; then echo "$(WARNS_FOR_GHC_GTEQ_7_4)"; else echo "$(WARNS_FOR_GHC_LT_7_4)"; fi)
+
+HC_OPTS=-Wall $(WARNS_DEP_GHC_GTEQ_7_4) -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
 
 .PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 
@@ -73,7 +85,8 @@ ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 
 all :: $(ALL_TESTS)
 
-.PHONY: clean
+.PHONY: clean debug
+
 clean:
 	rm -f $(CLEAN_FILES)
 
@@ -82,3 +95,8 @@ interact:
 	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception
 # -args='--template=.. simple.x -o simple.n.hs'
 # :set args --template=.. simple.x -o simple.n.hs
+
+debug :
+	@echo HC_OPTS=$(HC_OPTS)
+
+# EOF
