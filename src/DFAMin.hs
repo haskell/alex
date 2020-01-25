@@ -1,5 +1,9 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
-{-# LANGUAGE PatternGuards #-}
+
+{-# LANGUAGE PatternGuards       #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
+
 module DFAMin (minimizeDFA) where
 
 import AbsSyn
@@ -10,7 +14,7 @@ import Data.IntSet (IntSet)
 import qualified Data.IntSet as IS
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
-import Data.List as List
+import qualified Data.List as List
 
 
 -- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
@@ -31,28 +35,32 @@ import Data.List as List
 --      end;
 -- end;
 
-minimizeDFA :: Ord a => DFA Int a -> DFA Int a
+minimizeDFA :: forall a. Ord a => DFA Int a -> DFA Int a
 minimizeDFA  dfa@DFA { dfa_start_states = starts,
                        dfa_states       = statemap
                      }
   = DFA { dfa_start_states = starts,
           dfa_states       = Map.fromList states }
   where
+      equiv_classes   :: [EquivalenceClass]
       equiv_classes   = groupEquivStates dfa
 
+      numbered_states :: [(Int, EquivalenceClass)]
       numbered_states = number (length starts) equiv_classes
 
       -- assign each state in the minimized DFA a number, making
       -- sure that we assign the numbers [0..] to the start states.
+      number :: Int -> [EquivalenceClass] -> [(Int, EquivalenceClass)]
       number _ [] = []
       number n (ss:sss) =
         case filter (`IS.member` ss) starts of
           []      -> (n,ss) : number (n+1) sss
-          starts' -> zip starts' (repeat ss) ++ number n sss
+          starts' -> map (,ss) starts' ++ number n sss
           -- if one of the states of the minimized DFA corresponds
           -- to multiple starts states, we just have to duplicate
           -- that state.
 
+      states :: [(Int, State Int a)]
       states = [
                 let old_states = map (lookup statemap) (IS.toList equiv)
                     accs = map fix_acc (state_acc (head old_states))
@@ -64,38 +72,50 @@ minimizeDFA  dfa@DFA { dfa_start_states = starts,
                | (n, equiv) <- numbered_states
                ]
 
+      fix_acc :: Accept a -> Accept a
       fix_acc acc = acc { accRightCtx = fix_rctxt (accRightCtx acc) }
 
+      fix_rctxt :: RightContext SNum -> RightContext SNum
       fix_rctxt (RightContextRExp s) = RightContextRExp (get_new s)
       fix_rctxt other = other
 
+      lookup :: Ord k => Map k v -> k -> v
       lookup m k = Map.findWithDefault (error "minimizeDFA") k m
+
+      get_new :: Int -> Int
       get_new = lookup old_to_new
 
       old_to_new :: Map Int Int
       old_to_new = Map.fromList [ (s,n) | (n,ss) <- numbered_states,
                                           s <- IS.toList ss ]
 
+type EquivalenceClass = IntSet
 
-groupEquivStates :: (Ord a) => DFA Int a -> [IntSet]
+groupEquivStates :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
 groupEquivStates DFA { dfa_states = statemap }
   = go init_p init_q
   where
+    accepting, nonaccepting :: Map Int (State Int a)
     (accepting, nonaccepting) = Map.partition acc statemap
        where acc (State as _) = not (List.null as)
 
+    nonaccepting_states :: EquivalenceClass
     nonaccepting_states = IS.fromList (Map.keys nonaccepting)
 
     -- group the accepting states into equivalence classes
+    accept_map :: Map [Accept a] [Int]
     accept_map = {-# SCC "accept_map" #-}
-      foldl' (\m (n,s) -> Map.insertWith (++) (state_acc s) [n] m)
+      List.foldl' (\m (n,s) -> Map.insertWith (++) (state_acc s) [n] m)
              Map.empty
              (Map.toList accepting)
 
-    -- accept_groups :: Ord s => [Set s]
+    accept_groups :: [EquivalenceClass]
     accept_groups = map IS.fromList (Map.elems accept_map)
 
-    init_p = nonaccepting_states : accept_groups
+    init_p, init_q :: [EquivalenceClass]
+    init_p  -- Issue #71: each EquivalenceClass needs to be a non-empty set
+      | IS.null nonaccepting_states = accept_groups
+      | otherwise                   = nonaccepting_states : accept_groups
     init_q = accept_groups
 
     -- map token T to
@@ -118,6 +138,7 @@ groupEquivStates DFA { dfa_states = statemap }
               | s <- IS.toList a ]
 
     -- The outer loop: recurse on each set in Q
+    go ::  [EquivalenceClass] -> [EquivalenceClass] -> [EquivalenceClass]
     go p [] = p
     go p (a:q) = go1 0 p q
      where
@@ -145,6 +166,3 @@ groupEquivStates DFA { dfa_states = statemap }
                              replaceyin (z:zs)
                                 | z == y    = i : d : zs
                                 | otherwise = z : replaceyin zs
-
-
-

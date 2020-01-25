@@ -109,6 +109,7 @@ extra-source-files:
         tests/posn_typeclass_bytestring.x
         tests/strict_typeclass.x
         tests/unicode.x
+        tests/issue_71.x
 
 source-repository head
     type:     git
