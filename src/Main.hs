@@ -113,7 +113,11 @@ parseScript file prg =
         Left (Nothing, err) ->
                 die (file ++ ": " ++ err ++ "\n")
 
-        Right script -> return script
+        Right script@(_, _, scanner, _) -> do
+          -- issue 46: give proper error when lexer definition is empty
+          when (null $ scannerTokens scanner) $
+            dieAlex $ file ++ " contains no lexer rules\n"
+          return script
 
 alex :: [CLIFlags]
      -> FilePath
