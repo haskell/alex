@@ -33,6 +33,7 @@ import Control.Exception ( bracketOnError )
 import Control.Monad ( when, liftM )
 import Data.Char ( chr )
 import Data.List ( isSuffixOf, nub )
+import qualified Data.List as List
 import Data.Maybe ( isJust, fromJust )
 import Data.Version ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
@@ -218,7 +219,7 @@ alex cli file basename script = do
    hPutStr out_h (actions "")
 
    -- add the template
-   let template_name = templateFile template_dir target usespreds cli
+   let template_name = templateFile template_dir target encoding usespreds cli
    tmplt <- alexReadFile template_name
    hPutStr out_h tmplt
 
@@ -399,23 +400,27 @@ templateDir def cli
       [] -> def
       ds -> return (last ds)
 
-templateFile :: FilePath -> Target -> UsesPreds -> [CLIFlags] -> FilePath
-templateFile dir target usespreds cli
-  = dir ++ "/AlexTemplate" ++ maybe_ghc ++ maybe_debug ++ maybe_nopred
-  where
-        maybe_ghc = case target of
-                      GhcTarget -> "-ghc"
-                      _         -> ""
+-- Keep this function in sync with its twin in gen-alex-sdist/Main.hs.
+templateFileName :: Bool -> Bool -> Bool -> Bool -> FilePath
+templateFileName ghc latin1 nopred debug =
+  List.intercalate "-" $ concat
+    [ [ "AlexTemplate"    ]
+    , [ "ghc"    | ghc    ]
+    , [ "latin1" | latin1 ]
+    , [ "nopred" | nopred ]
+    , [ "debug"  | debug  ]
+    ]
 
-        maybe_debug
-          | OptDebugParser `elem` cli  = "-debug"
-          | otherwise                  = ""
-
-        maybe_nopred =
-          case usespreds of
-            DoesntUsePreds | not (null maybe_ghc)
-                          && null maybe_debug -> "-nopred"
-            _                                 -> ""
+templateFile :: FilePath -> Target -> Encoding -> UsesPreds -> [CLIFlags] -> FilePath
+templateFile dir target encoding usespreds cli = concat
+  [ dir
+  , "/"
+  , templateFileName
+      (target == GhcTarget)
+      (encoding == Latin1)
+      (usespreds == DoesntUsePreds)
+      (OptDebugParser `elem` cli)
+  ]
 
 wrapperFile :: FilePath -> Scheme -> Maybe FilePath
 wrapperFile dir scheme =
