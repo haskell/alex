@@ -1,6 +1,7 @@
 module Main (main) where
 
 import           Control.Monad
+import qualified Data.List                   as List
 import           Language.Preprocessor.Cpphs
 import           System.Directory
 import           System.FilePath
@@ -51,13 +52,37 @@ all_template_files :: [FilePath]
 all_template_files = map fst (templates ++ wrappers)
 
 templates :: [(FilePath,[String])]
-templates = [
-  ("AlexTemplate",           []),
-  ("AlexTemplate-ghc",       ["ALEX_GHC"]),
-  ("AlexTemplate-ghc-nopred",["ALEX_GHC", "ALEX_NOPRED"]),
-  ("AlexTemplate-ghc-debug", ["ALEX_GHC","ALEX_DEBUG"]),
-  ("AlexTemplate-debug",     ["ALEX_DEBUG"])
- ]
+templates =
+  [ ( templateFileName ghc latin1 nopred debug
+    , templateFlags    ghc latin1 nopred debug
+    )
+  | ghc    <- allBool
+  , latin1 <- allBool
+  , nopred <- allBool
+  , debug  <- allBool
+  ]
+  where
+  allBool = [False, True]
+
+-- Keep this function in sync with its twin in src/Main.hs.
+templateFileName :: Bool -> Bool -> Bool -> Bool -> FilePath
+templateFileName ghc latin1 nopred debug =
+  List.intercalate "-" $ concat
+    [ [ "AlexTemplate"    ]
+    , [ "ghc"    | ghc    ]
+    , [ "latin1" | latin1 ]
+    , [ "nopred" | nopred ]
+    , [ "debug"  | debug  ]
+    ]
+
+templateFlags :: Bool -> Bool -> Bool -> Bool -> [String]
+templateFlags ghc latin1 nopred debug =
+  map ("ALEX_" ++) $ concat
+    [ [ "GHC"    | ghc    ]
+    , [ "LATIN1" | latin1 ]
+    , [ "NOPRED" | nopred ]
+    , [ "DEBUG"  | debug  ]
+    ]
 
 wrappers :: [(FilePath,[String])]
 wrappers = [

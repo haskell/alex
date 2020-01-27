@@ -38,10 +38,21 @@ data-dir: data/
 
 data-files:
         AlexTemplate
-        AlexTemplate-ghc
-        AlexTemplate-ghc-nopred
-        AlexTemplate-ghc-debug
         AlexTemplate-debug
+        AlexTemplate-nopred
+        AlexTemplate-nopred-debug
+        AlexTemplate-latin1
+        AlexTemplate-latin1-debug
+        AlexTemplate-latin1-nopred
+        AlexTemplate-latin1-nopred-debug
+        AlexTemplate-ghc
+        AlexTemplate-ghc-debug
+        AlexTemplate-ghc-nopred
+        AlexTemplate-ghc-nopred-debug
+        AlexTemplate-ghc-latin1
+        AlexTemplate-ghc-latin1-debug
+        AlexTemplate-ghc-latin1-nopred
+        AlexTemplate-ghc-latin1-nopred-debug
         AlexWrapper-basic
         AlexWrapper-basic-bytestring
         AlexWrapper-strict-bytestring
@@ -110,6 +121,7 @@ extra-source-files:
         tests/strict_typeclass.x
         tests/unicode.x
         tests/issue_71.x
+        tests/issue_119.x
 
 source-repository head
     type:     git

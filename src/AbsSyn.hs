@@ -170,6 +170,7 @@ type StartCode = Int
 -- we can generate somewhat faster code in the case that
 -- the lexer doesn't use predicates
 data UsesPreds = UsesPreds | DoesntUsePreds
+  deriving Eq
 
 usesPreds :: DFA s a -> UsesPreds
 usesPreds dfa
@@ -390,3 +391,4 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str .
 -- Code generation targets
 
 data Target = GhcTarget | HaskellTarget
+  deriving Eq

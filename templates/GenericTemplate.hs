@@ -175,9 +175,15 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
             ILIT(-1) -> (new_acc, input__)
                 -- on an error, we want to keep the input *before* the
                 -- character that failed, not after.
-            _ -> alex_scan_tkn user__ orig_input (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
-                                                -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
-                        new_input new_s new_acc
+            _ -> alex_scan_tkn user__ orig_input
+#ifdef ALEX_LATIN1
+                   PLUS(len,ILIT(1))
+                   -- issue 119: in the latin1 encoding, *each* byte is one character
+#else
+                   (if c < 0x80 || c >= 0xC0 then PLUS(len,ILIT(1)) else len)
+                   -- note that the length is increased ONLY if this is the 1st byte in a char encoding)
+#endif
+                   new_input new_s new_acc
       }
   where
         check_accs (AlexAccNone) = last_acc
