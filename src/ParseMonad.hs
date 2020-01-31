@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- ParseMonad.hs, part of Alex
 --
 -- (c) Simon Marlow 2003
@@ -49,7 +49,7 @@ alexGetChar (_, _ ,_ : _, _) = undefined -- hide compiler warning
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
 alexGetByte (_,_,[],[]) = Nothing
-alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c 
+alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
                                   (b:bs) = UTF8.encode c
                               in p' `seq`  Just (b, (p', c, bs, s))
 
@@ -121,24 +121,24 @@ failP str = P $ \PState{ input = (p,_,_,_) } -> Left (Just p,str)
 
 lookupSMac :: (AlexPosn,String) -> P CharSet
 lookupSMac (posn,smac)
- = P $ \s@PState{ smac_env = senv } -> 
+ = P $ \s@PState{ smac_env = senv } ->
        case Map.lookup smac senv of
         Just ok -> Right (s,ok)
         Nothing -> Left (Just posn, "unknown set macro: $" ++ smac)
 
 lookupRMac :: String -> P RExp
-lookupRMac rmac 
- = P $ \s@PState{ rmac_env = renv } -> 
+lookupRMac rmac
+ = P $ \s@PState{ rmac_env = renv } ->
        case Map.lookup rmac renv of
         Just ok -> Right (s,ok)
         Nothing -> Left (Nothing, "unknown regex macro: %" ++ rmac)
 
 newSMac :: String -> CharSet -> P ()
-newSMac smac set 
+newSMac smac set
   = P $ \s -> Right (s{smac_env = Map.insert smac set (smac_env s)}, ())
 
 newRMac :: String -> RExp -> P ()
-newRMac rmac rexp 
+newRMac rmac rexp
   = P $ \s -> Right (s{rmac_env = Map.insert rmac rexp (rmac_env s)}, ())
 
 setStartCode :: StartCode -> P ()
