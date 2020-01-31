@@ -122,6 +122,7 @@ extra-source-files:
         tests/unicode.x
         tests/issue_71.x
         tests/issue_119.x
+        tests/issue_141.x
 
 source-repository head
     type:     git
