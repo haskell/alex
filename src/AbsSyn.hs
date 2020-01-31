@@ -14,7 +14,7 @@ module AbsSyn (
   wrapperName,
   Scanner(..),
   RECtx(..),
-  RExp(..),
+  RExp(..), nullable,
   DFA(..), State(..), SNum, StartCode, Accept(..),
   RightContext(..), showRCtx, strtype,
   encodeStartCodes, extractActions,
@@ -188,7 +188,7 @@ usesPreds dfa
 -- Regular expressions
 
 -- `RExp' provides an abstract syntax for regular expressions.  `Eps' will
--- match empty strings; `Ch p' matches strings containinng a single character
+-- match empty strings; `Ch p' matches strings containing a single character
 -- `c' if `p c' is true; `re1 :%% re2' matches a string if `re1' matches one of
 -- its prefixes and `re2' matches the rest; `re1 :| re2' matches a string if
 -- `re1' or `re2' matches it; `Star re', `Plus re' and `Ques re' can be
@@ -196,13 +196,13 @@ usesPreds dfa
 -- for a formal definition of the semantics of these operators.
 
 data RExp
-  = Eps
-  | Ch CharSet
-  | RExp :%% RExp
-  | RExp :| RExp
-  | Star RExp
-  | Plus RExp
-  | Ques RExp
+  = Eps            -- ^ Empty.
+  | Ch CharSet     -- ^ Singleton.
+  | RExp :%% RExp  -- ^ Sequence.
+  | RExp :| RExp   -- ^ Alternative.
+  | Star RExp      -- ^ Zero or more repetitions.
+  | Plus RExp      -- ^ One  or more repetitions.
+  | Ques RExp      -- ^ Zero or one  repetitions.
 
 instance Show RExp where
   showsPrec _ Eps = showString "()"
@@ -212,6 +212,17 @@ instance Show RExp where
   showsPrec _ (Star r) = shows r . ('*':)
   showsPrec _ (Plus r) = shows r . ('+':)
   showsPrec _ (Ques r) = shows r . ('?':)
+
+-- | A regular expression is nullable if it matches the empty string.
+nullable :: RExp -> Bool
+nullable Eps       = True
+nullable Ch{}      = False
+nullable (l :%% r) = nullable l && nullable r
+nullable (l :|  r) = nullable l || nullable r
+nullable Star{}    = True
+nullable (Plus r)  = nullable r
+nullable Ques{}    = True
+
 
 {------------------------------------------------------------------------------
                           Abstract Regular Expression

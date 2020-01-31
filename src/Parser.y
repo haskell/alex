@@ -109,16 +109,23 @@ tokendefs :: { [RECtx] }
 	| {- empty -}			{ [] }
 
 tokendef :: { [RECtx] }
-	: startcodes rule		{ [ replaceCodes $1 $2 ] }
+	: startcodes rule		{ [ replaceCodes $1 (snd $2) ] }
 	| startcodes '{' rules '}'	{ map (replaceCodes $1) $3 }
-	| rule				{ [ $1 ] }
+	| rule				{% do
+                                           let (pos, res@(RECtx _ _ e _ _)) = $1
+                                           warnIfNullable e pos
+                                           return [ res ]
+                                        }
 
-rule    :: { RECtx }
-	: context rhs			{ let (l,e,r) = $1 in
-					  RECtx [] l e r $2 }
+rule    :: { (AlexPosn, RECtx) }
+        : context rhs                   { let
+                                            (l, e, r)   = $1
+                                            (pos, code) = $2
+                                          in (pos, RECtx [] l e r code)
+                                        }
 
 rules	:: { [RECtx] }
-	: rule rules			{ $1 : $2 }
+	: rule rules			{ snd $1 : $2 }
 	| {- empty -}			{ [] }
 
 startcodes :: { [(String,StartCode)] }
@@ -132,9 +139,9 @@ startcode :: { String }
 	: ZERO 				{ "0" }
 	| ID	 			{ $1 }
 
-rhs	:: { Maybe Code }
-	: CODE 				{ case $1 of T _ (CodeT code) -> Just code }
-	| ';'	 			{ Nothing }
+rhs	:: { (AlexPosn, Maybe Code) }
+	: CODE 				{ case $1 of T pos (CodeT code) -> (pos, Just code) }
+	| ';'				{ (tokPosn $1, Nothing) }
 
 context :: { Maybe CharSet, RExp, RightContext RExp }
 	: left_ctx rexp right_ctx	{ (Just $1,$2,$3) }
