@@ -822,9 +822,9 @@ rexp0   := set
          | @string
          | '(' [ regexp ] ')'
 
-repeat  := '{' $digit '}'
-         | '{' $digit ',' '}'
-         | '{' $digit ',' $digit '}'</programlisting>
+repeat  := '{' $digit+ '}'
+         | '{' $digit+ ',' '}'
+         | '{' $digit+ ',' $digit+ '}'</programlisting>
 
       <para>The syntax of regular expressions is fairly standard, the
       only difference from normal lex-style regular expressions being

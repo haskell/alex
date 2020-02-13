@@ -54,6 +54,7 @@ import Data.Char
 	ID		{ T _ (IdT $$) }
 	CODE		{ T _ (CodeT _) }
 	CHAR		{ T _ (CharT $$) }
+	NUM		{ T _ (NumT $$) }
 	SMAC		{ T _ (SMacT _) }
 	RMAC		{ T _ (RMacT $$) }
 	SMAC_DEF	{ T _ (SMacDefT $$) }
@@ -166,11 +167,15 @@ rep	:: { RExp -> RExp }
 	: '*' 				{ Star }
 	| '+' 				{ Plus }
 	| '?' 				{ Ques }
+					-- Single digits are CHAR, not NUM.
 					-- TODO: these don't check for digits
 					-- properly.
 	| '{' CHAR '}'			{ repeat_rng (digit $2) Nothing }
 	| '{' CHAR ',' '}'		{ repeat_rng (digit $2) (Just Nothing) }
 	| '{' CHAR ',' CHAR '}' 	{ repeat_rng (digit $2) (Just (Just (digit $4))) }
+	| '{' NUM '}'			{ repeat_rng $2 Nothing }
+	| '{' NUM ',' '}'		{ repeat_rng $2 (Just Nothing) }
+	| '{' NUM ',' NUM '}'           { repeat_rng $2 (Just (Just $4)) }
 
 rexp0	:: { RExp }
 	: '(' ')'  			{ Eps }
