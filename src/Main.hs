@@ -18,7 +18,7 @@ import Info
 import Map ( Map )
 import qualified Map hiding ( Map )
 import Output
-import ParseMonad ( runP )
+import ParseMonad ( runP, Warning(..) )
 import Parser
 import Scan
 import Util ( hline )
@@ -114,11 +114,20 @@ parseScript file prg =
         Left (Nothing, err) ->
                 die (file ++ ": " ++ err ++ "\n")
 
-        Right script@(_, _, scanner, _) -> do
+        Right (warnings, script@(_, _, scanner, _)) -> do
           -- issue 46: give proper error when lexer definition is empty
           when (null $ scannerTokens scanner) $
             dieAlex $ file ++ " contains no lexer rules\n"
+          -- issue 71: warn about nullable regular expressions
+          mapM_ printWarning warnings
           return script
+  where
+  printWarning (WarnNullableRExp (AlexPn _ line col) msg) =
+    hPutStrLn stderr $ concat
+      [ "Warning: "
+      , file , ":", show line , ":" , show col , ": "
+      , msg
+      ]
 
 alex :: [CLIFlags]
      -> FilePath
