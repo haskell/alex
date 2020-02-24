@@ -111,11 +111,7 @@ scanner2nfa enc Scanner{scannerTokens = toks} startcodes
                                         accept r_e rctxt_accept
                                         return (RightContextRExp r_b)
 
-                let lctx' = case lctx of
-                                  Nothing -> Nothing
-                                  Just st -> Just st
-
-                accept e (Acc prio code lctx' rctx_e)
+                accept e (Acc prio code lctx rctx_e)
                 return b
 
           tok_transitions toks_with_states start_code start_state = do
