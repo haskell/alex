@@ -40,6 +40,7 @@ TESTS = \
         basic_typeclass_bytestring.x \
         default_typeclass.x \
         gscan_typeclass.x \
+        issue_53.x \
         issue_71.x \
         issue_119.x \
         issue_141.x \
