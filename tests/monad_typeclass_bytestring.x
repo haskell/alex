@@ -55,7 +55,7 @@ tokpred :: () -> AlexInput -> Int -> AlexInput -> Bool
 tokpred _ _ _ _ = True
 
 idtoken :: Read s => Int -> AlexInput -> Int64 -> Alex (Token s)
-idtoken n (_, _, s, _) len =
+idtoken n (_, _, _, _, s, _) len =
   return (Id n (read ("\"" ++ Lazy.unpack (Lazy.take (fromIntegral len) s) ++
                       "\"")))
 

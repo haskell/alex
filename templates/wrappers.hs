@@ -15,6 +15,7 @@ import Data.Int (Int64)
 import qualified Data.Char
 import qualified Data.ByteString.Lazy     as ByteString
 import qualified Data.ByteString.Internal as ByteString (w2c)
+import qualified Data.Bits
 
 #elif defined(ALEX_STRICT_BYTESTRING)
 
@@ -22,6 +23,7 @@ import qualified Data.Char
 import qualified Data.ByteString          as ByteString
 import qualified Data.ByteString.Internal as ByteString hiding (ByteString)
 import qualified Data.ByteString.Unsafe   as ByteString
+import qualified Data.Bits
 
 #else
 
@@ -85,6 +87,8 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
+                  Int,          -- current char
+                  Int,          -- number of bytes left for the current char
                   ByteString.ByteString,        -- current input string
                   Int64)           -- bytes consumed so far
 
@@ -92,53 +96,96 @@ ignorePendingBytes :: AlexInput -> AlexInput
 ignorePendingBytes i = i   -- no pending bytes when lexing bytestrings
 
 alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (_,c,_,_) = c
+alexInputPrevChar (_,c,_,_,_,_) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (p,_,cs,n) =
+alexGetByte (p,c,cc,bl,cs,n) =
     case ByteString.uncons cs of
         Nothing -> Nothing
         Just (b, cs') ->
-            let c   = ByteString.w2c b
-                p'  = alexMove p c
-                n'  = n+1
-            in p' `seq` cs' `seq` n' `seq` Just (b, (p', c, cs',n'))
+            let (p',c',cc',bl') = flush . shift $ fromIntegral b
+                n'              = n+1
+            in p' `seq` cc' `seq` cs' `seq` n' `seq` Just (b, (p', c', cc', bl', cs',n'))
+ where
+  shift b
+   | bl /= 0   = (cc `Data.Bits.shiftL` 6 + b Data.Bits..&. 0x3f,bl-1)
+   | b <= 0x7f = (b,0)
+   | b <= 0xdf = (b Data.Bits..&. 0x1f,1)
+   | b <= 0xef = (b Data.Bits..&. 0x0f,2)
+   | otherwise = (b Data.Bits..&. 0x07,3)
+
+  flush (cc',0)   = let c' = Data.Char.chr cc'
+                        p' = alexMove p c'
+                    in (p',c',0,0)
+  flush (cc',bl') = (p,c,cc',bl')
 #endif
 
 #ifdef ALEX_BASIC_BYTESTRING
 data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,      -- previous char
+                             alexCurChar :: {-# UNPACK #-} !Int,    -- current char
+                             alexBytesLeft :: {-# UNPACK #-} !Int,  -- number of bytes left for the current char
                              alexStr ::  !ByteString.ByteString,    -- current input string
                              alexBytePos :: {-# UNPACK #-} !Int64}  -- bytes consumed so far
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexChar
 
-alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
+alexGetByte (AlexInput {alexChar=pc,alexCurChar=cc,alexBytesLeft=bl,alexStr=cs,alexBytePos=n}) =
     case ByteString.uncons cs of
         Nothing -> Nothing
         Just (c, rest) ->
-            Just (c, AlexInput {
-                alexChar = ByteString.w2c c,
+            let (pc',cc',bl') = flush . shift $ fromIntegral c
+            in Just (c, AlexInput {
+                alexChar = pc',
+                alexCurChar = cc',
+                alexBytesLeft = bl',
                 alexStr =  rest,
                 alexBytePos = n+1})
+ where
+  shift b
+   | bl /= 0   = (cc `Data.Bits.shiftL` 6 + b Data.Bits..&. 0x3f,bl-1)
+   | b <= 0x7f = (b,0)
+   | b <= 0xdf = (b Data.Bits..&. 0x1f,1)
+   | b <= 0xef = (b Data.Bits..&. 0x0f,2)
+   | otherwise = (b Data.Bits..&. 0x07,3)
+
+  flush (cc',0)   = let c' = Data.Char.chr cc'
+                    in (c',0,0)
+  flush (cc',bl') = (pc,cc',bl')
 #endif
 
 #ifdef ALEX_STRICT_BYTESTRING
 data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,
+                             alexCurChar :: {-# UNPACK #-} !Int,
+                             alexBytesLeft :: {-# UNPACK #-} !Int,
                              alexStr :: {-# UNPACK #-} !ByteString.ByteString,
                              alexBytePos :: {-# UNPACK #-} !Int}
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar = alexChar
 
-alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
+alexGetByte (AlexInput {alexChar=pc,alexCurChar=cc,alexBytesLeft=bl,alexStr=cs,alexBytePos=n}) =
     case ByteString.uncons cs of
         Nothing -> Nothing
         Just (c, rest) ->
-            Just (c, AlexInput {
-                alexChar = ByteString.w2c c,
+            let (pc',cc',bl') = flush . shift $ fromIntegral c
+            in Just (c, AlexInput {
+                alexChar = pc',
+                alexCurChar = cc',
+                alexBytesLeft = bl',
                 alexStr =  rest,
                 alexBytePos = n+1})
+ where
+  shift b
+   | bl /= 0   = (cc `Data.Bits.shiftL` 6 + b Data.Bits..&. 0x3f,bl-1)
+   | b <= 0x7f = (b,0)
+   | b <= 0xdf = (b Data.Bits..&. 0x1f,1)
+   | b <= 0xef = (b Data.Bits..&. 0x0f,2)
+   | otherwise = (b Data.Bits..&. 0x07,3)
+
+  flush (cc',0)   = let c' = Data.Char.chr cc'
+                    in (c',0,0)
+  flush (cc',bl') = (pc,cc',bl')
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -178,6 +225,8 @@ data AlexState = AlexState {
         alex_bpos:: !Int64,     -- bytes consumed so far
         alex_inp :: ByteString.ByteString,      -- the current input
         alex_chr :: !Char,      -- the character before the input
+        alex_cchr:: !Int,       -- the current character
+        alex_bl  :: !Int,       -- the number of bytes left for the current character
 #endif /* ALEX_MONAD_BYTESTRING */
         alex_scd :: !Int        -- the current startcode
 #ifdef ALEX_MONAD_USER_STATE
@@ -195,6 +244,8 @@ runAlex input__ (Alex f)
 runAlex :: ByteString.ByteString -> Alex a -> Either String a
 runAlex input__ (Alex f)
    = case f (AlexState {alex_bpos = 0,
+                        alex_cchr = 0,
+                        alex_bl   = 0,
 #endif /* ALEX_MONAD_BYTESTRING */
                         alex_pos = alexStartPos,
                         alex_inp = input__,
@@ -232,8 +283,8 @@ alexGetInput
  = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} ->
         Right (s, (pos,c,bs,inp__))
 #else /* ALEX_MONAD_BYTESTRING */
- = Alex $ \s@AlexState{alex_pos=pos,alex_bpos=bpos,alex_chr=c,alex_inp=inp__} ->
-        Right (s, (pos,c,inp__,bpos))
+ = Alex $ \s@AlexState{alex_pos=pos,alex_bpos=bpos,alex_chr=c,alex_cchr=cc,alex_bl=bl,alex_inp=inp__} ->
+        Right (s, (pos,c,cc,bl,inp__,bpos))
 #endif /* ALEX_MONAD_BYTESTRING */
 
 alexSetInput :: AlexInput -> Alex ()
@@ -241,10 +292,12 @@ alexSetInput :: AlexInput -> Alex ()
 alexSetInput (pos,c,bs,inp__)
  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
 #else /* ALEX_MONAD_BYTESTRING */
-alexSetInput (pos,c,inp__,bpos)
+alexSetInput (pos,c,cc,bl,inp__,bpos)
  = Alex $ \s -> case s{alex_pos=pos,
                        alex_bpos=bpos,
                        alex_chr=c,
+                       alex_cchr=cc,
+                       alex_bl=bl,
                        alex_inp=inp__} of
 #endif /* ALEX_MONAD_BYTESTRING */
                   state__@(AlexState{}) -> Right (state__, ())
@@ -270,19 +323,23 @@ alexMonadScan = do
 #ifndef ALEX_MONAD_BYTESTRING
   inp__ <- alexGetInput
 #else /* ALEX_MONAD_BYTESTRING */
-  inp__@(_,_,_,n) <- alexGetInput
+  inp__@(_,_,_,_,_,n) <- alexGetInput
 #endif /* ALEX_MONAD_BYTESTRING */
   sc <- alexGetStartCode
   case alexScan inp__ sc of
     AlexEOF -> alexEOF
+#ifndef ALEX_MONAD_BYTESTRING
     AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+#else /* ALEX_MONAD_BYTESTRING */
+    AlexError ((AlexPn _ line column),_,_,_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+#endif /* ALEX_MONAD_BYTESTRING */
     AlexSkip  inp__' _len -> do
         alexSetInput inp__'
         alexMonadScan
 #ifndef ALEX_MONAD_BYTESTRING
     AlexToken inp__' len action -> do
 #else /* ALEX_MONAD_BYTESTRING */
-    AlexToken inp__'@(_,_,_,n') _ action -> let len = n'-n in do
+    AlexToken inp__'@(_,_,_,_,_,n') _ action -> let len = n'-n in do
 #endif /* ALEX_MONAD_BYTESTRING */
         alexSetInput inp__'
         action (ignorePendingBytes inp__) len
@@ -351,7 +408,7 @@ alexGetByte (_,[],(c:s)) = case utf8Encode' c of
 #ifdef ALEX_BASIC_BYTESTRING
 
 -- alexScanTokens :: ByteString.ByteString -> [token]
-alexScanTokens str = go (AlexInput '\n' str 0)
+alexScanTokens str = go (AlexInput '\n' 0 0 str 0)
   where go inp__ =
           case alexScan inp__ 0 of
                 AlexEOF -> []
@@ -366,7 +423,7 @@ alexScanTokens str = go (AlexInput '\n' str 0)
 #ifdef ALEX_STRICT_BYTESTRING
 
 -- alexScanTokens :: ByteString.ByteString -> [token]
-alexScanTokens str = go (AlexInput '\n' str 0)
+alexScanTokens str = go (AlexInput '\n' 0 0 str 0)
   where go inp__ =
           case alexScan inp__ 0 of
                 AlexEOF -> []
@@ -401,13 +458,13 @@ alexScanTokens str0 = go (alexStartPos,'\n',[],str0)
 
 #ifdef ALEX_POSN_BYTESTRING
 --alexScanTokens :: ByteString.ByteString -> [token]
-alexScanTokens str0 = go (alexStartPos,'\n',str0,0)
-  where go inp__@(pos,_,str,n) =
+alexScanTokens str0 = go (alexStartPos,'\n',0,0,str0,0)
+  where go inp__@(pos,_,_,_,str,n) =
           case alexScan inp__ 0 of
                 AlexEOF -> []
-                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexError ((AlexPn _ line column),_,_,_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
                 AlexSkip  inp__' _len       -> go inp__'
-                AlexToken inp__'@(_,_,_,n') _ act ->
+                AlexToken inp__'@(_,_,_,_,_,n') _ act ->
                   act pos (ByteString.take (n'-n) str) : go inp__'
 #endif
 
