@@ -103,8 +103,9 @@ alexGetByte (p,c,cc,bl,cs,n) =
     case ByteString.uncons cs of
         Nothing -> Nothing
         Just (b, cs') ->
-            let (p',c',cc',bl') = flush . shift $ fromIntegral b
-                n'              = n+1
+            let (cc',bl') = shift (fromIntegral b)
+                (p',c')   = flush cc' bl'
+                n'        = n+1
             in p' `seq` cc' `seq` cs' `seq` n' `seq` Just (b, (p', c', cc', bl', cs',n'))
  where
   shift b
@@ -114,10 +115,10 @@ alexGetByte (p,c,cc,bl,cs,n) =
    | b <= 0xef = (b Data.Bits..&. 0x0f,2)
    | otherwise = (b Data.Bits..&. 0x07,3)
 
-  flush (cc',0)   = let c' = Data.Char.chr cc'
+  flush cc'  0    = let c' = Data.Char.chr cc'
                         p' = alexMove p c'
-                    in (p',c',0,0)
-  flush (cc',bl') = (p,c,cc',bl')
+                    in (p',c')
+  flush _cc' _bl' = (p,c)
 #endif
 
 #ifdef ALEX_BASIC_BYTESTRING
@@ -134,7 +135,8 @@ alexGetByte (AlexInput {alexChar=pc,alexCurChar=cc,alexBytesLeft=bl,alexStr=cs,a
     case ByteString.uncons cs of
         Nothing -> Nothing
         Just (c, rest) ->
-            let (pc',cc',bl') = flush . shift $ fromIntegral c
+            let (cc',bl') = shift (fromIntegral c)
+                pc'       = flush cc' bl'
             in Just (c, AlexInput {
                 alexChar = pc',
                 alexCurChar = cc',
@@ -149,9 +151,8 @@ alexGetByte (AlexInput {alexChar=pc,alexCurChar=cc,alexBytesLeft=bl,alexStr=cs,a
    | b <= 0xef = (b Data.Bits..&. 0x0f,2)
    | otherwise = (b Data.Bits..&. 0x07,3)
 
-  flush (cc',0)   = let c' = Data.Char.chr cc'
-                    in (c',0,0)
-  flush (cc',bl') = (pc,cc',bl')
+  flush cc'  0    = Data.Char.chr cc'
+  flush _cc' _bl' = pc
 #endif
 
 #ifdef ALEX_STRICT_BYTESTRING
@@ -168,7 +169,8 @@ alexGetByte (AlexInput {alexChar=pc,alexCurChar=cc,alexBytesLeft=bl,alexStr=cs,a
     case ByteString.uncons cs of
         Nothing -> Nothing
         Just (c, rest) ->
-            let (pc',cc',bl') = flush . shift $ fromIntegral c
+            let (cc',bl') = shift (fromIntegral c)
+                pc'       = flush cc' bl'
             in Just (c, AlexInput {
                 alexChar = pc',
                 alexCurChar = cc',
@@ -183,9 +185,8 @@ alexGetByte (AlexInput {alexChar=pc,alexCurChar=cc,alexBytesLeft=bl,alexStr=cs,a
    | b <= 0xef = (b Data.Bits..&. 0x0f,2)
    | otherwise = (b Data.Bits..&. 0x07,3)
 
-  flush (cc',0)   = let c' = Data.Char.chr cc'
-                    in (c',0,0)
-  flush (cc',bl') = (pc,cc',bl')
+  flush cc'  0    = Data.Char.chr cc'
+  flush _cc' _bl' = pc
 #endif
 
 -- -----------------------------------------------------------------------------
