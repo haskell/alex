@@ -165,13 +165,13 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
       case fromIntegral c of { IBOX(ord_c) ->
         let
 ALEX_IF_GHC_GT_901
-                base   = extendInt32# (alexIndexInt32OffAddr alex_base s)
+                base   = int32ToInt# (alexIndexInt32OffAddr alex_base s)
                 offset = PLUS(base,ord_c)
-                check  = extendInt16# (alexIndexInt16OffAddr alex_check offset)
+                check  = int16ToInt# (alexIndexInt16OffAddr alex_check offset)
 
                 new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
-                          then extendInt16# (alexIndexInt16OffAddr alex_table offset)
-                          else extendInt16# (alexIndexInt16OffAddr alex_deflt s)
+                          then int16ToInt# (alexIndexInt16OffAddr alex_table offset)
+                          else int16ToInt# (alexIndexInt16OffAddr alex_deflt s)
 ALEX_ELSE
                 base   = alexIndexInt32OffAddr alex_base s
                 offset = PLUS(base,ord_c)
