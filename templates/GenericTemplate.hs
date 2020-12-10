@@ -12,6 +12,7 @@
 #define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
 #define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
 #define ALEX_IF_GHC_GT_706 #if __GLASGOW_HASKELL__ > 706
+#define ALEX_IF_GHC_GT_901 #if __GLASGOW_HASKELL__ > 901
 #define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
 #define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
 #define ALEX_ELSE #else
@@ -163,6 +164,15 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
 #endif
       case fromIntegral c of { IBOX(ord_c) ->
         let
+ALEX_IF_GHC_GT_901
+                base   = int32ToInt# (alexIndexInt32OffAddr alex_base s)
+                offset = PLUS(base,ord_c)
+                check  = int16ToInt# (alexIndexInt16OffAddr alex_check offset)
+
+                new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
+                          then int16ToInt# (alexIndexInt16OffAddr alex_table offset)
+                          else int16ToInt# (alexIndexInt16OffAddr alex_deflt s)
+ALEX_ELSE
                 base   = alexIndexInt32OffAddr alex_base s
                 offset = PLUS(base,ord_c)
                 check  = alexIndexInt16OffAddr alex_check offset
@@ -170,6 +180,7 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
                 new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
                           then alexIndexInt16OffAddr alex_table offset
                           else alexIndexInt16OffAddr alex_deflt s
+ALEX_ENDIF
         in
         case new_s of
             ILIT(-1) -> (new_acc, input__)
