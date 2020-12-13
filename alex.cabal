@@ -21,7 +21,7 @@ description:
 category: Development
 build-type: Simple
 
--- Keep the contents of `tested-with` in sync with `env` in `.travis.yml`.
+-- Keep the contents of `tested-with` in sync with `.github/workflows/haskell.yml`.
 tested-with:
         GHC == 7.0.4
         GHC == 7.4.2

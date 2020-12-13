@@ -1,0 +1,59 @@
+name: github-action
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        # Keep the list of tested GHC versions in sync with `tested-with` in
+        # `alex.cabal`.
+        ghc:
+          - '7.0.4'
+          - '7.4.2'
+          - '7.6.3'
+          - '7.8.4'
+          - '7.10.3'
+          - '8.0.2'
+          - '8.2.2'
+          - '8.4.4'
+          - '8.6.5'
+          - '8.8.3'
+          - '8.10.1'
+        os: ['ubuntu-latest', 'macos-latest']
+    runs-on: ${{ matrix.os }}
+
+    name: GHC ${{ matrix.ghc }} on ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-haskell@v1
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: lastest
+    - name: Cache
+      uses: actions/cache@v1
+      env:
+        cache-name: cache-cabal
+      with:
+        path: ~/.cabal
+        key: ${{ runner.os }}-${{ matrix.ghc }}-build-${{ env.cache-name }}-${{ hashFiles('**/*.cabal') }}-${{ hashFiles('**/cabal.project') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.ghc }}-build-${{ env.cache-name }}-
+          ${{ runner.os }}-${{ matrix.ghc }}-build-
+          ${{ runner.os }}-${{ matrix.ghc }}-
+          ${{ runner.os }}
+    - name: Install tools for boot
+      # hvr's PPA is already added.
+      run: |
+        sudo apt-get install alex-3.1.7 happy-1.19.5
+        export PATH=/opt/alex/3.1.7/bin:/opt/happy/1.19.5/bin:$PATH
+    - name: Install dependencies
+      run: |
+        cabal update
+        cabal build --only-dependencies --enable-tests --enable-benchmarks
+    - name: Make sdist
+      run: make sdist
+    - name: Run tests
+      run: make sdist-test-only
+    #- name: Build Docs
+    #  run: cabal haddock
