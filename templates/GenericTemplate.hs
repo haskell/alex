@@ -58,9 +58,14 @@ uncheckedShiftL# = shiftL#
 ALEX_ENDIF
 
 {-# INLINE alexIndexInt16OffAddr #-}
+alexIndexInt16OffAddr :: AlexAddr -> Int# -> Int#
 alexIndexInt16OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
+ALEX_IF_GHC_GT_901
   narrow16Int# i
+ALEX_ELSE
+  int16ToInt# i
+ALEX_ENDIF
   where
         i    = word2Int# ((high `uncheckedShiftL#` 8#) `or#` low)
         high = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
@@ -75,9 +80,14 @@ alexIndexInt16OffAddr arr off = arr ! off
 
 #ifdef ALEX_GHC
 {-# INLINE alexIndexInt32OffAddr #-}
+alexIndexInt32OffAddr :: AlexAddr -> Int# -> Int#
 alexIndexInt32OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
+ALEX_IF_GHC_GT_901
   narrow32Int# i
+ALEX_ELSE
+  int32ToInt# i
+ALEX_ENDIF
   where
    i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
                      (b2 `uncheckedShiftL#` 16#) `or#`
@@ -164,15 +174,6 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
 #endif
       case fromIntegral c of { IBOX(ord_c) ->
         let
-ALEX_IF_GHC_GT_901
-                base   = int32ToInt# (alexIndexInt32OffAddr alex_base s)
-                offset = PLUS(base,ord_c)
-                check  = int16ToInt# (alexIndexInt16OffAddr alex_check offset)
-
-                new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
-                          then int16ToInt# (alexIndexInt16OffAddr alex_table offset)
-                          else int16ToInt# (alexIndexInt16OffAddr alex_deflt s)
-ALEX_ELSE
                 base   = alexIndexInt32OffAddr alex_base s
                 offset = PLUS(base,ord_c)
                 check  = alexIndexInt16OffAddr alex_check offset
@@ -180,7 +181,6 @@ ALEX_ELSE
                 new_s = if GTE(offset,ILIT(0)) && EQ(check,ord_c)
                           then alexIndexInt16OffAddr alex_table offset
                           else alexIndexInt16OffAddr alex_deflt s
-ALEX_ENDIF
         in
         case new_s of
             ILIT(-1) -> (new_acc, input__)
