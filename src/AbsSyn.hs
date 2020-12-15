@@ -324,9 +324,9 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str)
  where
   (new_tokens, decls) = unzip (zipWith f (scannerTokens scanner) act_names)
 
-  f r@RECtx{ reCtxCode = Just code } name
+  f r@(RECtx{ reCtxCode = Just code }) name
         = (r{reCtxCode = Just name}, Just (mkDecl name code))
-  f r@RECtx{ reCtxCode = Nothing } _
+  f r@(RECtx{ reCtxCode = Nothing }) _
         = (r{reCtxCode = Nothing}, Nothing)
 
   gscanActionType res =
