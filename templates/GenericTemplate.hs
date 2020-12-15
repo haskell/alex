@@ -12,6 +12,7 @@
 #define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
 #define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
 #define ALEX_IF_GHC_GT_706 #if __GLASGOW_HASKELL__ > 706
+#define ALEX_IF_GHC_GT_901 #if __GLASGOW_HASKELL__ > 901
 #define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
 #define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
 #define ALEX_ELSE #else
@@ -57,9 +58,14 @@ uncheckedShiftL# = shiftL#
 ALEX_ENDIF
 
 {-# INLINE alexIndexInt16OffAddr #-}
+alexIndexInt16OffAddr :: AlexAddr -> Int# -> Int#
 alexIndexInt16OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
+ALEX_IF_GHC_GT_901
   narrow16Int# i
+ALEX_ELSE
+  int16ToInt# i
+ALEX_ENDIF
   where
         i    = word2Int# ((high `uncheckedShiftL#` 8#) `or#` low)
         high = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
@@ -74,9 +80,14 @@ alexIndexInt16OffAddr arr off = arr ! off
 
 #ifdef ALEX_GHC
 {-# INLINE alexIndexInt32OffAddr #-}
+alexIndexInt32OffAddr :: AlexAddr -> Int# -> Int#
 alexIndexInt32OffAddr (AlexA# arr) off =
 ALEX_IF_BIGENDIAN
+ALEX_IF_GHC_GT_901
   narrow32Int# i
+ALEX_ELSE
+  int32ToInt# i
+ALEX_ENDIF
   where
    i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
                      (b2 `uncheckedShiftL#` 16#) `or#`
