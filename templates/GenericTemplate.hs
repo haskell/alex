@@ -12,7 +12,7 @@
 #define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
 #define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
 #define ALEX_IF_GHC_GT_706 #if __GLASGOW_HASKELL__ > 706
-#define ALEX_IF_GHC_GT_901 #if __GLASGOW_HASKELL__ > 901
+#define ALEX_IF_GHC_GE_901 #if __GLASGOW_HASKELL__ >= 901
 #define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
 #define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
 #define ALEX_ELSE #else
@@ -68,7 +68,7 @@ ALEX_IF_BIGENDIAN
         low  = int2Word# (ord# (indexCharOffAddr# arr off'))
         off' = off *# 2#
 ALEX_ELSE
-ALEX_IF_GHC_GT_901
+ALEX_IF_GHC_GE_901
   int16ToInt#
 ALEX_ENDIF
     (indexInt16OffAddr# arr off)
@@ -93,7 +93,7 @@ ALEX_IF_BIGENDIAN
    b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
    off' = off *# 4#
 ALEX_ELSE
-ALEX_IF_GHC_GT_901
+ALEX_IF_GHC_GE_901
   int32ToInt#
 ALEX_ENDIF
     (indexInt32OffAddr# arr off)
