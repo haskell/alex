@@ -1,4 +1,4 @@
-cabal-version: >= 1.8
+cabal-version: >= 1.10
 name: alex
 version: 3.2.6
 -- don't forget updating changelog.md!
@@ -115,8 +115,12 @@ executable alex
 
   build-depends: base < 5
 
-  extensions: CPP
+  default-language: Haskell98
+  default-extensions: CPP
+  other-extensions: MagicHash
+
   ghc-options: -Wall -rtsopts
+
   other-modules:
         AbsSyn
         CharSet
@@ -145,5 +149,7 @@ test-suite tests
   main-is: test.hs
   -- This line is important as it ensures that the local `exe:alex` component declared above is built before the test-suite component is invoked, as well as making sure that `alex` is made available on $PATH and `$alex_datadir` is set accordingly before invoking `test.hs`
   build-tools: alex
+
+  default-language: Haskell98
 
   build-depends: base, process
