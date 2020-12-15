@@ -36,9 +36,9 @@ import qualified Data.List as List
 -- end;
 
 minimizeDFA :: forall a. Ord a => DFA Int a -> DFA Int a
-minimizeDFA  dfa@DFA { dfa_start_states = starts,
-                       dfa_states       = statemap
-                     }
+minimizeDFA  dfa@(DFA { dfa_start_states = starts,
+                        dfa_states       = statemap
+                      })
   = DFA { dfa_start_states = starts,
           dfa_states       = Map.fromList states }
   where

@@ -2,15 +2,15 @@
 
  * Support for the GHC 9.2.
 
-   The array access primops now read/write with the fixed-sized numeric
-   type corresponding to the width of the data accessed. Additionally,
-   the primops to convert to and from fixed-sized numeric types have
-   been given new names.
+   The array access primops now use the fixed-sized numeric types
+   corresponding to the width of the data accessed. Additionally, the
+   primops to convert to and from fixed-sized numeric types have been
+   given new names.
 
-   9.2 isn't cut yet, so these changes are somewhat speculative, but
-   unfortunately GHC must used a released version of Alex (and Happy) at
-   all times until further changes have been made, so we must make the
-   release to actually implement these changes in GHC.
+   9.2 isn't cut yet, so these changes are somewhat speculative.
+   Unfortunately, GHC must used a released version of Alex (and Happy)
+   at all times until further changes have been made, so we must make
+   the release to actually implement these changes in GHC.
 
    If the final GHC 9.2 ends up being different, this release will be
    marked broken to make it less likely people use it by accident.
