@@ -1,3 +1,16 @@
+## Unreleased
+
+ * Allow arbitary repetitions in regexps.
+   Previously, the `r{n,m}` and related forms were restricted to single
+   digit numbers `n` and `m`.
+
+ * DFA minimization used to crash on tokens of the form `c*` which
+   produce automata with only accepting states.  Considering the empty
+   set of non-accepting states as an equivalence class caused
+   minimization to crash with exception.
+
+ * A number of bug fixes and clearer diagnostics.
+
 ## Changes in 3.2.6:
 
  * Support for the GHC 9.2.
