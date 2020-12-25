@@ -91,7 +91,6 @@ extra-source-files:
         examples/words.x
         examples/words_monad.x
         examples/words_posn.x
-        src/Scan.x.boot
         src/ghc_hooks.c
         templates/GenericTemplate.hs
         templates/wrappers.hs
@@ -124,6 +123,11 @@ extra-source-files:
         tests/issue_119.x
         tests/issue_141.x
 
+flag bootstrap
+  description: Optimize the implementation of happy using a pre-built alex
+  manual: True
+  default: False
+
 source-repository head
     type:     git
     location: https://github.com/simonmar/alex.git
@@ -136,6 +140,9 @@ executable alex
                , array
                , containers
                , directory
+               -- min bounds for Except and ExceptT
+               , transformers >=0.4 && <0.6
+               , mtl >= 2.2.1
 
   build-tools: happy
 
@@ -158,6 +165,7 @@ executable alex
         Paths_alex
         Parser
         ParseMonad
+        ParseMonad.Class
         Scan
         Set
         Sort
@@ -168,6 +176,20 @@ executable alex
         Data.Ranged.Boundaries
         Data.Ranged.RangedSet
         Data.Ranged.Ranges
+
+  if flag(bootstrap)
+    -- TODO put this back when Cabal can use it's qualified goals to better
+    -- understand bootstrapping, see
+    -- https://github.com/haskell/cabal/issues/7189
+    --build-tools: alex
+    cpp-options: -DALEX_BOOTSTRAP
+    other-modules:
+      ParseMonad.Bootstrapped
+      Scan.Bootstrapped
+  else
+    other-modules:
+      ParseMonad.Oracle
+      Scan.Oracle
 
 test-suite tests
   type: exitcode-stdio-1.0

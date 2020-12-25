@@ -18,8 +18,6 @@ sdist ::
 		echo "Error: Tree is not clean"; \
 		exit 1; \
 	fi
-	$(ALEX) $(ALEX_OPTS) src/Scan.x -o src/Scan.hs
-	mv src/Scan.x src/Scan.x.boot
 	$(CABAL) v2-run gen-alex-sdist
 	$(CABAL) v2-sdist
 	@if [ ! -f "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" ]; then \
@@ -40,7 +38,14 @@ sdist-test-only ::
 	rm -rf "${SDIST_DIR}/alex-$(ALEX_VER)/"
 	tar -xf "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" -C ${SDIST_DIR}/
 	echo "packages: ." > "${SDIST_DIR}/alex-$(ALEX_VER)/cabal.project"
-	cd "${SDIST_DIR}/alex-$(ALEX_VER)/" && cabal v2-test --enable-tests all
+	echo "tests: True" >> "${SDIST_DIR}/alex-$(ALEX_VER)/cabal.project"
+	cd "${SDIST_DIR}/alex-$(ALEX_VER)/" \
+		&& cabal v2-build all --flag -bootstrap \
+		&& cabal v2-install --flag -bootstrap --installdir="./bootstrap-root" \
+		&& cabal v2-test all -j --flag -bootstrap \
+		&& export PATH=./bootstrap-root:$$PATH \
+		&& cabal v2-build all --flag +bootstrap \
+		&& cabal v2-test all -j --flag +bootstrap
 	@echo ""
 	@echo "Success! ${SDIST_DIR}/alex-$(ALEX_VER).tar.gz is ready for distribution!"
 	@echo ""
