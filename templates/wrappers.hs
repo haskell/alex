@@ -179,7 +179,8 @@ data AlexState = AlexState {
         alex_inp :: ByteString.ByteString,      -- the current input
         alex_chr :: !Char,      -- the character before the input
 #endif /* ALEX_MONAD_BYTESTRING */
-        alex_scd :: !Int        -- the current startcode
+        alex_scd :: !Int,        -- the current startcode
+        alex_errs :: [String]   -- lexical errors so far
 #ifdef ALEX_MONAD_USER_STATE
       , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
 #endif
@@ -199,6 +200,7 @@ runAlex input__ (Alex f)
                         alex_pos = alexStartPos,
                         alex_inp = input__,
                         alex_chr = '\n',
+                        alex_errs = [],
 #ifdef ALEX_MONAD_USER_STATE
                         alex_ust = alexInitUserState,
 #endif
@@ -252,6 +254,15 @@ alexSetInput (pos,c,inp__,bpos)
 alexError :: String -> Alex a
 alexError message = Alex $ const $ Left message
 
+alexPushError :: String -> Alex ()
+alexPushError message = Alex $ \s@AlexState{alex_errs=errs} -> Right (s{ alex_errs=message:errs }, ())
+
+-- Use this function for returning all lexical errors that have occurred
+alexThrowErrors :: Alex ()
+alexThrowErrors = Alex $ \s@AlexState{alex_errs=errs} -> case errs of
+  [] -> Right (s, ())
+  _ -> Left $ init $ concatMap (++ "\n") $ reverse errs
+
 alexGetStartCode :: Alex Int
 alexGetStartCode = Alex $ \s@AlexState{alex_scd=sc} -> Right (s, sc)
 
@@ -274,8 +285,29 @@ alexMonadScan = do
 #endif /* ALEX_MONAD_BYTESTRING */
   sc <- alexGetStartCode
   case alexScan inp__ sc of
-    AlexEOF -> alexEOF
-    AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+    AlexEOF -> do
+      alexThrowErrors
+      alexEOF
+
+#if defined(ALEX_BASIC)
+    AlexError (p@(AlexPn _ line column), x, s) -> do
+#elif !defined(ALEX_MONAD_BYTESTRING)
+    AlexError (p@(AlexPn _ line column),x,y,s) -> do
+#else
+    AlexError (p@(AlexPn _ line column), x, s, y) -> do
+#endif
+
+      alexPushError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+
+#if defined(ALEX_BASIC)
+      alexSetInput (p, x, tail s)
+#elif !defined(ALEX_MONAD_BYTESTRING)
+      alexSetInput (p, x, y, tail s)
+#else
+      alexSetInput (p, x, ByteString.tail s, y)
+#endif
+
+      alexMonadScan
     AlexSkip  inp__' _len -> do
         alexSetInput inp__'
         alexMonadScan
