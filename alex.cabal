@@ -91,7 +91,6 @@ extra-source-files:
         examples/words.x
         examples/words_monad.x
         examples/words_posn.x
-        src/Parser.y.boot
         src/Scan.x.boot
         src/ghc_hooks.c
         templates/GenericTemplate.hs
@@ -137,6 +136,8 @@ executable alex
                , array
                , containers
                , directory
+
+  build-tools: happy
 
   default-language: Haskell98
   default-extensions: CPP
