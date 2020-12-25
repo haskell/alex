@@ -129,19 +129,14 @@ source-repository head
     type:     git
     location: https://github.com/simonmar/alex.git
 
-flag small_base
-  description: Choose the new smaller, split-up base package.
-
 executable alex
   hs-source-dirs: src
   main-is: Main.hs
 
-  if flag(small_base)
-    build-depends: base >= 2.1, array, containers, directory
-  else
-    build-depends: base >= 1.0
-
-  build-depends: base < 5
+  build-depends: base >= 2.1 && < 5
+               , array
+               , containers
+               , directory
 
   default-language: Haskell98
   default-extensions: CPP
