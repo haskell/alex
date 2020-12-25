@@ -161,6 +161,7 @@ executable alex
         Scan
         Set
         Sort
+        Token
         Util
         UTF8
         Data.Ranged

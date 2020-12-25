@@ -12,6 +12,7 @@
 module Parser ( parse, P ) where
 import AbsSyn
 import Scan
+import Token (Token (..), Tkn (..), tokPosn)
 import CharSet
 import ParseMonad hiding ( StartCode )
 
