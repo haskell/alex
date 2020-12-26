@@ -12,7 +12,7 @@ ALEX=../dist/build/alex/alex
 endif
 
 # NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
-HC=ghc
+HC = ghc
 
 # Some GHC warnings are only available from a certain version on
 # Get the GHC version
@@ -101,5 +101,3 @@ interact:
 
 debug :
 	@echo HC_OPTS=$(HC_OPTS)
-
-# EOF
