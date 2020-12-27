@@ -18,13 +18,12 @@ sdist ::
 		echo "Error: Tree is not clean"; \
 		exit 1; \
 	fi
-	rm -rf dist/
 	$(HAPPY) $(HAPPY_OPTS) src/Parser.y -o src/Parser.hs
 	$(ALEX) $(ALEX_OPTS) src/Scan.x -o src/Scan.hs
 	mv src/Parser.y src/Parser.y.boot
 	mv src/Scan.x src/Scan.x.boot
-	$(CABAL) new-run gen-alex-sdist
-	$(CABAL) new-sdist
+	$(CABAL) v2-run gen-alex-sdist
+	$(CABAL) v2-sdist
 	@if [ ! -f "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" ]; then \
 		echo "Error: source tarball not found: dist/alex-$(ALEX_VER).tar.gz"; \
 		exit 1; \
@@ -43,7 +42,7 @@ sdist-test-only ::
 	rm -rf "${SDIST_DIR}/alex-$(ALEX_VER)/"
 	tar -xf "${SDIST_DIR}/alex-$(ALEX_VER).tar.gz" -C ${SDIST_DIR}/
 	echo "packages: ." > "${SDIST_DIR}/alex-$(ALEX_VER)/cabal.project"
-	cd "${SDIST_DIR}/alex-$(ALEX_VER)/" && cabal new-test --enable-tests all
+	cd "${SDIST_DIR}/alex-$(ALEX_VER)/" && cabal v2-test --enable-tests all
 	@echo ""
 	@echo "Success! ${SDIST_DIR}/alex-$(ALEX_VER).tar.gz is ready for distribution!"
 	@echo ""
