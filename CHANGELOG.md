@@ -1,5 +1,9 @@
 ## Unreleased
 
+ * No longer include pre-generated Parser.hs in the Hackage upload, as
+   Happy's new ability to bootstrap from parser combinators is a better
+   way to make building easy and less trustful.
+
  * Allow arbitary repetitions in regexps.
    Previously, the `r{n,m}` and related forms were restricted to single
    digit numbers `n` and `m`.

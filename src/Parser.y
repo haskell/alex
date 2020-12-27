@@ -12,9 +12,11 @@
 module Parser ( parse, P ) where
 import AbsSyn
 import Scan
+import Token (Token (..), Tkn (..), tokPosn)
 import CharSet
 import ParseMonad hiding ( StartCode )
 
+import Control.Monad.Trans (lift)
 import Data.Char
 --import Debug.Trace
 }
@@ -228,6 +230,9 @@ happyError = failP "parse error"
 
 -- -----------------------------------------------------------------------------
 -- Utils
+
+lexer :: (Token -> P a) -> P a
+lexer cont = lift lexToken >>= cont
 
 digit c = ord c - ord '0'
 

@@ -18,9 +18,8 @@ import Info
 import Map ( Map )
 import qualified Map hiding ( Map )
 import Output
-import ParseMonad ( runP, Warning(..) )
+import ParseMonad ( runP, AlexPosn(..), Warning(..) )
 import Parser
-import Scan
 import Util ( hline )
 import Paths_alex ( version, getDataDir )
 
