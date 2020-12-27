@@ -9,6 +9,9 @@
    set of non-accepting states as an equivalence class caused
    minimization to crash with exception.
 
+ * The `small_base` flag is removed.  Extremely old GHCs will no longer
+   build.
+
  * A number of bug fixes and clearer diagnostics.
 
 ## Changes in 3.2.6:
