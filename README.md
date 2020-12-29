@@ -50,14 +50,7 @@ they are in your `$PATH` for the next steps!).
 
 ### Variant A
 
-First you need to generate the pre-processed templates via
-
-    $ cabal new-run gen-alex-sdist
-
-(otherwise `cabal install` will complain about
-"`data/AlexTemplate: copyFile: does not exist (No such file or directory)`")
-
-And then you can install `alex` simply by invoking
+You can install `alex` simply by invoking
 
     $ cabal install
 
@@ -67,8 +60,7 @@ from inside the Git folder.
 
 Alternatively, you can use the `Makefile` which automates the steps of
 producing a self-contained pre-bootstrapped source distribution with
-pre-generated lexer/scanners (and which also performs the `cabal
-new-run gen-alex-sdist` pre-preprocessing step):
+pre-generated lexer/scanners:
 
     $ make sdist
     $ cabal install dist/alex-*.tar.gz

@@ -8,71 +8,58 @@
 -- INTERNALS and main scanner engine
 
 #ifdef ALEX_GHC
-#undef __GLASGOW_HASKELL__
-#define ALEX_IF_GHC_GT_500 #if __GLASGOW_HASKELL__ > 500
-#define ALEX_IF_GHC_LT_503 #if __GLASGOW_HASKELL__ < 503
-#define ALEX_IF_GHC_GT_706 #if __GLASGOW_HASKELL__ > 706
-#define ALEX_IF_GHC_GE_901 #if __GLASGOW_HASKELL__ >= 901
-#define ALEX_ELIF_GHC_500 #elif __GLASGOW_HASKELL__ == 500
-#define ALEX_IF_BIGENDIAN #ifdef WORDS_BIGENDIAN
-#define ALEX_ELSE #else
-#define ALEX_ENDIF #endif
-#define ALEX_DEFINE #define
-#endif
-
-#ifdef ALEX_GHC
-#define ILIT(n) n#
-#define IBOX(n) (I# (n))
-#define FAST_INT Int#
+#  define ILIT(n) n#
+#  define IBOX(n) (I# (n))
+#  define FAST_INT Int#
 -- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
-ALEX_IF_GHC_GT_706
-ALEX_DEFINE GTE(n,m) (tagToEnum# (n >=# m))
-ALEX_DEFINE EQ(n,m) (tagToEnum# (n ==# m))
-ALEX_ELSE
-ALEX_DEFINE GTE(n,m) (n >=# m)
-ALEX_DEFINE EQ(n,m) (n ==# m)
-ALEX_ENDIF
-#define PLUS(n,m) (n +# m)
-#define MINUS(n,m) (n -# m)
-#define TIMES(n,m) (n *# m)
-#define NEGATE(n) (negateInt# (n))
-#define IF_GHC(x) (x)
+#  if __GLASGOW_HASKELL__ > 706
+#    define GTE(n,m) (tagToEnum# (n >=# m))
+#    define EQ(n,m) (tagToEnum# (n ==# m))
+#  else
+#    define GTE(n,m) (n >=# m)
+#    define EQ(n,m) (n ==# m)
+#  endif
+#  define PLUS(n,m) (n +# m)
+#  define MINUS(n,m) (n -# m)
+#  define TIMES(n,m) (n *# m)
+#  define NEGATE(n) (negateInt# (n))
+#  define IF_GHC(x) (x)
 #else
-#define ILIT(n) (n)
-#define IBOX(n) (n)
-#define FAST_INT Int
-#define GTE(n,m) (n >= m)
-#define EQ(n,m) (n == m)
-#define PLUS(n,m) (n + m)
-#define MINUS(n,m) (n - m)
-#define TIMES(n,m) (n * m)
-#define NEGATE(n) (negate (n))
-#define IF_GHC(x)
+#  define ILIT(n) (n)
+#  define IBOX(n) (n)
+#  define FAST_INT Int
+#  define GTE(n,m) (n >= m)
+#  define EQ(n,m) (n == m)
+#  define PLUS(n,m) (n + m)
+#  define MINUS(n,m) (n - m)
+#  define TIMES(n,m) (n * m)
+#  define NEGATE(n) (negate (n))
+#  define IF_GHC(x)
 #endif
 
 #ifdef ALEX_GHC
 data AlexAddr = AlexA# Addr#
 -- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
-ALEX_IF_GHC_LT_503
+#if __GLASGOW_HASKELL__ < 503
 uncheckedShiftL# = shiftL#
-ALEX_ENDIF
+#endif
 
 {-# INLINE alexIndexInt16OffAddr #-}
 alexIndexInt16OffAddr :: AlexAddr -> Int# -> Int#
 alexIndexInt16OffAddr (AlexA# arr) off =
-ALEX_IF_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
   narrow16Int# i
   where
         i    = word2Int# ((high `uncheckedShiftL#` 8#) `or#` low)
         high = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
         low  = int2Word# (ord# (indexCharOffAddr# arr off'))
         off' = off *# 2#
-ALEX_ELSE
-ALEX_IF_GHC_GE_901
+#else
+#if __GLASGOW_HASKELL__ >= 901
   int16ToInt#
-ALEX_ENDIF
+#endif
     (indexInt16OffAddr# arr off)
-ALEX_ENDIF
+#endif
 #else
 alexIndexInt16OffAddr arr off = arr ! off
 #endif
@@ -81,7 +68,7 @@ alexIndexInt16OffAddr arr off = arr ! off
 {-# INLINE alexIndexInt32OffAddr #-}
 alexIndexInt32OffAddr :: AlexAddr -> Int# -> Int#
 alexIndexInt32OffAddr (AlexA# arr) off =
-ALEX_IF_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
   narrow32Int# i
   where
    i    = word2Int# ((b3 `uncheckedShiftL#` 24#) `or#`
@@ -92,24 +79,24 @@ ALEX_IF_BIGENDIAN
    b1   = int2Word# (ord# (indexCharOffAddr# arr (off' +# 1#)))
    b0   = int2Word# (ord# (indexCharOffAddr# arr off'))
    off' = off *# 4#
-ALEX_ELSE
-ALEX_IF_GHC_GE_901
+#else
+#if __GLASGOW_HASKELL__ >= 901
   int32ToInt#
-ALEX_ENDIF
+#endif
     (indexInt32OffAddr# arr off)
-ALEX_ENDIF
+#endif
 #else
 alexIndexInt32OffAddr arr off = arr ! off
 #endif
 
 #ifdef ALEX_GHC
 
-ALEX_IF_GHC_LT_503
+#if __GLASGOW_HASKELL__ < 503
 quickIndex arr i = arr ! i
-ALEX_ELSE
+#else
 -- GHC >= 503, unsafeAt is available from Data.Array.Base.
 quickIndex = unsafeAt
-ALEX_ENDIF
+#endif
 #else
 quickIndex arr i = arr ! i
 #endif

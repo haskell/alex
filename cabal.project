@@ -1,6 +1,2 @@
-
 packages:
   ./
-  ./gen-alex-sdist/
-
-
