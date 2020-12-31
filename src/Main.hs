@@ -33,8 +33,6 @@ import Control.Exception ( bracketOnError )
 import Control.Monad ( when, liftM )
 import Data.Char ( chr )
 import Data.List ( isSuffixOf, nub )
-import qualified Data.List as List
-import Data.Maybe ( isJust, fromJust )
 import Data.Version ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
 import System.Directory ( removeFile )
@@ -177,13 +175,11 @@ alex cli file basename script = do
         (\h -> do hClose h; removeFile o_file)
         $ \out_h -> do
 
-   let   wrapper_name            :: Maybe FilePath
-         scanner2, scanner_final :: Scanner
+   let   scanner2, scanner_final :: Scanner
          scs                     :: [StartCode]
          sc_hdr, actions         :: ShowS
          encodingsScript         :: [Encoding]
 
-         wrapper_name = wrapperFile template_dir scheme
          (scanner2, scs, sc_hdr) = encodeStartCodes scanner1
          (scanner_final, actions) = extractActions scheme scanner2
          encodingsScript = [ e | EncodingDirective e <- directives ]
@@ -194,15 +190,21 @@ alex cli file basename script = do
      _ | null encodingsCli -> dieAlex "conflicting %encoding directives"
        | otherwise -> dieAlex "--latin1 flag conflicts with %encoding directive"
 
-   hPutStr out_h (optsToInject target cli)
+   mapM_ (hPutStrLn out_h) (optsToInject target cli)
    injectCode maybe_header file out_h
 
    hPutStr out_h (importsToInject target cli)
 
    -- add the wrapper, if necessary
-   when (isJust wrapper_name) $
-        do str <- alexReadFile (fromJust wrapper_name)
-           hPutStr out_h str
+   case wrapperCppDefs scheme of
+     Nothing -> return ()
+     Just cppDefs -> do
+       let wrapper_name = template_dir ++ "/AlexWrappers.hs"
+       mapM_ (hPutStrLn out_h)
+         [ unwords ["#define", i, "1"]
+         | i <- cppDefs ]
+       str <- alexReadFile wrapper_name
+       hPutStr out_h str
 
    -- Inject the tab size
    hPutStrLn out_h $ "alex_tab_size :: Int"
@@ -232,9 +234,13 @@ alex cli file basename script = do
    hPutStr out_h (actions "")
 
    -- add the template
-   let template_name = templateFile template_dir target encoding usespreds cli
-   tmplt <- alexReadFile template_name
-   hPutStr out_h tmplt
+   do
+     let cppDefs = templateCppDefs target encoding usespreds cli
+     mapM_ (hPutStrLn out_h)
+       [ unwords ["#define", i, "1"]
+       | i <- cppDefs ]
+     tmplt <- alexReadFile $ template_dir ++ "/AlexTemplate.hs"
+     hPutStr out_h tmplt
 
    hClose out_h
    finish_info
@@ -357,12 +363,13 @@ injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl ("{-# LINE " ++ show ln ++ " \"" ++ filename ++ "\" #-}")
   hPutStrLn hdl code
 
-optsToInject :: Target -> [CLIFlags] -> String
-optsToInject GhcTarget _ = optNoWarnings ++ "{-# LANGUAGE CPP,MagicHash #-}\n"
-optsToInject _         _ = optNoWarnings ++ "{-# LANGUAGE CPP #-}\n"
+optsToInject :: Target -> [CLIFlags] -> [String]
+optsToInject target _ = optNoWarnings : "{-# LANGUAGE CPP #-}" : case target of
+  GhcTarget -> ["{-# LANGUAGE MagicHash #-}"]
+  _         -> []
 
 optNoWarnings :: String
-optNoWarnings = "{-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}\n"
+optNoWarnings = "{-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}"
 
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
@@ -375,7 +382,7 @@ importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
 
 -- CPP is turned on for -fglasogw-exts, so we can use conditional
 -- compilation.  We need to #include "config.h" to get hold of
--- WORDS_BIGENDIAN (see GenericTemplate.hs).
+-- WORDS_BIGENDIAN (see AlexTemplate.hs).
 
 always_imports :: String
 always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
@@ -413,33 +420,14 @@ templateDir def cli
       [] -> def
       ds -> return (last ds)
 
--- Keep this function in sync with its twin in gen-alex-sdist/Main.hs.
-templateFileName :: Bool -> Bool -> Bool -> Bool -> FilePath
-templateFileName ghc latin1 nopred debug =
-  List.intercalate "-" $ concat
-    [ [ "AlexTemplate"    ]
-    , [ "ghc"    | ghc    ]
-    , [ "latin1" | latin1 ]
-    , [ "nopred" | nopred ]
-    , [ "debug"  | debug  ]
+templateCppDefs :: Target -> Encoding -> UsesPreds -> [CLIFlags] -> [String]
+templateCppDefs target encoding usespreds cli =
+  map ("ALEX_" ++) $ concat
+    [ [ "GHC"    | target == GhcTarget ]
+    , [ "LATIN1" | encoding == Latin1  ]
+    , [ "NOPRED" | usespreds == DoesntUsePreds  ]
+    , [ "DEBUG"  | OptDebugParser `elem` cli  ]
     ]
-
-templateFile :: FilePath -> Target -> Encoding -> UsesPreds -> [CLIFlags] -> FilePath
-templateFile dir target encoding usespreds cli = concat
-  [ dir
-  , "/"
-  , templateFileName
-      (target == GhcTarget)
-      (encoding == Latin1)
-      (usespreds == DoesntUsePreds)
-      (OptDebugParser `elem` cli)
-  ]
-
-wrapperFile :: FilePath -> Scheme -> Maybe FilePath
-wrapperFile dir scheme =
-  do
-    f <- wrapperName scheme
-    return (dir ++ "/AlexWrapper-" ++ f)
 
 infoStart :: FilePath -> FilePath -> IO (String -> IO (), IO ())
 infoStart x_file info_file = do

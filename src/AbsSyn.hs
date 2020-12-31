@@ -11,7 +11,7 @@
 
 module AbsSyn (
   Code, Directive(..), Scheme(..),
-  wrapperName,
+  wrapperCppDefs,
   Scanner(..),
   RECtx(..),
   RExp(..), nullable,
@@ -70,22 +70,23 @@ strtype :: Bool -> String
 strtype True = "ByteString.ByteString"
 strtype False = "String"
 
-wrapperName :: Scheme -> Maybe String
-wrapperName Default {} = Nothing
-wrapperName GScan {} = Just "gscan"
-wrapperName Basic { basicStrType = Str } = Just "basic"
-wrapperName Basic { basicStrType = Lazy } = Just "basic-bytestring"
-wrapperName Basic { basicStrType = Strict } = Just "strict-bytestring"
-wrapperName Posn { posnByteString = False } = Just "posn"
-wrapperName Posn { posnByteString = True } = Just "posn-bytestring"
-wrapperName Monad { monadByteString = False,
-                    monadUserState = False } = Just "monad"
-wrapperName Monad { monadByteString = True,
-                    monadUserState = False } = Just "monad-bytestring"
-wrapperName Monad { monadByteString = False,
-                    monadUserState = True } = Just "monadUserState"
-wrapperName Monad { monadByteString = True,
-                    monadUserState = True } = Just "monadUserState-bytestring"
+
+wrapperCppDefs :: Scheme -> Maybe [String]
+wrapperCppDefs Default {} = Nothing
+wrapperCppDefs GScan {} = Just ["ALEX_GSCAN"]
+wrapperCppDefs Basic { basicStrType = Str } = Just ["ALEX_BASIC"]
+wrapperCppDefs Basic { basicStrType = Lazy } = Just ["ALEX_BASIC_BYTESTRING"]
+wrapperCppDefs Basic { basicStrType = Strict } = Just ["ALEX_STRICT_BYTESTRING"]
+wrapperCppDefs Posn { posnByteString = False } = Just ["ALEX_POSN"]
+wrapperCppDefs Posn { posnByteString = True } = Just ["ALEX_POSN_BYTESTRING"]
+wrapperCppDefs Monad { monadByteString = False,
+                       monadUserState = False } = Just ["ALEX_MONAD"]
+wrapperCppDefs Monad { monadByteString = True,
+                       monadUserState = False } = Just ["ALEX_MONAD_BYTESTRING"]
+wrapperCppDefs Monad { monadByteString = False,
+                       monadUserState = True } = Just ["ALEX_MONAD", "ALEX_MONAD_USER_STATE"]
+wrapperCppDefs Monad { monadByteString = True,
+                       monadUserState = True } = Just ["ALEX_MONAD_BYTESTRING", "ALEX_MONAD_USER_STATE"]
 
 -- TODO: update this comment
 --
