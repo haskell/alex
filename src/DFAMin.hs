@@ -25,12 +25,31 @@ import qualified Data.List as List
 --      choose and remove a set A from Q
 --      for each c in ∑ do
 --           let X be the set of states for which a transition on c leads to a state in A
---           for each set Y in P for which X ∩ Y is nonempty do
+--           for each set Y in P for which X ∩ Y is nonempty and Y \ X is nonempty do
 --                replace Y in P by the two sets X ∩ Y and Y \ X
 --                if Y is in Q
 --                     replace Y in Q by the same two sets
 --                else
 --                     add the smaller of the two sets to Q
+--           end;
+--      end;
+-- end;
+
+-- observation : Q is always subset of P
+-- let R = P \ Q. then following algorithm is the equivalent of the Hopcroft's Algorithm
+--
+-- R := {{all nonaccepting states}};
+-- Q := {{all accepting states}};
+-- while (Q is not empty) do
+--      choose and remove a set A from Q
+--      for each c in ∑ do
+--           let X be the set of states for which a transition on c leads to a state in A
+--           for each set Y in R for which X ∩ Y is nonempty and Y \ X is nonempty do
+--                replace Y in R by the greater of the two sets X ∩ Y and X \ Y
+--                add the smaller of the two sets to Q
+--           end;
+--           for each set Y in Q for which X ∩ Y is nonempty and Y \ X is nonempty do
+--                replace Y in Q by the two sets X ∩ Y and X \ Y
 --           end;
 --      end;
 -- end;
@@ -93,7 +112,7 @@ type EquivalenceClass = IntSet
 
 groupEquivStates :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
 groupEquivStates DFA { dfa_states = statemap }
-  = go init_p init_q
+  = go init_r init_q
   where
     accepting, nonaccepting :: Map Int (State Int a)
     (accepting, nonaccepting) = Map.partition acc statemap
@@ -112,57 +131,48 @@ groupEquivStates DFA { dfa_states = statemap }
     accept_groups :: [EquivalenceClass]
     accept_groups = map IS.fromList (Map.elems accept_map)
 
-    init_p, init_q :: [EquivalenceClass]
-    init_p  -- Issue #71: each EquivalenceClass needs to be a non-empty set
-      | IS.null nonaccepting_states = accept_groups
-      | otherwise                   = nonaccepting_states : accept_groups
+    init_r, init_q :: [EquivalenceClass]
+    init_r  -- Issue #71: each EquivalenceClass needs to be a non-empty set
+      | IS.null nonaccepting_states = []
+      | otherwise                   = [nonaccepting_states]
     init_q = accept_groups
 
-    -- map token T to
-    --   a map from state S to the list of states that transition to
-    --   S on token T
-    -- This is a cache of the information needed to compute x below
-    bigmap :: IntMap (IntMap [SNum])
-    bigmap = IM.fromListWith (IM.unionWith (++))
-                [ (i, IM.singleton to [from])
+    -- elements of
+    --   a map from token T to
+    --     a map from state S to the set of states that transition to
+    --     S on token T
+    -- This is a cache of the information needed to compute xs below
+    bigmap :: [IntMap EquivalenceClass]
+    bigmap = IM.elems $ IM.fromListWith (IM.unionWith IS.union)
+                [ (i, IM.singleton to (IS.singleton from))
                 | (from, state) <- Map.toList statemap,
                   (i,to) <- IM.toList (state_out state) ]
 
-    -- incoming I A = the set of states that transition to a state in
-    -- A on token I.
-    incoming :: Int -> IntSet -> IntSet
-    incoming i a = IS.fromList (concat ss)
-       where
-         map1 = IM.findWithDefault IM.empty i bigmap
-         ss = [ IM.findWithDefault [] s map1
-              | s <- IS.toList a ]
+    -- The outer loop: recurse on each set in R and Q
+    go :: [EquivalenceClass] -> [EquivalenceClass] -> [EquivalenceClass]
+    go r [] = r
+    go r (a:q) = uncurry go $ List.foldl' go0 (a:r,q) xs
+      where
+        xs :: [EquivalenceClass]
+        xs = filter (not . IS.null)
+           . map (IS.unions . flip IM.restrictKeys a)
+           $ bigmap
 
-    -- The outer loop: recurse on each set in Q
-    go ::  [EquivalenceClass] -> [EquivalenceClass] -> [EquivalenceClass]
-    go p [] = p
-    go p (a:q) = go1 0 p q
-     where
-       -- recurse on each token (0..255)
-       go1 256 p q = go p q
-       go1 i   p q = go1 (i+1) p' q'
+        go0 (r,q) x = go1 r [] []
           where
-            (p',q') = go2 p [] q
-
-            x = incoming i a
-
-            -- recurse on each set in P
-            go2 []    p' q = (p',q)
-            go2 (y:p) p' q
-              | IS.null i || IS.null d = go2 p (y:p') q
-              | otherwise              = go2 p (i:d:p') q1
+            go1 []    r' q' = (r', go2 q q')
+            go1 (y:r) r' q'
+              | IS.null y1 || IS.null y2 = go1 r (y:r') q'
+              | IS.size y1 <= IS.size y2 = go1 r (y2:r') (y1:q')
+              | otherwise                = go1 r (y1:r') (y2:q')
               where
-                    i = IS.intersection x y
-                    d = IS.difference y x
+                y1 = IS.intersection x y
+                y2 = IS.difference   y x
 
-                    q1 = replaceyin q
-                           where
-                             replaceyin [] =
-                                if IS.size i < IS.size d then [i] else [d]
-                             replaceyin (z:zs)
-                                | z == y    = i : d : zs
-                                | otherwise = z : replaceyin zs
+            go2 []    q' = q'
+            go2 (y:q) q'
+              | IS.null y1 || IS.null y2 = go2 q (y:q')
+              | otherwise                = go2 q (y1:y2:q')
+              where
+                y1 = IS.intersection x y
+                y2 = IS.difference   y x
