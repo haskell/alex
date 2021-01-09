@@ -15,7 +15,7 @@ import qualified Data.IntSet as IS
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import qualified Data.List as List
-
+import Data.Foldable (foldl')
 
 -- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
 
@@ -155,7 +155,7 @@ groupEquivStates DFA { dfa_states = statemap }
       where
         xs :: [EquivalenceClass]
         xs = filter (not . IS.null)
-           . map (IS.unions . flip IM.restrictKeys a)
+           . map (foldl' IS.union IS.empty . flip IM.restrictKeys a)
            $ bigmap
 
         go0 (r,q) x = go1 r [] []
