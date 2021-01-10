@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 
-{-# LANGUAGE CPP                 #-}
 {-# LANGUAGE PatternGuards       #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
@@ -16,13 +15,6 @@ import qualified Data.IntSet as IS
 import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import qualified Data.List as List
-import Data.Foldable (foldl')
-
-#if __GLASGOW_HASKELL__ >= 802
-restrictKeys = IM.restrictKeys
-#else
-restrictKeys m s = IM.intersection m (IM.fromSet (const ()) s)
-#endif
 
 -- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
 
@@ -162,7 +154,7 @@ groupEquivStates DFA { dfa_states = statemap }
       where
         xs :: [EquivalenceClass]
         xs = filter (not . IS.null)
-           . map (foldl' IS.union IS.empty . flip restrictKeys a)
+           . map (\m -> IS.unions  [IM.findWithDefault IS.empty s m | s <- IS.toList a])
            $ bigmap
 
         go0 (r,q) x = go1 r [] []
