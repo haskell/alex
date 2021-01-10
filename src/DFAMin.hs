@@ -21,7 +21,7 @@ import Data.Foldable (foldl')
 #if __GLASGOW_HASKELL__ >= 802
 restrictKeys = IM.restrictKeys
 #else
-restrictKeys m s = IM.filterWithKey (\k _ -> IS.member k s) m
+restrictKeys m s = IM.intersection m (IM.fromSet (const ()) s)
 #endif
 
 -- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
