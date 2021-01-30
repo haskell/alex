@@ -40,7 +40,8 @@ import qualified Data.List as List
 -- R := {{all nonaccepting states}};
 -- Q := {{all accepting states}};
 -- while (Q is not empty) do
---      choose and remove a set A from Q
+--      choose a set A from Q
+--      remove A from Q and add it to R
 --      for each c in ∑ do
 --           let X be the set of states for which a transition on c leads to a state in A
 --           for each set Y in R for which X ∩ Y is nonempty and Y \ X is nonempty do
@@ -154,7 +155,7 @@ groupEquivStates DFA { dfa_states = statemap }
       where
         xs :: [EquivalenceClass]
         xs = filter (not . IS.null)
-           . map (\m -> IS.unions  [IM.findWithDefault IS.empty s m | s <- IS.toList a])
+           . map (\m -> IS.unions [IM.findWithDefault IS.empty s m | s <- IS.toList a])
            $ bigmap
 
         go0 (r,q) x = go1 r [] []
