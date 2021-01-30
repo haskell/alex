@@ -137,13 +137,12 @@ groupEquivStates DFA { dfa_states = statemap }
       | otherwise                   = [nonaccepting_states]
     init_q = accept_groups
 
-    -- elements of
-    --   a map from token T to
-    --     a map from state S to the set of states that transition to
-    --     S on token T
+    -- a map from token T to
+    --   a map from state S to the set of states that transition to
+    --   S on token T
     -- This is a cache of the information needed to compute xs below
-    bigmap :: [IntMap EquivalenceClass]
-    bigmap = IM.elems $ IM.fromListWith (IM.unionWith IS.union)
+    bigmap :: IntMap (IntMap EquivalenceClass)
+    bigmap = IM.fromListWith (IM.unionWith IS.union)
                 [ (i, IM.singleton to (IS.singleton from))
                 | (from, state) <- Map.toList statemap,
                   (i,to) <- IM.toList (state_out state) ]
@@ -156,7 +155,7 @@ groupEquivStates DFA { dfa_states = statemap }
         xs :: [EquivalenceClass]
         xs = filter (not . IS.null)
            . map (\m -> IS.unions [IM.findWithDefault IS.empty s m | s <- IS.toList a])
-           $ bigmap
+           $ IM.elems bigmap
 
         go0 (r,q) x = go1 r [] []
           where
