@@ -163,21 +163,16 @@ groupEquivStates DFA { dfa_states = statemap }
     go r (a:q) = uncurry go $ List.foldl' go0 (a:r,q) xs
       where
         xs :: [EquivalenceClass]
+        xs =
+          [ x
+          | preimageMap <- IM.elems bigmap
 #if MIN_VERSION_containers(0, 6, 0)
-        xs =
-          [ x
-          | preimageMap <- IM.elems bigmap
           , let x = IS.unions (IM.restrictKeys preimageMap a)
-          , not (IS.null x)
-          ]
 #else
-        xs =
-          [ x
-          | preimageMap <- IM.elems bigmap
           , let x = IS.unions [IM.findWithDefault IS.empty s preimageMap | s <- IS.toList a]
+#endif
           , not (IS.null x)
           ]
-#endif
 
         refineWith
           :: IntSet -- preimage set that bisects the input equivalence class
