@@ -17,15 +17,19 @@ import qualified Data.IntMap as IM
 import qualified Data.List as List
 
 -- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
-
+-- X refines Y into Y1 and Y2 means
+--   Y1 := Y ∩ X
+--   Y2 := Y \ X
+--   where both Y1 and Y2 is nonempty
+--
 -- P := {{all accepting states}, {all nonaccepting states}};
 -- Q := {{all accepting states}};
 -- while (Q is not empty) do
 --      choose and remove a set A from Q
 --      for each c in ∑ do
 --           let X be the set of states for which a transition on c leads to a state in A
---           for each set Y in P for which X ∩ Y is nonempty and Y \ X is nonempty do
---                replace Y in P by the two sets X ∩ Y and Y \ X
+--           for each set Y in P for which X refines Y into Y1 and Y2 do
+--                replace Y in P by the two sets Y1 and Y2
 --                if Y is in Q
 --                     replace Y in Q by the same two sets
 --                else
@@ -44,12 +48,12 @@ import qualified Data.List as List
 --      remove A from Q and add it to R
 --      for each c in ∑ do
 --           let X be the set of states for which a transition on c leads to a state in A
---           for each set Y in R for which X ∩ Y is nonempty and Y \ X is nonempty do
---                replace Y in R by the greater of the two sets X ∩ Y and X \ Y
+--           for each set Y in R for which X refines Y into Y1 and Y2 do
+--                replace Y in R by the greater of the two sets Y1 and Y2
 --                add the smaller of the two sets to Q
 --           end;
---           for each set Y in Q for which X ∩ Y is nonempty and Y \ X is nonempty do
---                replace Y in Q by the two sets X ∩ Y and X \ Y
+--           for each set Y in Q for which X refines Y into Y1 and Y2 do
+--                replace Y in Q by the two sets Y1 and Y2
 --           end;
 --      end;
 -- end;
