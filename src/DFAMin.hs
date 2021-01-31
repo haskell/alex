@@ -20,7 +20,7 @@ import qualified Data.List as List
 -- X refines Y into Y1 and Y2 means
 --   Y1 := Y ∩ X
 --   Y2 := Y \ X
---   where both Y1 and Y2 is nonempty
+--   where both Y1 and Y2 are nonempty
 --
 -- P := {{all accepting states}, {all nonaccepting states}};
 -- Q := {{all accepting states}};
