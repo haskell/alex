@@ -157,9 +157,21 @@ groupEquivStates DFA { dfa_states = statemap }
     go r (a:q) = uncurry go $ List.foldl' go0 (a:r,q) xs
       where
         xs :: [EquivalenceClass]
-        xs = filter (not . IS.null)
-           . map (\m -> IS.unions [IM.findWithDefault IS.empty s m | s <- IS.toList a])
-           $ IM.elems bigmap
+#if MIN_VERSION_containers(0, 6, 0)
+        xs =
+          [ x
+          | preimageMap <- IM.elems bigmap
+          , let x = IS.unions (IM.restrictKeys preimageMap a)
+          , not (IS.null x)
+          ]
+#else
+        xs =
+          [ x
+          | preimageMap <- IM.elems bigmap
+          , let x = IS.unions [IM.findWithDefault IS.empty s preimageMap | s <- IS.toList a]
+          , not (IS.null x)
+          ]
+#endif
 
         go0 (r,q) x = go1 r [] []
           where
