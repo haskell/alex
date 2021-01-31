@@ -179,21 +179,28 @@ groupEquivStates DFA { dfa_states = statemap }
           ]
 #endif
 
+        refineWith
+          :: IntSet -- preimage set that bisects the input equivalence class
+          -> IntSet -- initial equivalence class
+          -> Maybe (IntSet, IntSet)
+        refineWith x y =
+          if IS.null y1 || IS.null y2
+            then Nothing
+            else Just (y1, y2)
+          where
+            y1 = IS.intersection y x
+            y2 = IS.difference   y x
+
         go0 (r,q) x = go1 r [] []
           where
             go1 []    r' q' = (r', go2 q q')
-            go1 (y:r) r' q'
-              | IS.null y1 || IS.null y2 = go1 r (y:r') q'
-              | IS.size y1 <= IS.size y2 = go1 r (y2:r') (y1:q')
-              | otherwise                = go1 r (y1:r') (y2:q')
-              where
-                y1 = IS.intersection x y
-                y2 = IS.difference   y x
+            go1 (y:r) r' q' = case refineWith x y of
+              Nothing                       -> go1 r (y:r') q'
+              Just (y1, y2)
+                | IS.size y1 <= IS.size y2  -> go1 r (y2:r') (y1:q')
+                | otherwise                 -> go1 r (y1:r') (y2:q')
 
             go2 []    q' = q'
-            go2 (y:q) q'
-              | IS.null y1 || IS.null y2 = go2 q (y:q')
-              | otherwise                = go2 q (y1:y2:q')
-              where
-                y1 = IS.intersection x y
-                y2 = IS.difference   y x
+            go2 (y:q) q' = case refineWith x y of
+              Nothing       -> go2 q (y:q')
+              Just (y1, y2) -> go2 q (y1:y2:q')
