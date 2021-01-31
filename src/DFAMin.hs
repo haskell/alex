@@ -16,11 +16,11 @@ import Data.IntMap (IntMap)
 import qualified Data.IntMap as IM
 import qualified Data.List as List
 
--- Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
--- X refines Y into Y1 and Y2 means
---   Y1 := Y ∩ X
---   Y2 := Y \ X
---   where both Y1 and Y2 are nonempty
+-- % Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
+-- % X refines Y into Y1 and Y2 means
+-- %  Y1 := Y ∩ X
+-- %  Y2 := Y \ X
+-- %  where both Y1 and Y2 are nonempty
 --
 -- P := {{all accepting states}, {all nonaccepting states}};
 -- Q := {{all accepting states}};
@@ -37,9 +37,11 @@ import qualified Data.List as List
 --           end;
 --      end;
 -- end;
+--
+-- % X is a preimage of A under transition function.
 
--- observation : Q is always subset of P
--- let R = P \ Q. then following algorithm is the equivalent of the Hopcroft's Algorithm
+-- % observation : Q is always subset of P
+-- % let R = P \ Q. then following algorithm is the equivalent of the Hopcroft's Algorithm
 --
 -- R := {{all nonaccepting states}};
 -- Q := {{all accepting states}};
@@ -57,6 +59,10 @@ import qualified Data.List as List
 --           end;
 --      end;
 -- end;
+--
+-- % The second for loop that iterates over R mutates Q,
+-- % but it does not affect the third for loop that iterates over Q.
+-- % Because once X refines Y into Y1 and Y2, Y1 and Y2 can't be more refined by X. 
 
 minimizeDFA :: forall a. Ord a => DFA Int a -> DFA Int a
 minimizeDFA  dfa@(DFA { dfa_start_states = starts,
