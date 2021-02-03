@@ -150,6 +150,9 @@ groupEquivStates DFA { dfa_states = statemap }
     -- a map from token T to
     --   a map from state S to the set of states that transition to
     --   S on token T
+    -- bigmap is an inversed transition function classified by each input token.
+    -- the codomain of each inversed function is a set of states rather than single state
+    -- since a transition function might not be an injective.
     -- This is a cache of the information needed to compute xs below
     bigmap :: IntMap (IntMap EquivalenceClass)
     bigmap = IM.fromListWith (IM.unionWith IS.union)
@@ -162,22 +165,27 @@ groupEquivStates DFA { dfa_states = statemap }
     go r [] = r
     go r (a:q) = uncurry go $ List.foldl' go0 (a:r,q) xs
       where
+        preimage :: IntMap EquivalenceClass -- inversed transition function
+                 -> EquivalenceClass        -- subset of codomain of original transition function
+                 -> EquivalenceClass        -- preimage of given subset
+#if MIN_VERSION_containers(0, 6, 0)
+        preimage invMap a = IS.unions (IM.restrictKeys invMap a)
+#else
+        preimage invMap a = IS.unions [IM.findWithDefault IS.empty s invMap | s <- IS.toList a]
+#endif
+
         xs :: [EquivalenceClass]
         xs =
           [ x
-          | preimageMap <- IM.elems bigmap
-#if MIN_VERSION_containers(0, 6, 0)
-          , let x = IS.unions (IM.restrictKeys preimageMap a)
-#else
-          , let x = IS.unions [IM.findWithDefault IS.empty s preimageMap | s <- IS.toList a]
-#endif
+          | invMap <- IM.elems bigmap
+          , let x = preimage invMap a
           , not (IS.null x)
           ]
 
         refineWith
-          :: IntSet -- preimage set that bisects the input equivalence class
-          -> IntSet -- initial equivalence class
-          -> Maybe (IntSet, IntSet)
+          :: EquivalenceClass -- preimage set that bisects the input equivalence class
+          -> EquivalenceClass -- input equivalence class
+          -> Maybe (EquivalenceClass, EquivalenceClass) -- refined equivalence class
         refineWith x y =
           if IS.null y1 || IS.null y2
             then Nothing
@@ -188,6 +196,7 @@ groupEquivStates DFA { dfa_states = statemap }
 
         go0 (r,q) x = go1 r [] []
           where
+            -- iterates over R
             go1 []    r' q' = (r', go2 q q')
             go1 (y:r) r' q' = case refineWith x y of
               Nothing                       -> go1 r (y:r') q'
@@ -195,6 +204,7 @@ groupEquivStates DFA { dfa_states = statemap }
                 | IS.size y1 <= IS.size y2  -> go1 r (y2:r') (y1:q')
                 | otherwise                 -> go1 r (y1:r') (y2:q')
 
+            -- iterates over Q
             go2 []    q' = q'
             go2 (y:q) q' = case refineWith x y of
               Nothing       -> go2 q (y:q')
