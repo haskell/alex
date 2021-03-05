@@ -81,3 +81,9 @@ Isaac Jones:   ijones@syntaxpolice.org
 Simon Marlow:  simonmar@microsoft.com
 
 and [recent contributors](https://github.com/simonmar/alex/graphs/contributors).
+
+## Current Maintainers
+
+- John Ericson (@Ericson2314)
+
+- Simon Marlow (@simonmar)
