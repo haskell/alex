@@ -45,7 +45,6 @@ extra-source-files:
         CHANGELOG.md
         README.md
         TODO
-        alex.spec
         doc/Makefile
         doc/aclocal.m4
         doc/alex.1.in
