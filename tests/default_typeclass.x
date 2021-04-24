@@ -133,7 +133,7 @@ alexSetInput (pos, c, bs, inp) =
 alexError :: (MonadState AlexState m, Read s) => String -> m (Token s)
 alexError message =
   do
-    s @ AlexState { alex_errs = errs } <- get
+    s@AlexState { alex_errs = errs } <- get
     put s { alex_errs = message : errs }
     alexMonadScan
 
