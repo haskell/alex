@@ -33,7 +33,7 @@ import Data.Semigroup
 import Data.Monoid
 #endif
 
-import Data.List
+import Data.List hiding (and, null)
 
 infixl 7 -/\-
 infixl 6 -\/-, -!-
