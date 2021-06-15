@@ -6,17 +6,19 @@
 # ../dist/build/alex/alex to support running tests via "runghc
 # Setup.hs test".
 #
+ifndef ALEX
 ALEX=$(shell which alex)
 ifeq "$(filter $(dir $(shell pwd))%,$(ALEX))" ""
 ALEX=../dist/build/alex/alex
 endif
+endif
 
 # NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
-HC = ghc
+HC ?= ghc
 
 # Some GHC warnings are only available from a certain version on
 # Get the GHC version
-GHC_VERSION:=$(shell ghc --numeric-version)
+GHC_VERSION:=$(shell $(HC) --numeric-version)
 GHC_VERSION_WORDS=$(subst ., ,$(GHC_VERSION))
 GHC_MAJOR_VERSION=$(word 1,$(GHC_VERSION_WORDS))
 GHC_MINOR_VERSION=$(word 2,$(GHC_VERSION_WORDS))
