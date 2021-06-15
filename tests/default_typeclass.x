@@ -280,8 +280,8 @@ instance (Functor m) => Functor (StateT s m) where
     fmap f m = StateT $ \ s ->
         fmap (\ (a, s') -> (f a, s')) $ runStateT m s
 
-instance (Monad m) => Monad (StateT s m) where
-    return a = state $ \s -> (a, s)
+instance (Functor m, Monad m) => Monad (StateT s m) where
+    return   = pure
     m >>= k  = StateT $ \s -> do
         (a, s') <- runStateT m s
         runStateT (k a) s'
@@ -307,7 +307,7 @@ instance Monad m => MonadState s (StateT s m) where
     state = state'
 
 instance (Functor m, Monad m) => Applicative (StateT s m) where
-    pure = return
+    pure a = state $ \s -> (a, s)
     (<*>) = ap
 
 }
