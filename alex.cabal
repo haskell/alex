@@ -109,8 +109,6 @@ executable alex
                , containers
                , directory
 
-  build-tools: alex, happy
-
   default-language: Haskell98
   default-extensions: CPP
   other-extensions: MagicHash

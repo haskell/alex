@@ -107,6 +107,9 @@ jobs:
           rm -f cabal-plan.xz
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
+      - name: install alex and happy
+        run: |
+          $CABAL v2-install $ARG_COMPILER alex happy
       - name: checkout
         uses: actions/checkout@v2
         with:
