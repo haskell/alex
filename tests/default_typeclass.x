@@ -280,34 +280,34 @@ instance (Functor m) => Functor (StateT s m) where
     fmap f m = StateT $ \ s ->
         fmap (\ (a, s') -> (f a, s')) $ runStateT m s
 
-instance (Monad m) => Monad (StateT s m) where
-    return a = state $ \s -> (a, s)
+instance (Functor m, Monad m) => Monad (StateT s m) where
+    return   = pure
     m >>= k  = StateT $ \s -> do
         (a, s') <- runStateT m s
         runStateT (k a) s'
 
 -- | Fetch the current value of the state within the monad.
-get' :: (Monad m) => StateT s m s
+get' :: (Functor m, Monad m) => StateT s m s
 get' = state $ \s -> (s, s)
 
 -- | @'put' s@ sets the state within the monad to @s@.
-put' :: (Monad m) => s -> StateT s m ()
+put' :: (Functor m, Monad m) => s -> StateT s m ()
 put' s = state $ \_ -> ((), s)
 
 -- | @'modify' f@ is an action that updates the state to the result of
 -- applying @f@ to the current state.
 --
 -- * @'modify' f = 'get' >>= ('put' . f)@
-modify' :: (Monad m) => (s -> s) -> StateT s m ()
+modify' :: (Functor m, Monad m) => (s -> s) -> StateT s m ()
 modify' f = state $ \s -> ((), f s)
 
-instance Monad m => MonadState s (StateT s m) where
+instance (Functor m, Monad m) => MonadState s (StateT s m) where
     get = get'
     put = put'
     state = state'
 
 instance (Functor m, Monad m) => Applicative (StateT s m) where
-    pure = return
+    pure a = state $ \s -> (a, s)
     (<*>) = ap
 
 }
