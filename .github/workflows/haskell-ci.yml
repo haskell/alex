@@ -107,13 +107,23 @@ jobs:
           rm -f cabal-plan.xz
           chmod a+x $HOME/.cabal/bin/cabal-plan
           cabal-plan --version
+
       - name: install alex and happy
         run: |
           $CABAL v2-install $ARG_COMPILER alex happy
+
       - name: checkout
         uses: actions/checkout@v2
         with:
           path: source
+
+      - name: generate Parser.hs and Scan.hs
+        run: |
+          happy -agc $GITHUB_WORKSPACE/source/src/Parser.y -o $GITHUB_WORKSPACE/source/src/Parser.hs
+          alex -g $GITHUB_WORKSPACE/source/src/Scan.x -o $GITHUB_WORKSPACE/source/src/Scan.hs
+          mv $GITHUB_WORKSPACE/source/src/Parser.y $GITHUB_WORKSPACE/source/src/Parser.y.boot
+          mv $GITHUB_WORKSPACE/source/src/Scan.x $GITHUB_WORKSPACE/source/src/Scan.x.boot
+
       - name: initial cabal.project for sdist
         run: |
           touch cabal.project
