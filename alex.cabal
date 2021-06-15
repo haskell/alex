@@ -66,8 +66,6 @@ extra-source-files:
         examples/words.x
         examples/words_monad.x
         examples/words_posn.x
-        src/Parser.y.boot
-        src/Scan.x.boot
         src/ghc_hooks.c
         tests/Makefile
         tests/simple.x
