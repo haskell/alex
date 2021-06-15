@@ -1,0 +1,50 @@
+--- .github/workflows/haskell-ci.yml	2021-06-15 15:05:48.000000000 +0200
++++ .github/workflows/haskell-ci.yml.patched	2021-06-15 15:05:35.000000000 +0200
+@@ -162,10 +162,23 @@
+           rm -f cabal-plan.xz
+           chmod a+x $HOME/.cabal/bin/cabal-plan
+           cabal-plan --version
++
++      - name: install alex and happy
++        run: |
++          $CABAL v2-install $ARG_COMPILER alex happy
++
+       - name: checkout
+         uses: actions/checkout@v2
+         with:
+           path: source
++
++      - name: generate Parser.hs and Scan.hs
++        run: |
++          happy -agc $GITHUB_WORKSPACE/source/src/Parser.y -o $GITHUB_WORKSPACE/source/src/Parser.hs
++          alex -g $GITHUB_WORKSPACE/source/src/Scan.x -o $GITHUB_WORKSPACE/source/src/Scan.hs
++          mv $GITHUB_WORKSPACE/source/src/Parser.y $GITHUB_WORKSPACE/source/src/Parser.y.boot
++          mv $GITHUB_WORKSPACE/source/src/Scan.x $GITHUB_WORKSPACE/source/src/Scan.x.boot
++
+       - name: initial cabal.project for sdist
+         run: |
+           touch cabal.project
+@@ -208,15 +221,21 @@
+         run: |
+           $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --dependencies-only -j2 all
+           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH --dependencies-only -j2 all
+-      - name: build w/o tests
++
++      - name: build w/o tests and install
+         run: |
+-          $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks all
++          $CABAL v2-install --reinstall --overwrite-policy=always $ARG_COMPILER --disable-tests --disable-benchmarks all
++
+       - name: build
+         run: |
+           $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --write-ghc-environment-files=always
+       - name: tests
+         run: |
++          # echo "ALEX=$HOME/.cabal/bin/alex" >> "$GITHUB_ENV"
++          export ALEX=$HOME/.cabal/bin/alex
++          export HC=$HC
+           $CABAL v2-test $ARG_COMPILER $ARG_TESTS $ARG_BENCH all --test-show-details=direct
++
+       - name: cabal check
+         run: |
+           cd ${PKGDIR_alex} || false
