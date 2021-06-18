@@ -6,17 +6,29 @@
 # ../dist/build/alex/alex to support running tests via "runghc
 # Setup.hs test".
 #
+# If ALEX has been set outside, e.g. in the environment, we trust this setting.
+# This way, we can pass in the correct Alex executable from a CI environment
+# without danger of it being "fixed" by the logic below.
+# [2021-06-15, PR #189](https://github.com/simonmar/alex/pull/189)
+#
+ifndef ALEX
 ALEX=$(shell which alex)
 ifeq "$(filter $(dir $(shell pwd))%,$(ALEX))" ""
 ALEX=../dist/build/alex/alex
 endif
+endif
 
-# NOTE: This assumes that a working `ghc` is on $PATH; this may not necessarily be the same GHC used by `cabal` for building `alex`.
-HC = ghc
+# NOTE: This assumes that a working `ghc` is on $PATH; this may not
+# necessarily be the same GHC used by `cabal` for building `alex`.
+#
+# Again, if HC has been set in the environment (e.g. by the CI), we keep this setting.
+# [2021-06-15, PR #189](https://github.com/simonmar/alex/pull/189)
+#
+HC ?= ghc
 
 # Some GHC warnings are only available from a certain version on
 # Get the GHC version
-GHC_VERSION:=$(shell ghc --numeric-version)
+GHC_VERSION:=$(shell $(HC) --numeric-version)
 GHC_VERSION_WORDS=$(subst ., ,$(GHC_VERSION))
 GHC_MAJOR_VERSION=$(word 1,$(GHC_VERSION_WORDS))
 GHC_MINOR_VERSION=$(word 2,$(GHC_VERSION_WORDS))
