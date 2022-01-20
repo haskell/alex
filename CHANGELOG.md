@@ -1,4 +1,4 @@
-## Unreleased
+## Changes in 3.2.7
 
  * Allow arbitary repetitions in regexps.
    Previously, the `r{n,m}` and related forms were restricted to single
