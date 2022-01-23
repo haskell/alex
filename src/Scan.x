@@ -11,7 +11,7 @@
 -------------------------------------------------------------------------------
 
 {
-module Scan (lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn) where
+module Scan (lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn, multiplicity) where
 
 import Data.Char
 import ParseMonad
@@ -56,8 +56,7 @@ alex :-
 <0> \\ x $hexdig+               { hexch }
 <0> \\ o $octal+                { octch }
 <0> \\ $printable               { escape }
-<0> $nonspecial # [\<]          { char } -- includes 1 digit numbers
-<0> $digit+                     { num  } -- should be after char
+<0> $nonspecial # [\<]          { char }
 <0> @smac                       { smac }
 <0> @rmac                       { rmac }
 
@@ -75,6 +74,13 @@ alex :-
 -- so don't try to interpret the opening { as a code block.
 <afterstartcodes> \{ (\n | [^$digit ])  { special `andBegin` 0 }
 <afterstartcodes> ()            { skip `andBegin` 0 }  -- note: empty pattern
+
+-- Numeric literals are only lexed in multiplicity braces e.g. {nnn,mmm}.
+-- Switching to the @multiplicity@ lexer state happens in the parser.
+<multiplicity> $digit+          { num }
+<multiplicity> \,               { special }
+<multiplicity> \}               { special `andBegin` 0 }
+
 {
 
 -- -----------------------------------------------------------------------------
