@@ -56,8 +56,8 @@ alex :-
 <0> \\ x $hexdig+               { hexch }
 <0> \\ o $octal+                { octch }
 <0> \\ $printable               { escape }
+<0> $digit                      { digit } -- should be before char
 <0> $nonspecial # [\<]          { char } -- includes 1 digit numbers
-<0> $digit+                     { num  } -- should be after char
 <0> @smac                       { smac }
 <0> @rmac                       { rmac }
 
@@ -92,12 +92,12 @@ data Tkn
   | IdT String
   | StringT String
   | BindT String
+  | DigitT Char
   | CharT Char
   | SMacT String
   | RMacT String
   | SMacDefT String
   | RMacDefT String
-  | NumT Int
   | WrapperT
   | EncodingT
   | ActionTypeT
@@ -121,7 +121,7 @@ decch     (p,_,str) ln = return $ T p (CharT (do_ech 10 ln (take (ln-1) (tail st
 hexch     (p,_,str) ln = return $ T p (CharT (do_ech 16 ln (take (ln-2) (drop 2 str))))
 octch     (p,_,str) ln = return $ T p (CharT (do_ech 8  ln (take (ln-2) (drop 2 str))))
 char      (p,_,str) _  = return $ T p (CharT (head str))
-num       (p,_,str) ln = return $ T p $ NumT $ parseInt 10 $ take ln str
+digit     (p,_,str) _  = return $ T p (DigitT (head str))
 smac      (p,_,str) ln = return $ T p (SMacT (mac ln str))
 rmac      (p,_,str) ln = return $ T p (RMacT (mac ln str))
 smacdef   (p,_,str) ln = return $ T p (SMacDefT (macdef ln str))

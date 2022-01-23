@@ -53,8 +53,8 @@ import Data.Char
 	BIND		{ T _ (BindT $$) }
 	ID		{ T _ (IdT $$) }
 	CODE		{ T _ (CodeT _) }
+	DIGIT		{ T _ (DigitT $$) }
 	CHAR		{ T _ (CharT $$) }
-	NUM		{ T _ (NumT $$) }
 	SMAC		{ T _ (SMacT _) }
 	RMAC		{ T _ (RMacT $$) }
 	SMAC_DEF	{ T _ (SMacDefT $$) }
@@ -174,15 +174,9 @@ rep	:: { RExp -> RExp }
 	: '*' 				{ Star }
 	| '+' 				{ Plus }
 	| '?' 				{ Ques }
-					-- Single digits are CHAR, not NUM.
-					-- TODO: these don't check for digits
-					-- properly.
-	| '{' CHAR '}'			{ repeat_rng (digit $2) Nothing }
-	| '{' CHAR ',' '}'		{ repeat_rng (digit $2) (Just Nothing) }
-	| '{' CHAR ',' CHAR '}' 	{ repeat_rng (digit $2) (Just (Just (digit $4))) }
-	| '{' NUM '}'			{ repeat_rng $2 Nothing }
-	| '{' NUM ',' '}'		{ repeat_rng $2 (Just Nothing) }
-	| '{' NUM ',' NUM '}'           { repeat_rng $2 (Just (Just $4)) }
+	| '{' natnum '}'		{ repeat_rng $2 Nothing }
+	| '{' natnum ',' '}'		{ repeat_rng $2 (Just Nothing) }
+	| '{' natnum ',' natnum '}'	{ repeat_rng $2 (Just (Just $4)) }
 
 rexp0	:: { RExp }
 	: '(' ')'  			{ Eps }
@@ -197,8 +191,8 @@ set	:: { CharSet }
 	| set0 				{ $1 }
 
 set0	:: { CharSet }
-	: CHAR 				{ charSetSingleton $1 }
-	| CHAR '-' CHAR			{ charSetRange $1 $3 }
+	: char 				{ charSetSingleton $1 }
+	| char '-' char			{ charSetRange $1 $3 }
 	| smac 				{% lookupSMac $1 }
 	| '[' sets ']' 			{ foldr charSetUnion emptyCharSet $2 }
 
@@ -222,14 +216,23 @@ smac	:: { (AlexPosn,String) }
  	: '.'				{ (tokPosn $1, ".") }
 	| SMAC				{ case $1 of T p (SMacT s) -> (p, s) }
 
+char	:: { Char }
+	: DIGIT				{ $1 }
+	| CHAR				{ $1 }
+
+natnum	:: { Int }
+	: digit				{ $1 }
+	| natnum digit			{ $1 * 10 + $2 }
+
+digit	:: { Int }
+	: DIGIT				{ digitToInt $1 }
+
 {
 happyError :: P a
 happyError = failP "parse error"
 
 -- -----------------------------------------------------------------------------
 -- Utils
-
-digit c = ord c - ord '0'
 
 repeat_rng :: Int -> Maybe (Maybe Int) -> (RExp->RExp)
 repeat_rng n (Nothing) re = foldr (:%%) Eps (replicate n re)
