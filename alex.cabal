@@ -97,6 +97,7 @@ extra-source-files:
         tests/issue_71.x
         tests/issue_119.x
         tests/issue_141.x
+        tests/issue_197.x
 
 source-repository head
     type:     git

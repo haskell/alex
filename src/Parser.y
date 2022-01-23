@@ -174,15 +174,19 @@ rep	:: { RExp -> RExp }
 	: '*' 				{ Star }
 	| '+' 				{ Plus }
 	| '?' 				{ Ques }
-					-- Single digits are CHAR, not NUM.
-					-- TODO: these don't check for digits
-					-- properly.
-	| '{' CHAR '}'			{ repeat_rng (digit $2) Nothing }
-	| '{' CHAR ',' '}'		{ repeat_rng (digit $2) (Just Nothing) }
-	| '{' CHAR ',' CHAR '}' 	{ repeat_rng (digit $2) (Just (Just (digit $4))) }
-	| '{' NUM '}'			{ repeat_rng $2 Nothing }
-	| '{' NUM ',' '}'		{ repeat_rng $2 (Just Nothing) }
-	| '{' NUM ',' NUM '}'           { repeat_rng $2 (Just (Just $4)) }
+	| begin_mult '{' mult '}'	{ $3 }
+-- A bit counterintuitively, we need @begin_mult@ already before the left brace,
+-- not just before @mult@.  This might be due to the lookahead in the parser.
+
+-- Enter the "multiplicity" lexer mode to scan number literals
+begin_mult :: { () }
+	: {- empty -}			{% setStartCode multiplicity }
+
+-- Parse a numeric multiplicity.
+mult	:: { RExp -> RExp }
+	: NUM				{ repeat_rng $1 Nothing }
+	| NUM ','			{ repeat_rng $1 (Just Nothing) }
+	| NUM ',' NUM			{ repeat_rng $1 (Just (Just $3)) }
 
 rexp0	:: { RExp }
 	: '(' ')'  			{ Eps }

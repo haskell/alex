@@ -55,6 +55,7 @@ TESTS = \
         issue_71.x \
         issue_119.x \
         issue_141.x \
+        issue_197.x \
         monad_typeclass.x \
         monad_typeclass_bytestring.x \
         monadUserState_typeclass.x \
