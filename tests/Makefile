@@ -48,6 +48,7 @@ HS_PROG_EXT = .bin
 endif
 
 TESTS = \
+        issue_197.x \
         basic_typeclass.x \
         basic_typeclass_bytestring.x \
         default_typeclass.x \

@@ -188,6 +188,8 @@ rexp0	:: { RExp }
 	: '(' ')'  			{ Eps }
 	| STRING			{ foldr (:%%) Eps
 					    (map (Ch . charSetSingleton) $1) }
+	| NUM				{ foldr (:%%) Eps
+					    (map (Ch . charSetSingleton) (show $1)) }
 	| RMAC 				{% lookupRMac $1 }
 	| set 				{ Ch $1 }
 	| '(' rexp ')' 			{ $2 }
@@ -216,6 +218,7 @@ set0	:: { CharSet }
 
 sets	:: { [CharSet] }
 	: set sets			{ $1 : $2 }
+	| NUM sets			{ map charSetSingleton (show $1) ++ $2 }
 	| {- empty -}			{ [] }
 
 smac	:: { (AlexPosn,String) }
