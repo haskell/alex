@@ -1,6 +1,11 @@
+## Change in 3.2.7.1
+
+ * Fix bug with repeated numeral characters *outside* of `r{n,m}`
+   repetitions. This was a regression introduced in 3.2.7.
+
 ## Changes in 3.2.7
 
- * Allow arbitary repetitions in regexps.
+ * Allow arbitrary repetitions in regexps.
    Previously, the `r{n,m}` and related forms were restricted to single
    digit numbers `n` and `m`.
 
