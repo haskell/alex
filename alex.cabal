@@ -45,15 +45,6 @@ data-files:
 extra-source-files:
         CHANGELOG.md
         README.md
-        TODO
-        doc/Makefile
-        doc/aclocal.m4
-        doc/alex.1.in
-        doc/alex.xml
-        doc/config.mk.in
-        doc/configure.ac
-        doc/docbook-xml.mk
-        doc/fptools.css
         examples/Makefile
         examples/Tokens.x
         examples/Tokens_gscan.x
