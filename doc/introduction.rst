@@ -11,7 +11,9 @@ generates a Haskell module containing code for scanning text
 efficiently. Alex is designed to be familiar to existing lex users,
 although it does depart from lex in a number of ways.
 
-A sample specification would be the following::
+A sample specification would be the following:
+
+.. code-block:: none
 
    {
    module Main (main) where
@@ -93,7 +95,7 @@ standard output.
 Alex has kindly provided the following function which we can use to
 invoke the scanner:
 
-..code-block:: haskell
+.. code-block:: haskell
 
    alexScanTokens :: String -> [Token]
 
@@ -110,7 +112,7 @@ no requirement for the scanner to return a list of tokens.
 With this specification in the file ``Tokens.x``, Alex can be used to
 generate ``Tokens.hs``:
 
-::
+.. code-block:: sh
 
    $ alex Tokens.x
 
@@ -118,7 +120,7 @@ If the module needed to be placed in a different file, ``Main.hs`` for
 example, then the output filename can be specified using the ``-o``
 option:
 
-::
+.. code-block:: sh
 
    $ alex Tokens.x -o Main.hs
 

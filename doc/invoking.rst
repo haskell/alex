@@ -6,7 +6,7 @@ Invoking Alex
 
 The command line syntax for Alex is entirely standard:
 
-::
+.. code-block:: sh
 
    $ alex { option } file.x  { option }
 

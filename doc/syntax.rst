@@ -210,7 +210,7 @@ Right context is rather more general. There are three forms:
    This form is called a *predicate* on the rule. The Haskell expression
    inside the curly braces should have type:
 
-   ::
+   .. code-block:: haskell
 
       { ... } :: user       -- predicate state
               -> AlexInput  -- input stream before the token
@@ -256,7 +256,7 @@ whose value is of type ``Int``. For example, if we mentioned startcodes
 ``foo`` and ``bar`` in the lexical spec, then Alex will create
 definitions such as:
 
-::
+.. code-block:: haskell
 
    foo = 1
    bar = 2

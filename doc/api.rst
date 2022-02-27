@@ -63,7 +63,7 @@ you get access to the lowest-level API to the lexer. You must provide
 definitions for the following, either in the same module or imported
 from another module:
 
-::
+.. code-block:: haskell
 
    type AlexInput
    alexGetByte       :: AlexInput -> Maybe (Word8,AlexInput)
@@ -80,7 +80,7 @@ safely forget about the previous character in the input stream, and have
 
 Alex will provide the following function:
 
-::
+.. code-block:: haskell
 
    alexScan :: AlexInput             -- The current input
             -> Int                   -- The "start code"
@@ -137,7 +137,7 @@ scheme. Wrappers are described in the next section.
 There is another entry point, which is useful if your grammar contains
 any predicates (see :ref:`Contexts <contexts>`):
 
-::
+.. code-block:: haskell
 
    alexScanUser
             :: user             -- predicate state
@@ -179,7 +179,7 @@ initial startcode is always set to zero.
 Here is the actual code included in the lexer when the basic wrapper is
 selected:
 
-::
+.. code-block:: haskell
 
    type AlexInput = (Char,      -- previous char
                      [Byte],    -- rest of the bytes for the current char
@@ -207,7 +207,7 @@ The type signature for ``alexScanTokens`` is commented out, because the
 ``token`` type is unknown. All of the actions in your lexical
 specification should have type:
 
-::
+.. code-block:: haskell
 
    { ... } :: String -> token
 
@@ -227,7 +227,7 @@ The posn wrapper provides the following, in addition to the
 straightforward definitions of ``alexGetByte`` and
 ``alexInputPrevChar``:
 
-::
+.. code-block:: haskell
 
    data AlexPosn = AlexPn !Int  -- absolute character offset
                           !Int  -- line number
@@ -249,7 +249,7 @@ straightforward definitions of ``alexGetByte`` and
 
 The types of the token actions should be:
 
-::
+.. code-block:: haskell
 
    { ... } :: AlexPosn -> String -> token
 
@@ -265,7 +265,7 @@ and text position, and the startcode. It is intended to be a template
 for building your own monads - feel free to copy the code and modify it
 to build a monad with the facilities you need.
 
-::
+.. code-block:: haskell
 
    data AlexState = AlexState {
            alex_pos :: !AlexPosn,  -- position at current input location
@@ -300,19 +300,19 @@ to build a monad with the facilities you need.
 The ``monad`` wrapper expects that you define a variable ``alexEOF``
 with the following signature:
 
-::
+.. code-block:: haskell
 
    alexEOF :: Alex result
 
 To invoke a scanner under the ``monad`` wrapper, use ``alexMonadScan``:
 
-::
+.. code-block:: haskell
 
    alexMonadScan :: Alex result
 
 The token actions should have the following type:
 
-::
+.. code-block:: haskell
 
    type AlexAction result = AlexInput -> Int -> Alex result
    { ... }  :: AlexAction result
@@ -320,14 +320,14 @@ The token actions should have the following type:
 The Alex file must also define a function ``alexEOF``, which will be
 executed on when the end-of-file is scanned:
 
-::
+.. code-block:: haskell
 
    alexEOF :: Alex result
 
 The ``monad`` wrapper also provides some useful combinators for
 constructing token actions:
 
-::
+.. code-block:: haskell
 
    -- skip :: AlexAction result
    skip input len = alexMonadScan
@@ -357,7 +357,7 @@ places:
 1) The definition of the general state, which now refers to a type
 ``AlexUserState`` that must be defined in the Alex file.
 
-::
+.. code-block:: haskell
 
    data AlexState = AlexState {
            alex_pos :: !AlexPosn,  -- position at current input location
@@ -371,7 +371,7 @@ places:
 2) The initialization code, where a user-specified routine
 (``alexInitUserState``) will be called.
 
-::
+.. code-block:: haskell
 
    runAlex :: String -> Alex a -> Either String a
    runAlex input (Alex f)
@@ -386,7 +386,7 @@ places:
 3) Two helper functions (``alexGetUserState`` and ``alexSetUserState``)
 are defined.
 
-::
+.. code-block:: haskell
 
    alexGetUserState :: Alex AlexUserState
    alexSetUserState :: AlexUserState -> Alex ()
@@ -394,7 +394,7 @@ are defined.
 Here is an example of code in the user's Alex file defining the type and
 function:
 
-::
+.. code-block:: haskell
 
    data AlexUserState = AlexUserState
                       {
@@ -433,7 +433,7 @@ version 1.x. The interface is intended to be very general, allowing
 actions to modify the startcode, and pass around an arbitrary state
 value.
 
-::
+.. code-block:: haskell
 
    alexGScan :: StopAction state result -> state -> String -> result
 
@@ -442,7 +442,7 @@ value.
 
 The token actions should all have this type:
 
-::
+.. code-block:: haskell
 
    { ... }      :: AlexPosn                -- token position
                 -> Char                    -- previous character
@@ -488,7 +488,7 @@ The "basic-bytestring" wrapper
 The ``basic-bytestring`` wrapper is the same as the ``basic`` wrapper
 but with lazy ``ByteString`` instead of ``String``:
 
-::
+.. code-block:: haskell
 
    import qualified Data.ByteString.Lazy as ByteString
 
@@ -504,7 +504,7 @@ but with lazy ``ByteString`` instead of ``String``:
 
 All of the actions in your lexical specification should have type:
 
-::
+.. code-block:: haskell
 
    { ... } :: ByteString.ByteString -> token
 
@@ -516,7 +516,7 @@ The "posn-bytestring" wrapper
 The ``posn-bytestring`` wrapper is the same as the ``posn`` wrapper but
 with lazy ``ByteString`` instead of ``String``:
 
-::
+.. code-block:: haskell
 
    import qualified Data.ByteString.Lazy as ByteString
 
@@ -529,7 +529,7 @@ with lazy ``ByteString`` instead of ``String``:
 
 All of the actions in your lexical specification should have type:
 
-::
+.. code-block:: haskell
 
    { ... } :: AlexPosn -> ByteString.ByteString -> token
 
@@ -541,7 +541,7 @@ The "monad-bytestring" wrapper
 The ``monad-bytestring`` wrapper is the same as the ``monad`` wrapper
 but with lazy ``ByteString`` instead of ``String``:
 
-::
+.. code-block:: haskell
 
    import qualified Data.ByteString.Lazy as ByteString
 
@@ -576,7 +576,7 @@ The ``monadUserState-bytestring`` wrapper is the same as the
 ``monadUserState`` wrapper but with lazy ``ByteString`` instead of
 ``String``:
 
-::
+.. code-block:: haskell
 
    import qualified Data.ByteString.Lazy as ByteString
 
@@ -619,7 +619,7 @@ more typeclass constraints. The following shows a simple lexer that
 makes use of this to interpret the meaning of tokens using the ``Read``
 typeclass:
 
-::
+.. code-block:: none
 
    %wrapper "basic"
    %token "Token s"
@@ -659,7 +659,7 @@ directive can be used to specify the typeclass in the same way as with a
 wrapper. The following example shows the use of typeclasses with a
 "homegrown" monadic lexer:
 
-::
+.. code-block:: none
 
    {
    {-# LANGUAGE FlexibleContexts #-}
