@@ -7,14 +7,6 @@
 /data/
 /dist
 /dist-newstyle
-/docbook/alex.1
-/docbook/alex.pdf
-/docbook/alex/
-/docbook/autom4te.cache/
-/docbook/configure
-/docbook/config.log
-/docbook/config.mk
-/docbook/config.status
 /examples/*.alex.hs
 /examples/*.happy.hs
 /examples/*.bin
