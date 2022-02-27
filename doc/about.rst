@@ -6,7 +6,7 @@ About Alex
 
 Alex can always be obtained from its `home
 page <http://www.haskell.org/alex>`__. The latest source code lives in
-the `git repository <https://github.com/simonmar/alex>`__ on ``GitHub``.
+the `git repository <https://github.com/haskell/alex>`__ on ``GitHub``.
 
 .. _relnotes-30:
 
@@ -158,10 +158,11 @@ Implementation changes
 Reporting bugs in Alex
 ----------------------
 
-Please report bugs in Alex to simonmar@microsoft.com. There are no
-specific mailing lists for the discussion of Alex-related matters, but
-such topics should be fine on the `Haskell
-Cafe <http://www.haskell.org/mailman/listinfo/haskell-cafe>`__ mailing
+Please report bugs on the
+`Alex issue tracker <https://github.com/haskell/alex/issues>`__.
+There are no specific mailing lists for the discussion of Alex-related
+matters, but such topics should be fine on the `Haskell Cafe
+<http://www.haskell.org/mailman/listinfo/haskell-cafe>`__ mailing
 list.
 
 License
@@ -196,3 +197,11 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+About this documentation
+------------------------
+
+This documentation is based on a DocBook documentation originally written by
+Chris Dornan, Isaac Jones, and Simon Marlow.
+
+Converted to RST / Sphinx / readthedocs.org by Andreas Abel in February 2022.
