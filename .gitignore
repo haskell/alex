@@ -26,4 +26,3 @@
 .stack-work
 cabal.sandbox.config
 /src/TAGS
-/doc/_build/
