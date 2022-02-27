@@ -181,27 +181,30 @@ selected:
 
 .. code-block:: haskell
 
-   type AlexInput = (Char,      -- previous char
-                     [Byte],    -- rest of the bytes for the current char
-                     String)    -- rest of the input string
+   type AlexInput =
+     ( Char      -- previous char
+     , [Byte]    -- rest of the bytes for the current char
+     , String    -- rest of the input string
+     )
 
-   alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-   alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
-   alexGetByte (c,[],[])    = Nothing
-   alexGetByte (_,[],(c:s)) = case utf8Encode c of
-                                (b:bs) -> Just (b, (c, bs, s))
+   alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
+   alexGetByte (c, b:bs, s  ) = Just (b, (c, bs, s))
+   alexGetByte (c, []  , [] ) = Nothing
+   alexGetByte (_, []  , c:s) = case utf8Encode c of
+                                  b:bs -> Just (b, (c, bs, s))
 
    alexInputPrevChar :: AlexInput -> Char
-   alexInputPrevChar (c,_,_) = c
+   alexInputPrevChar (c, _, _) = c
 
    -- alexScanTokens :: String -> [token]
-   alexScanTokens str = go ('\n',[],str)
-     where go inp@(_,_bs,str) =
-             case alexScan inp 0 of
-                   AlexEOF -> []
-                   AlexError _ -> error "lexical error"
-                   AlexSkip  inp' len     -> go inp'
-                   AlexToken inp' len act -> act (take len str) : go inp'
+   alexScanTokens str = go ('\n', [], str)
+     where
+       go inp@(_,_bs,str) =
+         case alexScan inp 0 of
+           AlexEOF                -> []
+           AlexSkip  inp' len     -> go inp'
+           AlexToken inp' len act -> act (take len str) : go inp'
+           AlexError _            -> error "lexical error"
 
 The type signature for ``alexScanTokens`` is commented out, because the
 ``token`` type is unknown. All of the actions in your lexical
@@ -229,23 +232,28 @@ straightforward definitions of ``alexGetByte`` and
 
 .. code-block:: haskell
 
-   data AlexPosn = AlexPn !Int  -- absolute character offset
-                          !Int  -- line number
-                          !Int  -- column number
+   data AlexPosn = AlexPn
+     !Int            -- absolute character offset
+     !Int            -- line number
+     !Int            -- column number
 
-   type AlexInput = (AlexPosn,     -- current position,
-                     Char,         -- previous char
-                     [Byte],       -- rest of the bytes for the current char
-                     String)       -- current input string
+   type AlexInput =
+     ( AlexPosn      -- current position,
+     , Char          -- previous char
+     , [Byte]        -- rest of the bytes for the current char
+     , String        -- current input string
+     )
 
-   --alexScanTokens :: String -> [token]
-   alexScanTokens str = go (alexStartPos,'\n',[],str)
-     where go inp@(pos,_,_,str) =
-             case alexScan inp 0 of
-                   AlexEOF -> []
-                   AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at " ++ (show line) ++ " line, " ++ (show column) ++ " column"
-                   AlexSkip  inp' len     -> go inp'
-                   AlexToken inp' len act -> act pos (take len str) : go inp'
+   -- alexScanTokens :: String -> [token]
+   alexScanTokens str = go (alexStartPos, '\n', [], str)
+     where
+       go inp@(pos, _, _, str) =
+         case alexScan inp 0 of
+           AlexEOF                -> []
+           AlexSkip  inp' len     -> go inp'
+           AlexToken inp' len act -> act pos (take len str) : go inp'
+           AlexError (AlexPn _ line column, _, _, _) -> error $ unwords
+             [ "lexical error at", show line, "line,", show column, "column" ]
 
 The types of the token actions should be:
 
@@ -267,27 +275,29 @@ to build a monad with the facilities you need.
 
 .. code-block:: haskell
 
-   data AlexState = AlexState {
-           alex_pos :: !AlexPosn,  -- position at current input location
-           alex_inp :: String,     -- the current input
-           alex_chr :: !Char,      -- the character before the input
-           alex_bytes :: [Byte],   -- rest of the bytes for the current char
-           alex_scd :: !Int        -- the current startcode
-       }
+   data AlexState = AlexState
+     { alex_pos   :: !AlexPosn  -- position at current input location
+     , alex_inp   :: String     -- the current input
+     , alex_chr   :: !Char      -- the character before the input
+     , alex_bytes :: [Byte]     -- rest of the bytes for the current char
+     , alex_scd   :: !Int       -- the current startcode
+     }
 
    newtype Alex a = Alex { unAlex :: AlexState
                                   -> Either String (AlexState, a) }
 
-   instance Functor Alex where ...
+   instance Functor     Alex where ...
    instance Applicative Alex where ...
-   instance Monad Alex where ...
+   instance Monad       Alex where ...
 
    runAlex          :: String -> Alex a -> Either String a
 
-   type AlexInput = (AlexPosn,     -- current position,
-                     Char,         -- previous char
-                     [Byte],       -- rest of the bytes for the current char
-                     String)       -- current input string
+   type AlexInput =
+     ( AlexPosn                 -- current position,
+     , Char                     -- previous char
+     , [Byte]                   -- rest of the bytes for the current char
+     , String                   -- current input string
+     )
 
    alexGetInput     :: Alex AlexInput
    alexSetInput     :: AlexInput -> Alex ()
@@ -354,42 +364,46 @@ information and carry it during the whole lexing phase.
 The generated code is the same as in the ``monad`` wrapper, except in 3
 places:
 
-1) The definition of the general state, which now refers to a type
-``AlexUserState`` that must be defined in the Alex file.
+1. The definition of the general state, which now refers to a type
+   ``AlexUserState`` that must be defined in the Alex file.
 
-.. code-block:: haskell
+   .. code-block:: haskell
 
-   data AlexState = AlexState {
-           alex_pos :: !AlexPosn,  -- position at current input location
-           alex_inp :: String,     -- the current input
-           alex_chr :: !Char,      -- the character before the input
-           alex_bytes :: [Byte],   -- rest of the bytes for the current char
-           alex_scd :: !Int,       -- the current startcode
-           alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
-       }
+      data AlexState = AlexState
+        { alex_pos   :: !AlexPosn      -- position at current input location
+        , alex_inp   :: String         -- the current input
+        , alex_chr   :: !Char          -- the character before the input
+        , alex_bytes :: [Byte]         -- rest of the bytes for the current char
+        , alex_scd   :: !Int           -- the current startcode
+        , alex_ust   :: AlexUserState  -- AlexUserState will be defined in the user program
+        }
 
-2) The initialization code, where a user-specified routine
-(``alexInitUserState``) will be called.
+2. The initialization code, where a user-specified routine
+   (``alexInitUserState``) will be called.
 
-.. code-block:: haskell
+   .. code-block:: haskell
 
-   runAlex :: String -> Alex a -> Either String a
-   runAlex input (Alex f)
-      = case f (AlexState {alex_pos = alexStartPos,
-                           alex_inp = input,
-                           alex_chr = '\n',
-                           alex_bytes = [],
-                           alex_ust = alexInitUserState,
-                           alex_scd = 0}) of Left msg -> Left msg
-                                             Right ( _, a ) -> Right a
+      runAlex :: String -> Alex a -> Either String a
+      runAlex input (Alex f) = case f st of
+          Left msg     -> Left msg
+          Right (_, a) -> Right a
+        where
+          st = AlexState
+               { alex_pos   = alexStartPos
+               , alex_inp   = input
+               , alex_chr   = '\n'
+               , alex_bytes = []
+               , alex_ust   = alexInitUserState
+               , alex_scd   = 0
+               }
 
-3) Two helper functions (``alexGetUserState`` and ``alexSetUserState``)
-are defined.
+3. Two helper functions (``alexGetUserState`` and ``alexSetUserState``)
+   are defined.
 
-.. code-block:: haskell
+   .. code-block:: haskell
 
-   alexGetUserState :: Alex AlexUserState
-   alexSetUserState :: AlexUserState -> Alex ()
+      alexGetUserState :: Alex AlexUserState
+      alexSetUserState :: AlexUserState -> Alex ()
 
 Here is an example of code in the user's Alex file defining the type and
 function:
@@ -397,32 +411,36 @@ function:
 .. code-block:: haskell
 
    data AlexUserState = AlexUserState
-                      {
-                          lexerCommentDepth  :: Int
-                        , lexerStringValue   :: String
-                      }
+     { lexerCommentDepth  :: Int
+     , lexerStringValue   :: String
+     }
 
    alexInitUserState :: AlexUserState
    alexInitUserState = AlexUserState
-                      {
-                          lexerCommentDepth  = 0
-                        , lexerStringValue   = ""
-                      }
+     { lexerCommentDepth  = 0
+     , lexerStringValue   = ""
+     }
 
    getLexerCommentDepth :: Alex Int
-   getLexerCommentDepth = do ust <- alexGetUserState; return (lexerCommentDepth ust)
+   getLexerCommentDepth = lexerCommentDepth <$> alexGetUserState
 
    setLexerCommentDepth :: Int -> Alex ()
-   setLexerCommentDepth ss = do ust <- alexGetUserState; alexSetUserState ust{lexerCommentDepth=ss}
+   setLexerCommentDepth ss = do
+     ust <- alexGetUserState
+     alexSetUserState ust{ lexerCommentDepth = ss }
 
    getLexerStringValue :: Alex String
-   getLexerStringValue = do ust <- alexGetUserState; return (lexerStringValue ust)
+   getLexerStringValue = lexerStringValue <$> alexGetUserState
 
    setLexerStringValue :: String -> Alex ()
-   setLexerStringValue ss = do ust <- alexGetUserState; alexSetUserState ust{lexerStringValue=ss}
+   setLexerStringValue ss = do
+     ust <- alexGetUserState
+     alexSetUserState ust{ lexerStringValue = ss }
 
    addCharToLexerStringValue :: Char -> Alex ()
-   addCharToLexerStringValue c = do ust <- alexGetUserState; alexSetUserState ust{lexerStringValue=c:(lexerStringValue ust)}
+   addCharToLexerStringValue c = do
+     ust <- alexGetUserState
+     alexSetUserState ust{ lexerStringValue = c : lexerStringValue ust }
 
 The "gscan" wrapper
 ~~~~~~~~~~~~~~~~~~~
@@ -437,20 +455,20 @@ value.
 
    alexGScan :: StopAction state result -> state -> String -> result
 
-   type StopAction state result
-            = AlexPosn -> Char -> String -> (Int,state) -> result
+   type StopAction state result =
+     AlexPosn -> Char -> String -> (Int, state) -> result
 
 The token actions should all have this type:
 
 .. code-block:: haskell
 
-   { ... }      :: AlexPosn                -- token position
-                -> Char                    -- previous character
-                -> String                  -- input string at token
-                -> Int                     -- length of token
-                -> ((Int,state) -> result) -- continuation
-                -> (Int,state)             -- current (startcode,state)
-                -> result
+   { ... }   :: AlexPosn                  -- token position
+             -> Char                      -- previous character
+             -> String                    -- input string at token
+             -> Int                       -- length of token
+             -> ((Int, state) -> result)  -- continuation
+             -> (Int, state)              -- current (startcode, state)
+             -> result
 
 The bytestring wrappers
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -490,23 +508,26 @@ but with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
+   import           Data.ByteString.Lazy (ByteString)
    import qualified Data.ByteString.Lazy as ByteString
 
-   data AlexInput = AlexInput { alexChar :: {-# UNPACK #-} !Char,      -- previous char
-                                alexStr ::  !ByteString.ByteString,    -- current input string
-                                alexBytePos :: {-# UNPACK #-} !Int64}  -- bytes consumed so far
+   data AlexInput = AlexInput
+     { alexChar    :: {-# UNPACK #-} !Char    -- previous char
+     , alexStr     :: !ByteString             -- current input string
+     , alexBytePos :: {-# UNPACK #-} !Int64   -- bytes consumed so far
+     }
 
-   alexGetByte :: AlexInput -> Maybe (Char,AlexInput)
+   alexGetByte       :: AlexInput -> Maybe (Char, AlexInput)
 
    alexInputPrevChar :: AlexInput -> Char
 
-   -- alexScanTokens :: ByteString.ByteString -> [token]
+   -- alexScanTokens :: ByteString -> [token]
 
 All of the actions in your lexical specification should have type:
 
 .. code-block:: haskell
 
-   { ... } :: ByteString.ByteString -> token
+   { ... } :: ByteString -> token
 
 for some type ``token``.
 
@@ -518,20 +539,23 @@ with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
+   import           Data.ByteString.Lazy (ByteString)
    import qualified Data.ByteString.Lazy as ByteString
 
-   type AlexInput = (AlexPosn,   -- current position,
-                     Char,       -- previous char
-                     ByteString.ByteString, -- current input string
-                     Int64)           -- bytes consumed so far
+   type AlexInput =
+     ( AlexPosn    -- current position
+     , Char        -- previous char
+     , ByteString  -- current input string
+     , Int64       -- bytes consumed so far
+     )
 
-   -- alexScanTokens :: ByteString.ByteString -> [token]
+   -- alexScanTokens :: ByteString -> [token]
 
 All of the actions in your lexical specification should have type:
 
 .. code-block:: haskell
 
-   { ... } :: AlexPosn -> ByteString.ByteString -> token
+   { ... } :: AlexPosn -> ByteString -> token
 
 for some type ``token``.
 
@@ -543,25 +567,28 @@ but with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
+   import           Data.ByteString.Lazy (ByteString)
    import qualified Data.ByteString.Lazy as ByteString
 
-   data AlexState = AlexState {
-           alex_pos :: !AlexPosn,  -- position at current input location
-           alex_bpos:: !Int64,     -- bytes consumed so far
-           alex_inp :: ByteString.ByteString, -- the current input
-           alex_chr :: !Char,      -- the character before the input
-           alex_scd :: !Int        -- the current startcode
-       }
+   data AlexState = AlexState
+     { alex_pos  :: !AlexPosn   -- position at current input location
+     , alex_bpos :: !Int64      -- bytes consumed so far
+     , alex_inp  :: ByteString  -- the current input
+     , alex_chr  :: !Char       -- the character before the input
+     , alex_scd  :: !Int        -- the current startcode
+     }
 
    newtype Alex a = Alex { unAlex :: AlexState
                                   -> Either String (AlexState, a) }
 
-   runAlex          :: ByteString.ByteString -> Alex a -> Either String a
+   runAlex :: ByteString -> Alex a -> Either String a
 
-   type AlexInput = (AlexPosn,     -- current position,
-                     Char,         -- previous char
-                     ByteString.ByteString,   -- current input string
-                     Int64)        -- bytes consumed so far
+   type AlexInput =
+     ( AlexPosn                 -- current position
+     , Char                     -- previous char
+     , ByteString               -- current input string
+     , Int64                    -- bytes consumed so far
+     )
 
    -- token :: (AlexInput -> Int -> token) -> AlexAction token
 
@@ -578,21 +605,22 @@ The ``monadUserState-bytestring`` wrapper is the same as the
 
 .. code-block:: haskell
 
+   import           Data.ByteString.Lazy (ByteString)
    import qualified Data.ByteString.Lazy as ByteString
 
-   ata AlexState = AlexState {
-           alex_pos :: !AlexPosn,  -- position at current input location
-           alex_bpos:: !Int64,     -- bytes consumed so far
-           alex_inp :: ByteString.ByteString, -- the current input
-           alex_chr :: !Char,      -- the character before the input
-           alex_scd :: !Int        -- the current startcode
-         , alex_ust :: AlexUserState -- AlexUserState will be defined in the user program
-       }
+   data AlexState = AlexState
+     { alex_pos  :: !AlexPosn      -- position at current input location
+     , alex_bpos :: !Int64         -- bytes consumed so far
+     , alex_inp  :: ByteString     -- the current input
+     , alex_chr  :: !Char          -- the character before the input
+     , alex_scd  :: !Int           -- the current startcode
+     , alex_ust  :: AlexUserState  -- AlexUserState will be defined in the user program
+     }
 
    newtype Alex a = Alex { unAlex :: AlexState
                                   -> Either String (AlexState, a) }
 
-   runAlex          :: ByteString.ByteString -> Alex a -> Either String a
+   runAlex :: ByteString -> Alex a -> Either String a
 
    -- token :: (AlexInput -> Int -> token) -> AlexAction token
 
