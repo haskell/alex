@@ -1,67 +1,56 @@
-
 .. _api:
 
 The Interface to an Alex-generated lexer
 ========================================
 
-This section answers the question: "How do I include an Alex lexer in my
-program?"
+This section answers the question: "How do I include an Alex lexer in my program?"
 
-Alex provides for a great deal of flexibility in how the lexer is
-exposed to the rest of the program. For instance, there's no need to
-parse a ``String`` directly if you have some special character-buffer
-operations that avoid the overheads of ordinary Haskell ``String``\ s.
-You might want Alex to keep track of the line and column number in the
-input text, or you might wish to do it yourself (perhaps you use a
-different tab width from the standard 8-columns, for example).
+Alex provides for a great deal of flexibility in how the lexer is exposed to the rest of the program.
+For instance, there's no need to parse a ``String`` directly if you have some special character-buffer operations that avoid the overheads of ordinary Haskell ``String``\ s.
+You might want Alex to keep track of the line and column number in the input text,
+or you might wish to do it yourself (perhaps you use a different tab width from the standard 8-columns, for example).
 
-The general story is this: Alex provides a basic interface to the
-generated lexer (described in the next section), which you can use to
-parse tokens given an abstract input type with operations over it. You
-also have the option of including a wrapper, which provides a
-higher-level abstraction over the basic interface; Alex comes with
-several wrappers.
+The general story is this:
+Alex provides a basic interface to the generated lexer (described in the next section), which you can use to parse tokens given an abstract input type with operations over it.
+You also have the option of including a wrapper,
+which provides a higher-level abstraction over the basic interface;
+Alex comes with several wrappers.
 
 .. _encoding:
 
 Unicode and UTF-8
 -----------------
 
-Lexer specifications are written in terms of Unicode characters, but
-Alex works internally on a UTF-8 encoded byte sequence.
+Lexer specifications are written in terms of Unicode characters,
+but Alex works internally on a UTF-8 encoded byte sequence.
 
-Depending on how you use Alex, the fact that Alex uses UTF-8 encoding
-internally may or may not affect you. If you use one of the wrappers
-(below) that takes input from a Haskell ``String``, then the UTF-8
-encoding is handled automatically. However, if you take input from a
-``ByteString``, then it is your responsibility to ensure that the input
-is properly UTF-8 encoded.
+Depending on how you use Alex, the fact that Alex uses UTF-8 encoding internally may or may not affect you.
+If you use one of the wrappers (below) that takes input from a Haskell ``String``,
+then the UTF-8 encoding is handled automatically.
+However, if you take input from a ``ByteString``,
+then it is your responsibility to ensure that the input is properly UTF-8 encoded.
 
-None of this applies if you used the ``--latin1`` option to Alex or
-specify a Latin-1 encoding via a ``%encoding`` declaration. In that
-case, the input is just a sequence of 8-bit bytes, interpreted as
-characters in the Latin-1 character set.
+None of this applies if you used the ``--latin1`` option to Alex or specify a Latin-1 encoding via a ``%encoding`` declaration.
+In that case, the input is just a sequence of 8-bit bytes, interpreted as characters in the Latin-1 character set.
 
-The following (case-insenstive) encoding strings are currently
-supported:
+The following (case-insenstive) encoding strings are currently supported:
 
 ``%encoding "latin-1"``; ``%encoding "iso-8859-1"``
    Declare Latin-1 encoding as described above.
 
 ``%encoding "utf-8"``; ``%encoding "utf8"``
-   Declare UTF-8 encoding. This is the default encoding but it may be
-   useful to explicitly declare this to make protect against Alex being
-   called with the ``--latin1`` flag.
+   Declare UTF-8 encoding.
+   This is the default encoding but it may be useful to explicitly declare this to make protect against Alex being called with the ``--latin1`` flag.
 
 .. _basic-api:
 
 Basic interface
 ---------------
 
-If you compile your Alex file without a ``%wrapper`` declaration, then
-you get access to the lowest-level API to the lexer. You must provide
-definitions for the following, either in the same module or imported
-from another module:
+If you compile your Alex file without a ``%wrapper`` declaration,
+then you get access to the lowest-level API to the lexer.
+You must provide definitions for the following,
+either in the same module or imported from another module:
 
 .. code-block:: haskell
 
@@ -69,14 +58,13 @@ from another module:
    alexGetByte       :: AlexInput -> Maybe (Word8,AlexInput)
    alexInputPrevChar :: AlexInput -> Char
 
-The generated lexer is independent of the input type, which is why you
-have to provide a definition for the input type yourself. Note that the
-input type needs to keep track of the *previous* character in the input
-stream; this is used for implementing patterns with a left-context
-(those that begin with ``^`` or ``set^``). If you don't ever use
-patterns with a left-context in your lexical specification, then you can
-safely forget about the previous character in the input stream, and have
-``alexInputPrevChar`` return ``undefined``.
+The generated lexer is independent of the input type,
+which is why you have to provide a definition for the input type yourself.
+Note that the input type needs to keep track of the *previous* character in the input stream;
+this is used for implementing patterns with a left-context (those that begin with ``^`` or ``set^``).
+If you don't ever use patterns with a left-context in your lexical specification,
+then you can safely forget about the previous character in the input stream,
+and have ``alexInputPrevChar`` return ``undefined``.
 
 Alex will provide the following function:
 
@@ -101,8 +89,9 @@ Alex will provide the following function:
          !Int           -- Token length
          action         -- action value
 
-Calling ``alexScan`` will scan a single token from the input stream, and
-return a value of type ``AlexReturn``. The value returned is either:
+Calling ``alexScan`` will scan a single token from the input stream,
+and return a value of type ``AlexReturn``.
+The value returned is either:
 
 ``AlexEOF``
    The end-of-file was reached.
@@ -116,26 +105,22 @@ return a value of type ``AlexReturn``. The value returned is either:
 ``AlexToken``
    A token was matched, and the action associated with it is returned.
 
-The ``action`` is simply the value of the expression inside ``{...}`` on
-the right-hand-side of the appropriate rule in the Alex file. Alex
-doesn't specify what type these expressions should have, it simply
-requires that they all have the same type, or else you'll get a type
-error when you try to compile the generated lexer.
+The ``action`` is simply the value of the expression inside ``{...}`` on the right-hand-side of the appropriate rule in the Alex file.
+Alex doesn't specify what type these expressions should have,
+it simply requires that they all have the same type,
+or else you'll get a type error when you try to compile the generated lexer.
 
-Once you have the ``action``, it is up to you what to do with it. The
-type of ``action`` could be a function which takes the ``String``
-representation of the token and returns a value in some token type, or
-it could be a continuation that takes the new input and calls
-``alexScan`` again, building a list of tokens as it goes.
+Once you have the ``action``, it is up to you what to do with it.
+The type of ``action`` could be a function which takes the ``String`` representation of the token and returns a value in some token type,
+or it could be a continuation that takes the new input and calls ``alexScan`` again, building a list of tokens as it goes.
 
-This is pretty low-level stuff; you have complete flexibility about how
-you use the lexer, but there might be a fair amount of support code to
-write before you can actually use it. For this reason, we also provide a
-selection of wrappers that add some common functionality to this basic
-scheme. Wrappers are described in the next section.
+This is pretty low-level stuff;
+you have complete flexibility about how you use the lexer,
+but there might be a fair amount of support code to write before you can actually use it.
+For this reason, we also provide a selection of wrappers that add some common functionality to this basic scheme.
+Wrappers are described in the next section.
 
-There is another entry point, which is useful if your grammar contains
-any predicates (see :ref:`Contexts <contexts>`):
+There is another entry point, which is useful if your grammar contains any predicates (see :ref:`Contexts <contexts>`):
 
 .. code-block:: haskell
 
@@ -152,32 +137,27 @@ The extra argument, of some type ``user``, is passed to each predicate.
 Wrappers
 --------
 
-To use one of the provided wrappers, include the following declaration
-in your file:
+To use one of the provided wrappers, include the following declaration in your file:
 
 ::
 
    %wrapper "name"
 
-where <name> is the name of the wrapper, eg. ``basic``. The following
-sections describe each of the wrappers that come with Alex.
+where <name> is the name of the wrapper, eg. ``basic``.
+The following sections describe each of the wrappers that come with Alex.
 
 The "basic" wrapper
 ~~~~~~~~~~~~~~~~~~~
 
-The basic wrapper is a good way to obtain a function of type
-``String -> [token]`` from a lexer specification, with little fuss.
+The basic wrapper is a good way to obtain a function of type ``String -> [token]`` from a lexer specification, with little fuss.
 
-It provides definitions for ``AlexInput``, ``alexGetByte`` and
-``alexInputPrevChar`` that are suitable for lexing a ``String`` input.
-It also provides a function ``alexScanTokens`` which takes a ``String``
-input and returns a list of the tokens it contains.
+It provides definitions for ``AlexInput``, ``alexGetByte`` and ``alexInputPrevChar`` that are suitable for lexing a ``String`` input.
+It also provides a function ``alexScanTokens`` which takes a ``String`` input and returns a list of the tokens it contains.
 
-The ``basic`` wrapper provides no support for using startcodes; the
-initial startcode is always set to zero.
+The ``basic`` wrapper provides no support for using startcodes;
+the initial startcode is always set to zero.
 
-Here is the actual code included in the lexer when the basic wrapper is
-selected:
+Here is the actual code included in the lexer when the basic wrapper is selected:
 
 .. code-block:: haskell
 
@@ -206,9 +186,8 @@ selected:
            AlexToken inp' len act -> act (take len str) : go inp'
            AlexError _            -> error "lexical error"
 
-The type signature for ``alexScanTokens`` is commented out, because the
-``token`` type is unknown. All of the actions in your lexical
-specification should have type:
+The type signature for ``alexScanTokens`` is commented out, because the ``token`` type is unknown.
+All of the actions in your lexical specification should have type:
 
 .. code-block:: haskell
 
@@ -216,19 +195,17 @@ specification should have type:
 
 for some type ``token``.
 
-For an example of the use of the basic wrapper, see the file
-``examples/Tokens.x`` in the Alex distribution.
+For an example of the use of the basic wrapper, see the file ``examples/Tokens.x`` in the Alex distribution.
 
 The "posn" wrapper
 ~~~~~~~~~~~~~~~~~~
 
 The posn wrapper provides slightly more functionality than the basic
-wrapper: it keeps track of line and column numbers of tokens in the
-input text.
+wrapper:
+it keeps track of line and column numbers of tokens in the input text.
 
-The posn wrapper provides the following, in addition to the
-straightforward definitions of ``alexGetByte`` and
-``alexInputPrevChar``:
+The posn wrapper provides the following,
+in addition to the straightforward definitions of ``alexGetByte`` and ``alexInputPrevChar``:
 
 .. code-block:: haskell
 
@@ -261,17 +238,16 @@ The types of the token actions should be:
 
    { ... } :: AlexPosn -> String -> token
 
-For an example using the ``posn`` wrapper, see the file
-``examples/Tokens_posn.x`` in the Alex distribution.
+For an example using the ``posn`` wrapper,
+see the file ``examples/Tokens_posn.x`` in the Alex distribution.
 
 The "monad" wrapper
 ~~~~~~~~~~~~~~~~~~~
 
-The ``monad`` wrapper is the most flexible of the wrappers provided with
-Alex. It includes a state monad which keeps track of the current input
-and text position, and the startcode. It is intended to be a template
-for building your own monads - feel free to copy the code and modify it
-to build a monad with the facilities you need.
+The ``monad`` wrapper is the most flexible of the wrappers provided with Alex.
+It includes a state monad which keeps track of the current input and text position, and the startcode.
+It is intended to be a template for building your own monads -
+feel free to copy the code and modify it to build a monad with the facilities you need.
 
 .. code-block:: haskell
 
@@ -307,8 +283,7 @@ to build a monad with the facilities you need.
    alexGetStartCode :: Alex Int
    alexSetStartCode :: Int -> Alex ()
 
-The ``monad`` wrapper expects that you define a variable ``alexEOF``
-with the following signature:
+The ``monad`` wrapper expects that you define a variable ``alexEOF`` with the following signature:
 
 .. code-block:: haskell
 
@@ -327,15 +302,14 @@ The token actions should have the following type:
    type AlexAction result = AlexInput -> Int -> Alex result
    { ... }  :: AlexAction result
 
-The Alex file must also define a function ``alexEOF``, which will be
-executed on when the end-of-file is scanned:
+The Alex file must also define a function ``alexEOF``,
+which will be executed on when the end-of-file is scanned:
 
 .. code-block:: haskell
 
    alexEOF :: Alex result
 
-The ``monad`` wrapper also provides some useful combinators for
-constructing token actions:
+The ``monad`` wrapper also provides some useful combinators for constructing token actions:
 
 .. code-block:: haskell
 
@@ -354,18 +328,14 @@ constructing token actions:
 The "monadUserState" wrapper
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``monadUserState`` wrapper is built upon the ``monad`` wrapper. It
-includes a reference to a type which must be defined in the user's
-program, ``AlexUserState``, and a call to an initialization function
-which must also be defined in the user's program, ``alexInitUserState``.
-It gives great flexibility because it is now possible to add any needed
-information and carry it during the whole lexing phase.
+The ``monadUserState`` wrapper is built upon the ``monad`` wrapper.
+It includes a reference to a type which must be defined in the user's program, ``AlexUserState``,
+and a call to an initialization function which must also be defined in the user's program, ``alexInitUserState``.
+It gives great flexibility because it is now possible to add any needed information and carry it during the whole lexing phase.
 
-The generated code is the same as in the ``monad`` wrapper, except in 3
-places:
+The generated code is the same as in the ``monad`` wrapper, except in 3 places:
 
-1. The definition of the general state, which now refers to a type
-   ``AlexUserState`` that must be defined in the Alex file.
+1. The definition of the general state, which now refers to a type ``AlexUserState`` that must be defined in the Alex file.
 
    .. code-block:: haskell
 
@@ -378,8 +348,7 @@ places:
         , alex_ust   :: AlexUserState  -- AlexUserState will be defined in the user program
         }
 
-2. The initialization code, where a user-specified routine
-   (``alexInitUserState``) will be called.
+2. The initialization code, where a user-specified routine (``alexInitUserState``) will be called.
 
    .. code-block:: haskell
 
@@ -397,16 +366,14 @@ places:
                , alex_scd   = 0
                }
 
-3. Two helper functions (``alexGetUserState`` and ``alexSetUserState``)
-   are defined.
+3. Two helper functions (``alexGetUserState`` and ``alexSetUserState``) are defined.
 
    .. code-block:: haskell
 
       alexGetUserState :: Alex AlexUserState
       alexSetUserState :: AlexUserState -> Alex ()
 
-Here is an example of code in the user's Alex file defining the type and
-function:
+Here is an example of code in the user's Alex file defining the type and function:
 
 .. code-block:: haskell
 
@@ -445,11 +412,10 @@ function:
 The "gscan" wrapper
 ~~~~~~~~~~~~~~~~~~~
 
-The ``gscan`` wrapper is provided mainly for historical reasons: it
-exposes an interface which is very similar to that provided by Alex
-version 1.x. The interface is intended to be very general, allowing
-actions to modify the startcode, and pass around an arbitrary state
-value.
+The ``gscan`` wrapper is provided mainly for historical reasons:
+it exposes an interface which is very similar to that provided by Alex version 1.x.
+The interface is intended to be very general, allowing actions to modify the startcode,
+and pass around an arbitrary state value.
 
 .. code-block:: haskell
 
@@ -473,38 +439,27 @@ The token actions should all have this type:
 The bytestring wrappers
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``basic-bytestring``, ``posn-bytestring`` and ``monad-bytestring``
-wrappers are variations on the ``basic``, ``posn`` and ``monad``
-wrappers that use lazy ``ByteString``\ s as the input and token types
-instead of an ordinary ``String``.
+The ``basic-bytestring``, ``posn-bytestring`` and ``monad-bytestring`` wrappers are variations on the ``basic``, ``posn`` and ``monad`` wrappers that use lazy ``ByteString``\ s as the input and token types instead of an ordinary ``String``.
 
-The point of using these wrappers is that ``ByteString``\ s provide a
-more memory efficient representation of an input stream. They can also
-be somewhat faster to process. Note that using these wrappers adds a
-dependency on the ``ByteString`` modules, which live in the
-``bytestring`` package (or in the ``base`` package in ``ghc-6.6``)
+The point of using these wrappers is that ``ByteString``\ s provide a more memory efficient representation of an input stream.
+They can also be somewhat faster to process.
+Note that using these wrappers adds a dependency on the ``ByteString`` modules, which live in the ``bytestring`` package (or in the ``base`` package in ``ghc-6.6``)
 
-As mentioned earlier (:ref:`Unicode and UTF-8 <encoding>`), Alex lexers
-internally process a UTF-8 encoded string of bytes. This means that the
-``ByteString`` supplied as input when using one of the ByteString
-wrappers should be UTF-8 encoded (or use either the ``--latin1`` option
-or the ``%encoding`` declaration).
+As mentioned earlier (:ref:`Unicode and UTF-8 <encoding>`),
+Alex lexers internally process a UTF-8 encoded string of bytes.
+This means that the ``ByteString`` supplied as input when using one of the ByteString wrappers should be UTF-8 encoded
+(or use either the ``--latin1`` option or the ``%encoding`` declaration).
 
-Do note that ``token`` provides a *lazy* ``ByteString`` which is not the
-most compact representation for short strings. You may want to convert
-to a strict ``ByteString`` or perhaps something more compact still. Note
-also that by default tokens share space with the input ``ByteString``
-which has the advantage that it does not need to make a copy but it also
-prevents the input from being garbage collected. It may make sense in
-some applications to use ``ByteString``'s ``copy`` function to unshare
-tokens that will be kept for a long time, to allow the original input to
-be collected.
+Do note that ``token`` provides a *lazy* ``ByteString`` which is not the most compact representation for short strings.
+You may want to convert to a strict ``ByteString`` or perhaps something more compact still.
+Note also that by default tokens share space with the input ``ByteString`` which has the advantage that it does not need to make a copy but it also prevents the input from being garbage collected.
+It may make sense in some applications to use ``ByteString``'s ``copy`` function to unshare tokens that will be kept for a long time,
+to allow the original input to be collected.
 
 The "basic-bytestring" wrapper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``basic-bytestring`` wrapper is the same as the ``basic`` wrapper
-but with lazy ``ByteString`` instead of ``String``:
+The ``basic-bytestring`` wrapper is the same as the ``basic`` wrapper but with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
@@ -534,8 +489,7 @@ for some type ``token``.
 The "posn-bytestring" wrapper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``posn-bytestring`` wrapper is the same as the ``posn`` wrapper but
-with lazy ``ByteString`` instead of ``String``:
+The ``posn-bytestring`` wrapper is the same as the ``posn`` wrapper but with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
@@ -562,8 +516,7 @@ for some type ``token``.
 The "monad-bytestring" wrapper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``monad-bytestring`` wrapper is the same as the ``monad`` wrapper
-but with lazy ``ByteString`` instead of ``String``:
+The ``monad-bytestring`` wrapper is the same as the ``monad`` wrapper but with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
@@ -592,16 +545,13 @@ but with lazy ``ByteString`` instead of ``String``:
 
    -- token :: (AlexInput -> Int -> token) -> AlexAction token
 
-All of the actions in your lexical specification have the same type as
-in the ``monad`` wrapper. It is only the types of the function to run
-the monad and the type of the ``token`` function that change.
+All of the actions in your lexical specification have the same type as in the ``monad`` wrapper.
+It is only the types of the function to run the monad and the type of the ``token`` function that change.
 
 The "monadUserState-bytestring" wrapper
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The ``monadUserState-bytestring`` wrapper is the same as the
-``monadUserState`` wrapper but with lazy ``ByteString`` instead of
-``String``:
+The ``monadUserState-bytestring`` wrapper is the same as the ``monadUserState`` wrapper but with lazy ``ByteString`` instead of ``String``:
 
 .. code-block:: haskell
 
@@ -624,28 +574,23 @@ The ``monadUserState-bytestring`` wrapper is the same as the
 
    -- token :: (AlexInput -> Int -> token) -> AlexAction token
 
-All of the actions in your lexical specification have the same type as
-in the ``monadUserState`` wrapper. It is only the types of the function
-to run the monad and the type of the ``token`` function that change.
+All of the actions in your lexical specification have the same type as in the ``monadUserState`` wrapper.
+It is only the types of the function to run the monad and the type of the ``token`` function that change.
 
 .. _types:
 
 Type Signatures and Typeclasses
 -------------------------------
 
-The ``%token``, ``%typeclass``, and ``%action`` directives can be used
-to cause Alex to emit additional type signatures in generated code. This
-allows the use of typeclasses in generated lexers.
+The ``%token``, ``%typeclass``, and ``%action`` directives can be used to cause Alex to emit additional type signatures in generated code.
+This allows the use of typeclasses in generated lexers.
 
 Generating Type Signatures with Wrappers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``%token`` directive can be used to specify the token type when any
-kind of ``%wrapper`` directive has been given. Whenever ``%token`` is
-used, the ``%typeclass`` directive can also be used to specify one or
-more typeclass constraints. The following shows a simple lexer that
-makes use of this to interpret the meaning of tokens using the ``Read``
-typeclass:
+The ``%token`` directive can be used to specify the token type when any kind of ``%wrapper`` directive has been given.
+Whenever ``%token`` is used, the ``%typeclass`` directive can also be used to specify one or more typeclass constraints.
+The following shows a simple lexer that makes use of this to interpret the meaning of tokens using the ``Read`` typeclass:
 
 .. code-block:: none
 
@@ -670,8 +615,7 @@ typeclass:
 
    }
 
-Multiple typeclasses can be given by separating them with commas, for
-example:
+Multiple typeclasses can be given by separating them with commas, for example:
 
 ::
 
@@ -680,12 +624,10 @@ example:
 Generating Type Signatures without Wrappers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Type signatures can also be generated for lexers that do not use any
-wrapper. Instead of the ``%token`` directive, the ``%action`` directive
-is used to specify the type of a lexer action. The ``%typeclass``
-directive can be used to specify the typeclass in the same way as with a
-wrapper. The following example shows the use of typeclasses with a
-"homegrown" monadic lexer:
+Type signatures can also be generated for lexers that do not use any wrapper.
+Instead of the ``%token`` directive, the ``%action`` directive is used to specify the type of a lexer action.
+The ``%typeclass`` directive can be used to specify the typeclass in the same way as with a wrapper.
+The following example shows the use of typeclasses with a "homegrown" monadic lexer:
 
 .. code-block:: none
 
@@ -726,8 +668,7 @@ wrapper. The following example shows the use of typeclasses with a
 
    }
 
-The ``%token`` directive may only be used with wrapper, and the
-``%action`` can only be used when no wrapper is used.
+The ``%token`` directive may only be used with wrapper,
+and the ``%action`` can only be used when no wrapper is used.
 
-The ``%typeclass`` directive cannot be given without the ``%token`` or
-``%action`` directive.
+The ``%typeclass`` directive cannot be given without the ``%token`` or ``%action`` directive.
