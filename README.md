@@ -9,8 +9,8 @@ documentation, see the doc directory.
 
 - <https://hackage.haskell.org/package/alex>
 
-Alex is covered by a BSD-Style licence; see the licence file in
-the `doc` directory for details.
+For information on copying and distributing this program, see the file
+LICENSE in this directory.
 
 The sources are in the `src` directory and the documentation in the `doc`
 directory; various  examples are in the `examples` subdirectory.
