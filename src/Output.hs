@@ -4,7 +4,7 @@
 --
 -- (c) Simon Marlow 2003
 --
--- Code-outputing and table-generation routines
+-- Code-outputting and table-generation routines
 --
 -- ----------------------------------------------------------------------------}
 

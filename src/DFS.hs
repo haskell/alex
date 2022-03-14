@@ -76,10 +76,10 @@ reverse_graph:: Graph -> Graph
 reverse_graph g@(sz,_) = mk_graph sz (rev_edges g)
 
 
--- `t_close' takes the transitive closure of a graph; `scc' returns the stronly
--- connected components of the graph and `top_sort' topologically sorts the
--- graph.  Note that the array is given one more element in order to avoid
--- problems with empty arrays.
+-- `t_close' takes the transitive closure of a graph; `scc' returns the
+-- strongly connected components of the graph and `top_sort' topologically
+-- sorts the graph.  Note that the array is given one more element in order
+-- to avoid problems with empty arrays.
 
 t_close:: Graph -> Graph
 t_close g@(sz,_) = (sz,\v->ar!v)
