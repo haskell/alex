@@ -57,7 +57,7 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
 -- Token positions
 
 -- `Posn' records the location of a token in the input text.  It has three
--- fields: the address (number of charaters preceding the token), line number
+-- fields: the address (number of characters preceding the token), line number
 -- and column of a token within the file. `start_pos' gives the position of the
 -- start of the file and `eof_pos' a standard encoding for the end of file.
 -- `move_pos' calculates the new position after traversing a given character,

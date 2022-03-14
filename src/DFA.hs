@@ -132,7 +132,7 @@ nfa2pdfa nfa pdfa (ss:umkd)
 
         accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
 
--- `sort_accs' sorts a list of accept values into decending order of priority,
+-- `sort_accs' sorts a list of accept values into descending order of priority,
 -- eliminating any elements that follow an unconditional accept value.
 
 sort_accs:: [Accept a] -> [Accept a]

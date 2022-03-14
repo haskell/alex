@@ -5,7 +5,7 @@
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
 --
 -- The `scanner2nfa' takes a `Scanner' (see the `RExp' module) and
--- generates its equivelent nondeterministic finite automaton.  NFAs
+-- generates its equivalent nondeterministic finite automaton.  NFAs
 -- are turned into DFAs in the DFA module.
 -- 
 -- See the chapter on `Finite Automata and Lexical Analysis' in the
