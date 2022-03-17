@@ -57,7 +57,7 @@ import Data.Maybe ( fromJust )
 -- The `Accept' structure contains the priority of the token being accepted
 -- (lower numbers => higher priorities), the name of the token, a place holder
 -- that can be used for storing the `action' function for constructing the
--- token from the input text and thge scanner's state, a list of start codes
+-- token from the input text and the scanner's state, a list of start codes
 -- (listing the start codes that the scanner must be in for the token to be
 -- accepted; empty => no restriction), the leading and trailing context (both
 -- `Nothing' if there is none).
