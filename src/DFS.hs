@@ -29,12 +29,12 @@ import qualified Set hiding ( Set )
 import Data.Array ( (!), accumArray, listArray )
 
 -- The result of a depth-first search of a graph is a list of trees,
--- `GForrest'.  `post_order' provides a post-order traversal of a forrest.
+-- `GForest'.  `post_order' provides a post-order traversal of a forest.
 
-type GForrest = [GTree]
-data GTree    = GNode Int GForrest
+type GForest = [GTree]
+data GTree    = GNode Int GForest
 
-postorder:: GForrest -> [Int]
+postorder:: GForest -> [Int]
 postorder ts = po ts []
         where
         po ts' l = foldr po_tree l ts'
@@ -87,33 +87,33 @@ t_close g@(sz,_) = (sz,\v->ar!v)
         ar = listArray (0,sz) ([postorder(dff' [v] g)| v<-vertices g]++[und])
         und = error "t_close"
 
-scc:: Graph -> GForrest
+scc:: Graph -> GForest
 scc g = dff' (reverse (top_sort (reverse_graph g))) g
 
 top_sort:: Graph -> [Int]
 top_sort = postorder . dff 
 
 
--- `dff' computes the depth-first forrest.  It works by unrolling the
+-- `dff' computes the depth-first forest.  It works by unrolling the
 -- potentially infinite tree from each of the vertices with `generate_g' and
 -- then pruning out the duplicates.
 
-dff:: Graph -> GForrest
+dff:: Graph -> GForest
 dff g = dff' (vertices g) g
 
-dff':: [Int] -> Graph -> GForrest
+dff':: [Int] -> Graph -> GForest
 dff' vs (_bs, f) = prune (map (generate_g f) vs)
 
 generate_g:: (Int->[Int]) -> Int -> GTree
 generate_g f v = GNode v (map (generate_g f) (f v))
 
-prune:: GForrest -> GForrest
+prune:: GForest -> GForest
 prune ts = snd(chop(empty_int,ts))
         where
         empty_int:: Set Int
         empty_int = Set.empty
 
-chop:: (Set Int,GForrest) -> (Set Int,GForrest)
+chop:: (Set Int,GForest) -> (Set Int,GForest)
 chop p@(_, []) = p
 chop (vstd,GNode v ts:us) =
         if v `Set.member` vstd
