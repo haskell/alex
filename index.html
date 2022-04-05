@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!DOCTYPE html 
+<!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
@@ -42,10 +42,11 @@
   </tr>
   <tr>
     <td width="100%" style="padding-left: 10px; padding-top: 5px">
+    <p>Documentation is hosted on <a href="https://haskell-alex.readthedocs.io">Read the Docs</a>.
     <ul>
-      <li><a href="doc/html/index.html">Online (HTML)</a></li>
-      <li><a href="doc/alex.pdf">27-page PDF</a></li>
-      <li>Downloadable HTML: <a href="doc/alex-doc-html-3.0.tar.gz">alex-doc-html-3.0.tar.gz</a></li>
+      <li><a href="https://haskell-alex.readthedocs.io">Online (HTML)</a></li>
+      <li><a href="https://haskell-alex.readthedocs.io/_/downloads/en/latest/pdf/">PDF</a></li>
+      <li><a href="https://haskell-alex.readthedocs.io/_/downloads/en/latest/htmlzip/">Downloadable HTML</a></li>
     </ul>
     </td>
   </tr>
@@ -56,25 +57,22 @@
   <tr>
     <td width="100%" style="padding-left: 10px; padding-top: 5px">
 
-      <p>Alex is part of
-        the <a href="http://www.haskell.org/haskellwiki/Haskell_Platform">Haskell
-          Platform</a>, so if you install the platform you will
-        automatically have a working Alex.</p>
-      
-      <p>Alex is also on Hackage.  If you have
-        the <a href="http://hackage.haskell.org/trac/hackage/wiki/CabalInstall">cabal-install</a>
-        tool (which also comes with the Haskell Platform), then you can
-        build and install the latest version of Alex with</p>
+      <p>From <a href="https://hackage.haskell.org/package/alex">Hackage</a> via
+         <a href="https://www.haskell.org/cabal/"><code>cabal-install</code></a>:
       <pre>
         cabal install alex
       </pre>
-      
-      <p>To find out what the latest version of Alex is, and to download
-        the source separately, go to Alex's <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/alex">HackageDB
-          page</a>.
-        
-      <p>Alex might also be pre-packaged for your OS:</p>
-      
+      </p>
+
+      <p>From <a href="https://www.stackage.org/package/alex">Stackage</a> via
+         <a href="https://haskellstack.org"><code>stack</code></a>, e.g.:
+      <pre>
+        stack install --resolver nightly alex
+      </pre>
+      </p>
+
+      <p>Alex might also be pre-packaged for your OS (unconfirmed as of 2022-04-06):</p>
+
       <UL>
         <LI>Ubuntu users: packages should be available from the universe repository.</LI>
         <LI>Debian GNU/Linux users: packages are available <a href="http://packages.debian.org/alex">here</a>.</LI>
@@ -96,17 +94,21 @@
     <td width="100%" style="padding-left: 10px; padding-top: 5px">
     <p>Alex is licensed under a <a
               href="http://www.haskell.org/alex/doc/html/license.html">BSD-style
-        license</a>.  The current sources are <a href="https://github.com/simonmar/alex">on github</a>, to get the latest version say:</p>
+        license</a>.
+       The current sources are on <a href="https://github.com/haskell/alex">github</a>,
+       get the latest version with:
+    <pre>&nbsp;&nbsp;&nbsp;git clone https://github.com/haskell/alex</pre>
+    </p>
 
-    <pre>&nbsp;&nbsp;&nbsp;git clone https://github.com/simonmar/alex</pre>
-
-    <p>Feel free to hack on Alex and send me your merge requests or patches.</p>
+    <p>Contribute by opening <a href="https://github.com/haskell/alex/issues">issues</a>
+       which can be followed up by <a href="https://github.com/haskell/alex/pulls">pull requests</a>.</p>
     </td>
   </tr>
 </table>
 <hr>
-<p><a href="http://www.haskell.org/~simonmar"><i>Simon Marlow</i></a> <a href="mailto:simonmar@microsoft.com">
-&lt;simonmar@microsoft.com&gt;</a></p>
+<p style="font-family: Arial">Source of this page:
+<a href="https://github.com/haskell/alex/blob/master/www/index.html"><code>index.html</code></a>,
+deployed 2022-04-06.</p>
 
 </body>
 
