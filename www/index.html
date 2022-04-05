@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html
      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -7,9 +7,9 @@
 <head>
 <title>Alex</title>
 </head>
-
+<body>
 <table border="0" cellpadding="0" cellspacing="0" style="border-collapse:
-      collapse; font-family: Arial" bordercolor="#111111" width="800" align="center">
+      collapse; font-family: Arial" width="800" align="center">
   <tr>
     <td width="100%" style="font-size: 24pt; padding-bottom: 0px" bgcolor="#77aaFF">
     Alex: A lexical analyser generator for Haskell</td>
@@ -33,7 +33,7 @@
       <p>Alex is a tool for generating lexical analysers
       in Haskell, given a description of the tokens to be recognised
       in the form of regular expressions.  It is similar to the tool
-      <quote>lex</quote> or <quote>flex</quote> for C/C++.</p>
+      <q>lex</q> or <q>flex</q> for C/C++.</p>
       </td>
   </tr>
   <tr style="border-bottom: 1px dotted">
@@ -42,7 +42,7 @@
   </tr>
   <tr>
     <td width="100%" style="padding-left: 10px; padding-top: 5px">
-    <p>Documentation is hosted on <a href="https://haskell-alex.readthedocs.io">Read the Docs</a>.
+    <p>Documentation is hosted on <a href="https://haskell-alex.readthedocs.io">Read the Docs</a>.</p>
     <ul>
       <li><a href="https://haskell-alex.readthedocs.io">Online (HTML)</a></li>
       <li><a href="https://haskell-alex.readthedocs.io/_/downloads/en/latest/pdf/">PDF</a></li>
@@ -58,31 +58,29 @@
     <td width="100%" style="padding-left: 10px; padding-top: 5px">
 
       <p>From <a href="https://hackage.haskell.org/package/alex">Hackage</a> via
-         <a href="https://www.haskell.org/cabal/"><code>cabal-install</code></a>:
+         <a href="https://www.haskell.org/cabal/"><code>cabal-install</code></a>:</p>
       <pre>
         cabal install alex
       </pre>
-      </p>
 
       <p>From <a href="https://www.stackage.org/package/alex">Stackage</a> via
-         <a href="https://haskellstack.org"><code>stack</code></a>, e.g.:
+         <a href="https://haskellstack.org"><code>stack</code></a>, e.g.:</p>
       <pre>
         stack install --resolver nightly alex
       </pre>
-      </p>
 
       <p>Alex might also be pre-packaged for your OS (unconfirmed as of 2022-04-06):</p>
 
-      <UL>
-        <LI>Ubuntu users: packages should be available from the universe repository.</LI>
-        <LI>Debian GNU/Linux users: packages are available <a href="http://packages.debian.org/alex">here</a>.</LI>
-        <LI>RPMs for other versions of Linux can be built directly from the source, using <tt>rpmbuild -ta</tt>.</LI>
-        <LI>FreeBSD/x86 users: Alex is in the ports tree, so either <tt>pkg_add -r
+      <ul>
+        <li>Ubuntu users: packages should be available from the universe repository.</li>
+        <li>Debian GNU/Linux users: packages are available <a href="http://packages.debian.org/alex">here</a>.</li>
+        <li>RPMs for other versions of Linux can be built directly from the source, using <tt>rpmbuild -ta</tt>.</li>
+        <li>FreeBSD/x86 users: Alex is in the ports tree, so either <tt>pkg_add -r
             hs-alex</tt>, or install it from the ports tree in
-          <tt>/usr/ports/devel/hs-alex</tt>.</LI>
+          <tt>/usr/ports/devel/hs-alex</tt>.</li>
         <li>OpenBSD users: Alex is in the -current ports tree, you can
           install it from <tt>/usr/ports/devel/alex</tt>.</li>
-      </UL>
+      </ul>
 
     </td>
   </tr>
@@ -96,16 +94,15 @@
               href="http://www.haskell.org/alex/doc/html/license.html">BSD-style
         license</a>.
        The current sources are on <a href="https://github.com/haskell/alex">github</a>,
-       get the latest version with:
-    <pre>&nbsp;&nbsp;&nbsp;git clone https://github.com/haskell/alex</pre>
-    </p>
+       get the latest version with:</p>
+    <pre>&nbsp;&nbsp;&nbsp;git clone https://github.com/haskell/alex.git</pre>
 
     <p>Contribute by opening <a href="https://github.com/haskell/alex/issues">issues</a>
        which can be followed up by <a href="https://github.com/haskell/alex/pulls">pull requests</a>.</p>
     </td>
   </tr>
 </table>
-<hr>
+<hr></hr>
 <p style="font-family: Arial">Source of this page:
 <a href="https://github.com/haskell/alex/blob/master/www/index.html"><code>index.html</code></a>,
 deployed 2022-04-06.</p>
