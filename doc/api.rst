@@ -33,7 +33,7 @@ then it is your responsibility to ensure that the input is properly UTF-8 encode
 None of this applies if you used the ``--latin1`` option to Alex or specify a Latin-1 encoding via a ``%encoding`` declaration.
 In that case, the input is just a sequence of 8-bit bytes, interpreted as characters in the Latin-1 character set.
 
-The following (case-insenstive) encoding strings are currently supported:
+The following (case-insensitive) encoding strings are currently supported:
 
 ``%encoding "latin-1"``; ``%encoding "iso-8859-1"``
    Declare Latin-1 encoding as described above.
