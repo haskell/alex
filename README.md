@@ -1,6 +1,6 @@
 # Alex: A Lexical Analyser Generator
 
-[![Build Status](https://secure.travis-ci.org/simonmar/alex.png?branch=master)](http://travis-ci.org/simonmar/alex)
+[![Haskell-CI](https://github.com/haskell/alex/actions/workflows/haskell-ci.yml/badge.svg)](https://github.com/haskell/alex/actions/workflows/haskell-ci.yml)
 
 Alex is a Lex-like tool for generating Haskell scanners.  For complete
 documentation, see the doc directory.
