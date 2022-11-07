@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+<title>Alex</title>
+</head>
+
+<table border="0" cellpadding="0" cellspacing="0" style="border-collapse:
+      collapse; font-family: Arial" bordercolor="#111111" width="800" align="center">
+  <tr>
+    <td width="100%" style="font-size: 24pt; padding-bottom: 0px" bgcolor="#77aaFF">
+    Alex: A lexical analyser generator for Haskell</td>
+  </tr>
+  <tr>
+    <td width="100%" style="padding-top: 20px">
+    <ul>
+      <li><a href="#Overview">Overview</a></li>
+      <li><a href="#Documentation">Documentation</a></li>
+      <li><a href="#Download">Download</a></li>
+      <li><a href="#Development">Development</a></li>
+    </ul>
+    </td>
+  </tr>
+  <tr style="border-bottom: 1px dotted">
+    <td width="100%" style="font-size: 18pt; padding-top: 10px">
+    <a name="Overview">Overview</a></td>
+  </tr>
+  <tr>
+    <td width="100%" style="padding-left: 10px; padding-top: 5px">
+      <p>Alex is a tool for generating lexical analysers
+      in Haskell, given a description of the tokens to be recognised
+      in the form of regular expressions.  It is similar to the tool
+      <quote>lex</quote> or <quote>flex</quote> for C/C++.</p>
+      </td>
+  </tr>
+  <tr style="border-bottom: 1px dotted">
+    <td width="100%" style="font-size: 18pt; padding-top: 10px">
+    <a name="Documentation">Documentation</a></td>
+  </tr>
+  <tr>
+    <td width="100%" style="padding-left: 10px; padding-top: 5px">
+    <ul>
+      <li><a href="doc/html/index.html">Online (HTML)</a></li>
+      <li>Downloadable: <a href="doc/alex-doc-html-2.2.tar.gz">HTML</a></li>
+    </ul>
+    </td>
+  </tr>
+  <tr style="border-bottom: 1px dotted">
+    <td width="100%" style="font-size: 18pt; padding-top: 10px">
+    <a name="Download">Download</a></td>
+  </tr>
+  <tr>
+    <td width="100%" style="padding-left: 10px; padding-top: 5px">
+
+      <p>Alex is part of
+        the <a href="http://www.haskell.org/haskellwiki/Haskell_Platform">Haskell
+          Platform</a>, so if you install the platform you will
+        automatically have a working Alex.</p>
+      
+      <p>Alex is also on Hackage.  If you have
+        the <a href="http://hackage.haskell.org/trac/hackage/wiki/CabalInstall">cabal-install</a>
+        tool (which also comes with the Haskell Platform), then you can
+        build and install the latest version of Alex with
+      <pre>
+        cabal install alex
+      </pre>
+      </p>
+
+      <p>To find out what the latest version of Alex is, and to download
+        the source separately, go to Alex's <a href="http://hackage.haskell.org/cgi-bin/hackage-scripts/package/alex">HackageDB
+          page</a>.
+        
+      <p>Alex might also be pre-packaged for your OS:</p>
+      
+      <UL>
+        <LI>Ubuntu users: packages should be available from the universe repository.</LI>
+        <LI>Debian GNU/Linux users: packages are available <a href="http://packages.debian.org/alex">here</a>.</LI>
+        <LI>RPMs for other versions of Linux can be built directly from the source, using <tt>rpmbuild -ta</tt>.</LI>
+        <LI>FreeBSD/x86 users: Alex is in the ports tree, so either <tt>pkg_add -r
+            hs-alex</tt>, or install it from the ports tree in
+          <tt>/usr/ports/devel/hs-alex</tt>.</LI>
+        <li>OpenBSD users: Alex is in the -current ports tree, you can
+          install it from <tt>/usr/ports/devel/alex</tt>.</li>
+      </UL>
+
+    </td>
+  </tr>
+  <tr style="border-bottom: 1px dotted">
+    <td width="100%" style="font-size: 18pt; padding-top: 10px">
+    <a name="Development">Development</a></td>
+  </tr>
+  <tr>
+    <td width="100%" style="padding-left: 10px; padding-top: 5px">
+    <p>Alex is licensed under a <a
+	      href="http://www.haskell.org/alex/doc/html/license.html">BSD-style license</a>.  The current sources are in a <a href="http://darcs.net/">Darcs</a>
+	    repository, to get the latest version say:</p>
+
+    <pre>&nbsp;&nbsp;&nbsp;darcs get http://darcs.haskell.org/alex/</pre>
+
+    <p>Feel free to hack on Alex and <tt>darcs send</tt> me your
+	    patches.</p>
+
+    </td>
+  </tr>
+</table>
+<hr>
+<p><a href="http://www.haskell.org/~simonmar"><i>Simon Marlow</i></a> <a href="mailto:simonmar@microsoft.com">
+&lt;simonmar@microsoft.com&gt;</a></p>
+
+</body>
+
+</html>
