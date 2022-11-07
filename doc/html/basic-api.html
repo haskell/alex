@@ -1,0 +1,66 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>5.2. Basic interface</title><link rel="stylesheet" href="fptools.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="Alex User Guide"><link rel="up" href="api.html" title="Chapter 5. The Interface to an Alex-generated lexer"><link rel="prev" href="api.html" title="Chapter 5. The Interface to an Alex-generated lexer"><link rel="next" href="wrappers.html" title="5.3. Wrappers"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">5.2. Basic interface</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="api.html">Prev</a> </td><th width="60%" align="center">Chapter 5. The Interface to an Alex-generated lexer</th><td width="20%" align="right"> <a accesskey="n" href="wrappers.html">Next</a></td></tr></table><hr></div><div class="section" title="5.2. Basic interface"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="basic-api"></a>5.2. Basic interface</h2></div></div></div><p>If you compile your Alex file without a
+      <code class="literal">%wrapper</code> declaration, then you get access to
+      the lowest-level API to the lexer.  You must provide definitions
+      for the following, either in the same module or imported from
+      another module:</p><pre class="programlisting">type AlexInput
+alexGetByte       :: AlexInput -&gt; Maybe (Word8,AlexInput)
+alexInputPrevChar :: AlexInput -&gt; Char</pre><p>The generated lexer is independent of the input type,
+      which is why you have to provide a definition for the input type
+      yourself.  Note that the input type needs to keep track of the
+      <span class="emphasis"><em>previous</em></span> character in the input stream;
+      this is used for implementing patterns with a left-context
+      (those that begin with <code class="literal">^</code> or
+      <code class="literal"><em class="replaceable"><code>set</code></em>^</code>).  If you
+      don't ever use patterns with a left-context in your lexical
+      specification, then you can safely forget about the previous
+      character in the input stream, and have
+      <code class="literal">alexInputPrevChar</code> return
+      <code class="literal">undefined</code>.</p><p>Alex will provide the following function:</p><pre class="programlisting">alexScan :: AlexInput             -- The current input
+         -&gt; Int                   -- The "start code"
+         -&gt; AlexReturn action     -- The return value
+
+data AlexReturn action
+  = AlexEOF
+
+  | AlexError
+      !AlexInput     -- Remaining input
+
+  | AlexSkip
+      !AlexInput     -- Remaining input
+      !Int           -- Token length
+
+  | AlexToken  
+      !AlexInput     -- Remaining input
+      !Int           -- Token length
+      action         -- action value</pre><p>Calling <code class="literal">alexScan</code> will scan a single
+      token from the input stream, and return a value of type
+      <code class="literal">AlexReturn</code>.  The value returned is either:</p><div class="variablelist"><dl><dt><span class="term"><code class="literal">AlexEOF</code></span></dt><dd><p>The end-of-file was reached.</p></dd><dt><span class="term"><code class="literal">AlexError</code></span></dt><dd><p>A valid token could not be recognised.</p></dd><dt><span class="term"><code class="literal">AlexSkip</code></span></dt><dd><p>The matched token did not have an action associated
+	    with it.</p></dd><dt><span class="term"><code class="literal">AlexToken</code></span></dt><dd><p>A token was matched, and the action associated with
+	    it is returned.</p></dd></dl></div><p>The <code class="literal">action</code> is simply the value of the
+      expression inside <code class="literal">{...}</code> on the
+      right-hand-side of the appropriate rule in the Alex file.
+      Alex doesn't specify what type these expressions should have, it
+      simply requires that they all have the same type, or else you'll
+      get a type error when you try to compile the generated
+      lexer.</p><p>Once you have the <code class="literal">action</code>, it is up to
+      you what to do with it.  The type of <code class="literal">action</code>
+      could be a function which takes the <code class="literal">String</code>
+      representation of the token and returns a value in some token
+      type, or it could be a continuation that takes the new input and
+      calls <code class="literal">alexScan</code> again, building a list of
+      tokens as it goes.</p><p>This is pretty low-level stuff; you have complete
+      flexibility about how you use the lexer, but there might be a
+      fair amount of support code to write before you can actually use
+      it.  For this reason, we also provide a selection of wrappers
+      that add some common functionality to this basic scheme.
+      Wrappers are described in the next section.</p><p>There is another entry point, which is useful if your
+      grammar contains any predicates (see <a class="xref" href="alex-files.html#contexts" title="3.2.2.1. Contexts">Section 3.2.2.1, &#8220;Contexts&#8221;</a>):</p><pre class="programlisting">alexScanUser
+         :: user             -- predicate state
+         -&gt; AlexInput        -- The current input
+         -&gt; Int              -- The "start code"
+         -&gt; Maybe (          -- Nothing on error or EOF
+                 AlexInput,  -- The remaining input
+                 Int,        -- Length of this token
+                 action      -- The action (an unknown type)
+              )</pre><p>The extra argument, of some type <code class="literal">user</code>,
+      is passed to each predicate.</p></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="api.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="api.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="wrappers.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 5. The Interface to an Alex-generated lexer </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> 5.3. Wrappers</td></tr></table></div></body></html>

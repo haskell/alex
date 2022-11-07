@@ -1,0 +1,135 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>3.2. Syntax of Alex files</title><link rel="stylesheet" href="fptools.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.69.1"><link rel="start" href="index.html" title="Alex User Guide"><link rel="up" href="syntax.html" title="Chapter 3. Alex Files"><link rel="prev" href="syntax.html" title="Chapter 3. Alex Files"><link rel="next" href="regexps.html" title="Chapter 4. Regular Expression"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">3.2. Syntax of Alex files</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="syntax.html">Prev</a> </td><th width="60%" align="center">Chapter 3. Alex Files</th><td width="20%" align="right"> <a accesskey="n" href="regexps.html">Next</a></td></tr></table><hr></div><div class="section" lang="en"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="alex-files"></a>3.2. Syntax of Alex files</h2></div></div></div><p>In the following description of the Alex syntax, we use an
+      extended form of BNF, where optional phrases are enclosed in
+      square brackets (<code class="literal">[ ... ]</code>), and phrases which
+      may be repeated zero or more times are enclosed in braces
+      (<code class="literal">{ ... }</code>).  Literal text is enclosed in
+      single quotes.</p><p>An Alex lexical specification is normally placed in a file
+      with a <code class="literal">.x</code> extension.  The overall layout of
+      an Alex file is:</p><pre class="programlisting">alex := [ @code ] [ wrapper ] { macrodef } @id ':-' { rule } [ @code ]</pre><p>The file begins and ends with optional code fragments.
+      These code fragments are copied verbatim into the generated
+      source file.</p><p>At the top of the file, the code fragment is normally used
+      to declare the module name and some imports, and that is all it
+      should do: don't declare any functions or types in the top code
+      fragment, because Alex may need to inject some imports of its
+      own into the generated lexer code, and it does this by adding
+      them directly after this code fragment in the output
+      file.</p><p>Next comes an optional wrapper specification:</p><pre class="programlisting">wrapper := '%wrapper' @string</pre><p>wrappers are described in <a href="wrappers.html" title="5.2. Wrappers">Section 5.2, &#8220;Wrappers&#8221;</a>.</p><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="macrodefs"></a>3.2.1. Macro definitions</h3></div></div></div><p>Next, the lexer specification can contain a series of
+	macro definitions.  There are two kinds of macros,
+	<em class="firstterm">character set macros</em>, which begin with
+	a <code class="literal">$</code>, and <em class="firstterm">regular expression
+	macros</em>, which begin with a <code class="literal">@</code>.
+	A character set macro can be used wherever a character set is
+	valid (see <a href="charsets.html" title="4.2. Syntax of character sets">Section 4.2, &#8220;Syntax of character sets&#8221;</a>), and a regular
+	expression macro can be used wherever a regular expression is
+	valid (see <a href="regexps.html" title="Chapter 4. Regular Expression">Chapter 4, <i>Regular Expression</i></a>).</p><pre class="programlisting">macrodef  :=  @smac '=' set
+           |  @rmac '=' regexp</pre></div><div class="section" lang="en"><div class="titlepage"><div><div><h3 class="title"><a name="rules"></a>3.2.2. Rules</h3></div></div></div><p>The rules are heralded by the sequence
+	&#8216;<code class="literal"><em class="replaceable"><code>id</code></em> :-</code>&#8217;
+        in the file.  It doesn't matter what you use for the
+        identifer, it is just there for documentation purposes.  In
+	fact, it can be omitted, but the <code class="literal">:-</code> must be
+	left in.</p><p>The syntax of rules is as follows:</p><pre class="programlisting">rule       := [ startcodes ] token
+            | startcodes '{' { token } '}'
+
+token      := [ left_ctx ] regexp [ right_ctx ]  rhs
+
+rhs        := @code | ';'</pre><p>Each rule defines one token in the lexical
+	specification.  When the input stream matches the regular
+	expression in a rule, the Alex lexer will return the value of
+	the expression on the right hand side, which we call the
+	<em class="firstterm">action</em>.  The action can be any Haskell
+	expression.  Alex only places one restriction on actions: all
+	the actions must have the same type.  They can be values in a
+	token type, for example, or possibly operations in a monad.
+	More about how this all works is in <a href="api.html" title="Chapter 5. The Interface to an Alex-generated lexer">Chapter 5, <i>The Interface to an Alex-generated lexer</i></a>.</p><p>The action may be missing, indicated by replacing it
+	with &#8216;<code class="literal">;</code>&#8217;, in which case the
+	token will be skipped in the input stream.</p><p>Alex will always find the longest match.  For example,
+	if we have a rule that matches whitespace:</p><pre class="programlisting">$white+        ;</pre><p>Then this rule will match as much whitespace at the
+        beginning of the input stream as it can.  Be careful: if we
+        had instead written this rule as</p><pre class="programlisting">$white*        ;</pre><p>then it would also match the empty string, which would
+	mean that Alex could never fail to match a rule!</p><p>When the input stream matches more than one rule, the
+	rule which matches the longest prefix of the input stream
+	wins.  If there are still several rules which match an equal
+	number of characters, then the rule which appears earliest in
+	the file wins.</p><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="contexts"></a>3.2.2.1. Contexts</h4></div></div></div><p>Alex allows a left and right context to be placed on
+	  any rule:</p><pre class="programlisting">
+left_ctx   := '^'
+            | set '^'
+
+right_ctx  := '$'
+            | '/' regexp
+            | '/' @code
+</pre><p>The left context matches the character which
+	  immediately precedes the token in the input stream.  The
+	  character immediately preceding the beginning of the stream
+	  is assumed to be &#8216;<code class="literal">\n</code>&#8217;.  The
+	  special left-context &#8216;<code class="literal">^</code>&#8217; is
+	  shorthand for &#8216;<code class="literal">\n^</code>&#8217;.</p><p>Right context is rather more general.  There are three
+	  forms:</p><div class="variablelist"><dl><dt><span class="term">
+                <code class="literal">/ <em class="replaceable"><code>regexp</code></em></code>
+              </span></dt><dd><p>This right-context causes the rule to match if
+ 	        and only if it is followed in the input stream by text
+ 	        which matches
+ 	        <em class="replaceable"><code>regexp</code></em>.</p><p>NOTE: this should be used sparingly, because it
+		can have a serious impact on performance.  Any time
+		this rule <span class="emphasis"><em>could</em></span> match, its
+		right-context will be checked against the current
+		input stream.</p></dd><dt><span class="term"><code class="literal">$</code></span></dt><dd><p>Equivalent to
+		&#8216;<code class="literal">/\n</code>&#8217;.</p></dd><dt><span class="term"><code class="literal">/ { ... }</code></span></dt><dd><p>This form is called a
+		<span class="emphasis"><em>predicate</em></span> on the rule.  The
+		Haskell expression inside the curly braces should have
+		type:
+</p><pre class="programlisting">{ ... } :: user       -- predicate state
+        -&gt; AlexInput  -- input stream before the token
+        -&gt; Int        -- length of the token
+        -&gt; AlexInput  -- input stream after the token
+        -&gt; Bool       -- True &lt;=&gt; accept the token</pre><p>
+                Alex will only accept the token as matching if
+                the predicate returns <code class="literal">True</code>.</p><p>See <a href="api.html" title="Chapter 5. The Interface to an Alex-generated lexer">Chapter 5, <i>The Interface to an Alex-generated lexer</i></a> for the meaning of the
+                <code class="literal">AlexInput</code> type.  The
+                <code class="literal">user</code> argument is available for
+                passing into the lexer a special state which is used
+                by predicates; to give this argument a value, the
+                <code class="literal">alexScanUser</code> entry point to the
+                lexer must be used (see <a href="api.html#basic-api" title="5.1. Basic interface">Section 5.1, &#8220;Basic interface&#8221;</a>).</p></dd></dl></div></div><div class="section" lang="en"><div class="titlepage"><div><div><h4 class="title"><a name="startcodes"></a>3.2.2.2. Start codes</h4></div></div></div><p>Start codes are a way of adding state to a lexical
+	  specification, such that only certain rules will match for a
+	  given state.</p><p>A startcode is simply an identifer, or the special
+	  start code &#8216;<code class="literal">0</code>&#8217;.  Each rule
+	  may be given a list of startcodes under which it
+	  applies:</p><pre class="programlisting">startcode  := @id | '0'
+startcodes := '&lt;' startcode { ',' startcode } '&gt;'</pre><p>When the lexer is invoked to scan the next token from
+	  the input stream, the start code to use is also specified
+	  (see <a href="api.html" title="Chapter 5. The Interface to an Alex-generated lexer">Chapter 5, <i>The Interface to an Alex-generated lexer</i></a>).  Only rules that mention this
+	  start code are then enabled.  Rules which do not have a list
+	  of startcodes are available all the time.</p><p>Each distinct start code mentioned in the lexical
+	  specification causes a definition of the same name to be
+	  inserted in the generated source file, whose value is of
+	  type <code class="literal">Int</code>.  For example, if we mentioned
+	  startcodes <code class="literal">foo</code> and <code class="literal">bar</code>
+	  in the lexical spec, then Alex will create definitions such
+	  as:
+</p><pre class="programlisting">foo = 1
+bar = 2</pre><p>
+          in the output file.</p><p>Another way to think of start codes is as a way to
+	  define several different (but possibly overlapping) lexical
+	  specifications in a single file, since each start code
+	  corresponds to a different set of rules.  In concrete terms,
+	  each start code corresponds to a distinct initial state in
+	  the state machine that Alex derives from the lexical
+	  specification.</p><p>Here is an example of using startcodes as states, for
+	  collecting the characters inside a string:</p><pre class="programlisting">&lt;0&gt;      ([^\"] | \n)*  ;
+&lt;0&gt;      \"             { begin string }
+&lt;string&gt; [^\"]          { stringchar }
+&lt;string&gt; \"             { begin 0 }</pre><p>When it sees a quotation mark, the lexer switches into
+          the <code class="literal">string</code> state and each character
+          thereafter causes a <code class="literal">stringchar</code> action,
+          until the next quotation mark is found, when we switch back
+          into the <code class="literal">0</code> state again.</p><p>From the lexer's point of view, the startcode is just
+	  an integer passed in, which tells it which state to start
+	  in.  In order to actually use it as a state, you must have
+	  some way for the token actions to specify new start codes -
+	  <a href="api.html" title="Chapter 5. The Interface to an Alex-generated lexer">Chapter 5, <i>The Interface to an Alex-generated lexer</i></a> describes some ways this can be done.
+	  In some applications, it might be necessary to keep a
+	  <span class="emphasis"><em>stack</em></span> of start codes, where at the end
+	  of a state we pop the stack and resume parsing in the
+	  previous state.  If you want this functionality, you have to
+	  program it yourself.</p></div></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="syntax.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="syntax.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="regexps.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 3. Alex Files </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> Chapter 4. Regular Expression</td></tr></table></div></body></html>

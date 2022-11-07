@@ -1,0 +1,23 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 3. Alex Files</title><link rel="stylesheet" href="fptools.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="Alex User Guide"><link rel="up" href="index.html" title="Alex User Guide"><link rel="prev" href="introduction.html" title="Chapter 2. Introduction"><link rel="next" href="alex-files.html" title="3.2. Syntax of Alex files"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 3. Alex Files</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> <a accesskey="n" href="alex-files.html">Next</a></td></tr></table><hr></div><div class="chapter" title="Chapter 3. Alex Files"><div class="titlepage"><div><div><h2 class="title"><a name="syntax"></a>Chapter 3. Alex Files</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="syntax.html#lexical">3.1. Lexical syntax</a></span></dt><dt><span class="section"><a href="alex-files.html">3.2. Syntax of Alex files</a></span></dt><dd><dl><dt><span class="section"><a href="alex-files.html#macrodefs">3.2.1. Macro definitions</a></span></dt><dt><span class="section"><a href="alex-files.html#rules">3.2.2. Rules</a></span></dt><dd><dl><dt><span class="section"><a href="alex-files.html#contexts">3.2.2.1. Contexts</a></span></dt><dt><span class="section"><a href="alex-files.html#startcodes">3.2.2.2. Start codes</a></span></dt></dl></dd></dl></dd></dl></div><p>In this section we describe the layout of an Alex lexical
+      specification.</p><p>
+
+    </p><p>
+      We begin with the lexical syntax; elements of the lexical syntax
+      are referred to throughout the rest of this documentation, so
+      you may need to refer back to the following section several
+      times.
+    </p><div class="section" title="3.1. Lexical syntax"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="lexical"></a>3.1. Lexical syntax</h2></div></div></div><p>Alex's lexical syntax is given below.  It is written as a
+      set of macro definitions using Alex's own syntax.  These macros
+      are used in the BNF specification of the syntax later on.</p><pre class="programlisting">$digit      = [0-9]
+$octdig     = [0-7]
+$hexdig     = [0-9A-Fa-f]
+$special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^\/]
+$graphic    = $printable # $white
+
+@string     = \" ($graphic # \")* \"
+@id         = [A-Za-z][A-Za-z'_]*
+@smac       = '$' id
+@rmac       = '@' id
+@char       = ($graphic # $special) | @escape
+@escape     = '\\' ($printable | 'x' $hexdig+ | 'o' $octdig+ | $digit+)
+@code       = -- curly braces surrounding a Haskell code fragment</pre></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="introduction.html">Prev</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> <a accesskey="n" href="alex-files.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">Chapter 2. Introduction </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> 3.2. Syntax of Alex files</td></tr></table></div></body></html>

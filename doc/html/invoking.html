@@ -1,0 +1,40 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"><title>Chapter 6. Invoking Alex</title><link rel="stylesheet" href="fptools.css" type="text/css"><meta name="generator" content="DocBook XSL Stylesheets V1.75.2"><link rel="home" href="index.html" title="Alex User Guide"><link rel="up" href="index.html" title="Alex User Guide"><link rel="prev" href="wrappers.html" title="5.3. Wrappers"></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="navheader"><table width="100%" summary="Navigation header"><tr><th colspan="3" align="center">Chapter 6. Invoking Alex</th></tr><tr><td width="20%" align="left"><a accesskey="p" href="wrappers.html">Prev</a> </td><th width="60%" align="center"> </th><td width="20%" align="right"> </td></tr></table><hr></div><div class="chapter" title="Chapter 6. Invoking Alex"><div class="titlepage"><div><div><h2 class="title"><a name="invoking"></a>Chapter 6. Invoking Alex</h2></div></div></div><p>The command line syntax for Alex is entirely
+    standard:</p><pre class="screen">$ alex { <em class="replaceable"><code>option</code></em> } <em class="replaceable"><code>file</code></em>.x  { <em class="replaceable"><code>option</code></em> }</pre><p>Alex expects a single
+    <code class="literal"><em class="replaceable"><code>file</code></em>.x</code> to be named
+    on the command line.  By default, Alex will create
+    <code class="literal"><em class="replaceable"><code>file</code></em>.hs</code> containing
+    the Haskell source for the lexer.</p><p>The options that Alex accepts are listed below:</p><div class="variablelist"><dl><dt><span class="term"><code class="option">-o</code> <em class="replaceable"><code>file</code></em>, </span><span class="term"><code class="option">--outfile</code>=<em class="replaceable"><code>file</code></em></span></dt><dd><p>Specifies the filename in which the output is to be
+	  placed.  By default, this is the name of the input file with
+	  the <code class="literal">.x</code> suffix replaced by
+	  <code class="literal">.hs</code>.</p></dd><dt><span class="term"><code class="option">-i</code> [<span class="optional"><em class="replaceable"><code>file</code></em></span>], </span><span class="term"><code class="option">--info</code> [<span class="optional"><em class="replaceable"><code>=file</code></em></span>]</span></dt><dd><p>Produces a human-readable rendition of the state
+	  machine (DFA) that Alex derives from the lexer, in
+	  <em class="replaceable"><code>file</code></em> (default:
+	  <code class="literal"><em class="replaceable"><code>file</code></em>.info</code>
+	  where the input file is
+	  <code class="literal"><em class="replaceable"><code>file</code></em>.x</code>).</p><p>The format of the info file is currently a bit basic,
+	  and not particularly informative.</p></dd><dt><span class="term"><code class="option">-t</code> [<span class="optional"><em class="replaceable"><code>dir</code></em></span>], </span><span class="term"><code class="option">--template</code>=<em class="replaceable"><code>dir</code></em></span></dt><dd><p>Look in <em class="replaceable"><code>dir</code></em> for template files.</p></dd><dt><span class="term"><code class="option">-g</code>, </span><span class="term"><code class="option">--ghc</code></span></dt><dd><p>Causes Alex to produce a lexer which is optimised for
+          compiling with GHC.  The lexer will be significantly more
+	  efficient, both in terms of the size of the compiled
+	  lexer and its runtime.</p></dd><dt><span class="term"><code class="option">-d</code>, </span><span class="term"><code class="option">--debug</code></span></dt><dd><p>Causes Alex to produce a lexer which will output
+	  debugging messsages as it runs.</p></dd><dt><span class="term"><code class="option">-l</code>, </span><span class="term"><code class="option">--latin1</code></span></dt><dd><p>Disables the use of UTF-8 encoding in the generated
+          lexer.  This has two consequences:
+          </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>
+                The Alex source file is still assumed to be UTF-8
+                encoded, but any Unicode characters outside the range
+                0-255 are mapped to Latin-1 characters by taking the
+                code point modulo 256.
+              </p></li><li class="listitem"><p>
+                The built-in macros <code class="literal">$printable</code>
+                and '<code class="literal">.</code>' range over the Latin-1
+                character set, not the Unicode character set.
+              </p></li></ul></div><p>
+
+          Note that this currently does not disable the UTF-8 encoding
+          that happens in the "basic" wrappers,
+          so <code class="option">--latin1</code> does not make sense in
+          conjunction with these wrappers (not that you would want to
+          do that, anyway).
+          </p></dd><dt><span class="term"><code class="option">-?</code>, </span><span class="term"><code class="option">--help</code></span></dt><dd><p>Display help and exit.</p></dd><dt><span class="term"><code class="option">-V</code>, </span><span class="term"><code class="option">--version</code></span></dt><dd><p>Output version information and exit. Note that for legacy
+	  reasons <code class="option">-v</code> is supported, too, but the use of it
+	  is deprecated. <code class="option">-v</code> will be used for verbose mode
+	  when it is actually implemented.</p></dd></dl></div></div><div class="navfooter"><hr><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="wrappers.html">Prev</a> </td><td width="20%" align="center"> </td><td width="40%" align="right"> </td></tr><tr><td width="40%" align="left" valign="top">5.3. Wrappers </td><td width="20%" align="center"><a accesskey="h" href="index.html">Home</a></td><td width="40%" align="right" valign="top"> </td></tr></table></div></body></html>
