@@ -26,10 +26,10 @@ Moreover, recent versions of ``cabal`` will automatically install the required v
 Operating System way
 --------------------
 
-Alex might also be pre-packaged for your OS (unconfirmed as of 2022-04-06):
+Because Alex is a dependency of GHC, it is often packaged by operating systems.
+`Repology <https://repology.org>`__ aggregates this info across many distros and operating systems, and Alex is actually listed twice:
 
-- Ubuntu users: packages should be available from the universe repository.
-- Debian GNU/Linux users: packages are available `here <http://packages.debian.org/alex>`__.
-- FreeBSD/x86 users: Alex is in the ports tree, so either ``pkg_add -r hs-alex``,
-  or install it from the ports tree in ``/usr/ports/devel/hs-alex``.
-- OpenBSD users: Alex is in the -current ports tree, you can install it from ``/usr/ports/devel/alex``.
+- https://repology.org/project/haskell:alex/versions
+- https://repology.org/project/alex/versions
+
+The table contains links to the individual OS packages, which should provide installation instructions.
