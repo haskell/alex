@@ -62,8 +62,8 @@ Current Maintainers
 
 - Simon Marlow (@simonmar)
 
-Other contributor
-~~~~~~~~~~~~~~~~~
+Other contributors
+~~~~~~~~~~~~~~~~~~
 
 The data is in the Git history.
 GitHub can render that in `various ways <https://github.com/simonmar/alex/graphs/contributors>`__.
