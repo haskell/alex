@@ -18,3 +18,11 @@ It is similar to the tools "lex" and "flex" for C/C++.
    api
    invoking
    contributing
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`search`
