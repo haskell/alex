@@ -105,6 +105,7 @@ executable alex
                , array
                , containers
                , directory
+               , filepath
 
   default-language: Haskell98
   default-extensions: CPP
