@@ -1,6 +1,6 @@
---- .github/workflows/haskell-ci.yml	2021-06-15 15:05:48.000000000 +0200
-+++ .github/workflows/haskell-ci.yml.patched	2021-06-15 15:05:35.000000000 +0200
-@@ -162,10 +162,23 @@
+--- .github/workflows/haskell-ci.yml	2023-02-08 20:09:03.000000000 +0100
++++ .github/workflows/haskell-ci.yml-patched	2023-02-08 20:08:57.000000000 +0100
+@@ -226,10 +226,23 @@
            rm -f cabal-plan.xz
            chmod a+x $HOME/.cabal/bin/cabal-plan
            cabal-plan --version
@@ -10,7 +10,7 @@
 +          $CABAL v2-install $ARG_COMPILER alex happy
 +
        - name: checkout
-         uses: actions/checkout@v2
+         uses: actions/checkout@v3
          with:
            path: source
 +
@@ -24,7 +24,7 @@
        - name: initial cabal.project for sdist
          run: |
            touch cabal.project
-@@ -208,15 +221,21 @@
+@@ -275,15 +288,21 @@
          run: |
            $CABAL v2-build $ARG_COMPILER --disable-tests --disable-benchmarks --dependencies-only -j2 all
            $CABAL v2-build $ARG_COMPILER $ARG_TESTS $ARG_BENCH --dependencies-only -j2 all

@@ -7,7 +7,7 @@ license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
 author: Chris Dornan and Simon Marlow
 maintainer: Simon Marlow <marlowsd@gmail.com>
-bug-reports: https://github.com/simonmar/alex/issues
+bug-reports: https://github.com/haskell/alex/issues
 stability: stable
 homepage: http://www.haskell.org/alex/
 synopsis: Alex is a tool for generating lexical analysers in Haskell
@@ -22,7 +22,9 @@ category: Development
 build-type: Simple
 
 tested-with:
-        GHC == 9.2.1
+        GHC == 9.6.0
+        GHC == 9.4.4
+        GHC == 9.2.5
         GHC == 9.0.2
         GHC == 8.10.7
         GHC == 8.8.4
@@ -93,7 +95,7 @@ extra-source-files:
 
 source-repository head
     type:     git
-    location: https://github.com/simonmar/alex.git
+    location: https://github.com/haskell/alex.git
 
 executable alex
   hs-source-dirs: src

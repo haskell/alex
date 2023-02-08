@@ -1,0 +1,5 @@
+branches: master ci-* release-*
+
+-- -- For bootstrapping:
+-- apt: alex happy
+-- alex in the distribution might be too old.
