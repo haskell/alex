@@ -1,3 +1,7 @@
+## Change in 3.2.7.2
+
+ * Fix bug with out-of-bound access to `alex_check` array.
+
 ## Change in 3.2.7.1
 
  * Fix bug with repeated numeral characters *outside* of `r{n,m}`
