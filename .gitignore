@@ -11,6 +11,7 @@
 /examples/*.happy.hs
 /examples/*.bin
 /examples/*.exe
+/old-*/
 /tests/*.[gn].hs
 /tests/*.[gn].bin
 /tests/*.[gn].exe

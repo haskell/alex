@@ -1,6 +1,6 @@
 CABAL = cabal
 
-HAPPY = happy 
+HAPPY = happy
 HAPPY_OPTS = -agc
 
 ALEX = alex
