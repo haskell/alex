@@ -3,6 +3,8 @@
  * Fix bug with repeated numeral characters *outside* of `r{n,m}`
    repetitions. This was a regression introduced in 3.2.7.
 
+_John Ericson, 2022-01-23_
+
 ## Changes in 3.2.7
 
  * Allow arbitrary repetitions in regexps.
@@ -18,6 +20,8 @@
    build.
 
  * A number of bug fixes and clearer diagnostics.
+
+_John Ericson, 2022-01-20_
 
 ## Changes in 3.2.6:
 
@@ -36,38 +40,52 @@
    If the final GHC 9.2 ends up being different, this release will be
    marked broken to make it less likely people use it by accident.
 
+_John Ericson, 2020-12-15_
+
 ## Changes in 3.2.5:
 
  * Build fixes for GHC 8.8.x
 
+_Simon Marlow, 2019-11-04_
+
 ## Changes in 3.2.4:
 
- * Remove dependency on QuickCheck
+ * Remove dependency on `QuickCheck`
  * Change the way that bootstrapping is done: see README.md for build
    instructions
 
+_Simon Marlow, 2018-03-29_
+
 ## Changes in 3.2.3:
 
- * fix issue when using cpphs (#116)
+ * fix issue when using `cpphs` (#116)
+
+_Simon Marlow, 2017-09-08_
 
 ## Changes in 3.2.2:
 
  * Manage line length in generated files [GH-84]
  * Fix issue when identifier with multiple single quotes, e.g. `foo''` was used
  * Allow omitting spaces around `=` in macro definitions
- * Include pre-generated Parser.hs and Scan.hs in the Hackage upload, to
+ * Include pre-generated `Parser.hs` and `Scan.hs` in the Hackage upload, to
    make bootstrapping easier.
+
+_Simon Marlow, 2017-09-02_
 
 ## Changes in 3.2.1:
 
- * Fix build problem with GHC; add new test tokens_scan_user.x
+ * Fix build problem with GHC; add new test `tokens_scan_user.x`
+
+_Simon Marlow, 2016-10-18_
 
 ## Changes in 3.2.0:
 
  * Allow the token type and productions to be overloaded, and add new
-   directives: %token, %typeclass, %action.  See "Type Signatures and
+   directives: `%token`, `%typeclass`, `%action`.  See "Type Signatures and
    Typeclasses" in the manual.
  * Some small space leak fixes
+
+_Simon Marlow, 2016-10-08_
 
 ##  Changes in 3.1.7:
 
@@ -76,35 +94,51 @@
  * Make code forward-compatible with in-progress proposals
  * Suppress more warnings
 
+_Simon Marlow, 2016-01-08_
+
 ##  Changes in 3.1.6:
 
  * `sdist` for 3.1.5 was mis-generated, causing it to ask for Happy
     when building.
+
+_Simon Marlow, 2015-11-30_
 
 ## Changes in 3.1.5:
 
  * Generate less warning-laden code, and suppress other warnings.
  * Bug fixes.
 
+_Simon Marlow, 2015-11-25_
+
 ##  Changes in 3.1.4:
 
- * Add Applicative/Functor instances for GHC 7.10
+ * Add `Applicative`/`Functor` instances for GHC 7.10
+
+_Simon Marlow, 2015-01-06_
 
 ##  Changes in 3.1.3:
 
- * Fix for clang (XCode 5)
+ * Fix for `clang` (XCode 5)
+
+_Simon Marlow, 2013-11-28_
 
 ##  Changes in 3.1.2:
 
- * Add missing file to extra-source-files
+ * Add missing file to `extra-source-files`
+
+ _Simon Marlow, 2013-11-11_
 
 ##  Changes in 3.1.1:
 
  * Bug fixes (#24, #30, #31, #32)
 
+_Simon Marlow, 2013-11-11_
+
 ##  Changes in 3.1.0:
 
  * necessary changes to work with GHC 7.8.1
+
+_Simon Marlow, 2013-09-16_
 
 ##  Changes in 3.0 (since 2.3.5)
 
