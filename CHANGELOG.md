@@ -1,6 +1,11 @@
 ## Change in 3.2.7.2
 
  * Fix bug with out-of-bound access to `alex_check` array.
+   (Surfaced with GHC's JS backend, fixed by Sylvain Henry in
+    PR [#223](https://github.com/haskell/alex/pull/223).)
+ * Tested with GHC 7.0 - 9.6.1.
+
+_Andreas Abel, 2023-04-03_
 
 ## Change in 3.2.7.1
 
