@@ -1,3 +1,11 @@
+## Change in 3.2.7.3
+
+ * Amend last change (3.2.7.2)
+   so that Alex-generated code does not need `LANGUAGE PatternGuards`.
+ * Tested with GHC 7.0 - 9.6.1.
+
+_Andreas Abel, 2023-04-14_
+
 ## Change in 3.2.7.2
 
  * Fix bug with out-of-bound access to `alex_check` array.

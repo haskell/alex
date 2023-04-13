@@ -162,14 +162,11 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
                 base   = alexIndexInt32OffAddr alex_base s
                 offset = PLUS(base,ord_c)
 
-                new_s
-                  | GTE(offset,ILIT(0))
-                  , check <- alexIndexInt16OffAddr alex_check offset
-                  , EQ(check,ord_c)
-                  = alexIndexInt16OffAddr alex_table offset
-
-                  | otherwise
-                  = alexIndexInt16OffAddr alex_deflt s
+                new_s = if GTE(offset,ILIT(0))
+                          && let check  = alexIndexInt16OffAddr alex_check offset
+                             in  EQ(check,ord_c)
+                          then alexIndexInt16OffAddr alex_table offset
+                          else alexIndexInt16OffAddr alex_deflt s
         in
         case new_s of
             ILIT(-1) -> (new_acc, input__)
