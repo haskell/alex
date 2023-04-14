@@ -12,8 +12,7 @@ endif
 
 PROGS = lit Tokens Tokens_gscan words words_posn words_monad tiny haskell tiger
 
-ALEX_OPTS = --template=.. -g
-# ALEX_OPTS = --template=..
+ALEX_OPTS = --template=../data/ -g
 
 %.alex.hs : %.x
 	$(ALEX) $(ALEX_OPTS) $< -o $@

@@ -14,7 +14,7 @@ module TigerLexer ( main
                   , line_number
                   ) where
 
-import Prelude hiding ( GT, LT, EQ )
+import Prelude
 import System.Console.GetOpt ( OptDescr(..), ArgOrder(..), getOpt, usageInfo )
 import System.Environment ( getArgs, getProgName )
 import System.Directory ( doesFileExist )
@@ -65,11 +65,11 @@ state:-
 <0>             \|           { mkL OR }
 <0>             &            { mkL AND }
 <0>             \>\=         { mkL GE }
-<0>             \>           { mkL GT }
+<0>             \>           { mkL GT' }
 <0>             \<\=         { mkL LE }
-<0>             \<           { mkL LT }
+<0>             \<           { mkL LT' }
 <0>             \<\>         { mkL NEQ }
-<0>             \=           { mkL EQ }
+<0>             \=           { mkL EQ' }
 <0>             \/           { mkL DIVIDE }
 <0>             \*           { mkL TIMES }
 <0>             \-           { mkL MINUS }
@@ -145,11 +145,11 @@ data LexemeClass =
       | MINUS
       | TIMES
       | DIVIDE
-      | EQ
+      | EQ'
       | NEQ
-      | LT
+      | LT'
       | LE
-      | GT
+      | GT'
       | GE
       | AND
       | OR
