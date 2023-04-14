@@ -1,3 +1,9 @@
+## Unreleased
+
+ * The user-supplied "epilogue" Haskell code is now put _last_ in the generated file.
+   This enables use of Template Haskell in the epilogue.
+   (Issue [#125](https://github.com/haskell/alex/issues/125).)
+
 ## Change in 3.2.7.3
 
  * Amend last change (3.2.7.2)
