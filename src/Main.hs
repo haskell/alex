@@ -228,8 +228,6 @@ alex cli file basename script = do
    put_info (infoDFA 1 nm min_dfa "")
    hPutStr out_h (outputDFA target 1 nm scheme min_dfa "")
 
-   injectCode maybe_footer file out_h
-
    hPutStr out_h (sc_hdr "")
    hPutStr out_h (actions "")
 
@@ -241,6 +239,8 @@ alex cli file basename script = do
        | i <- cppDefs ]
      tmplt <- alexReadFile $ template_dir ++ "/AlexTemplate.hs"
      hPutStr out_h tmplt
+
+   injectCode maybe_footer file out_h
 
    hClose out_h
    finish_info

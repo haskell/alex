@@ -1,6 +1,7 @@
 {
 {-# LANGUAGE FlexibleContexts, MultiParamTypeClasses, FunctionalDependencies,
              FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell #-} -- issue #125
 
 module Main (main) where
 import System.Exit
@@ -309,5 +310,26 @@ instance (Functor m, Monad m) => MonadState s (StateT s m) where
 instance (Functor m, Monad m) => Applicative (StateT s m) where
     pure a = state $ \s -> (a, s)
     (<*>) = ap
+
+-- Andreas Abel, 2023-04-14, issue #125
+-- It should be possible to put some Template Haskell here, e.g.
+-- @
+--     makeLenses ''AlexState
+-- @
+-- (with 'makeLenses' from 'lens' or 'microlens-th').
+--
+-- For this to work this "epilogue" code must come last in the generated file.
+-- Otherwise, we get scope errors, e.g.
+--
+--     default_typeclass.x:157:5: error: [GHC-76037]
+--         Not in scope: data constructor ‘AlexError’
+--         |
+--     157 |   case alexScan inp sc of
+--         |     ^^^^^^^^^
+--
+-- It is hard to test 'makeLenses' here because we would need a dependency,
+-- but just any Template Haskell instruction seems to trigger issue #125.
+-- Thus, we confine ourselves to:
+return []
 
 }
