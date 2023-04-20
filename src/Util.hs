@@ -13,7 +13,6 @@ module Util
   , char
   , nl
   , paren
-  , brack
   , interleave_shows
   , space
   , cjustify
@@ -36,9 +35,6 @@ nl = char '\n'
 
 paren :: (String -> String) -> String -> String
 paren s = char '(' . s . char ')'
-
-brack :: (String -> String) -> String -> String
-brack s = char '[' . s . char ']'
 
 interleave_shows :: (String -> String) -> [String -> String] -> String -> String
 interleave_shows _ [] = id
