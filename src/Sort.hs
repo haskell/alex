@@ -1,10 +1,8 @@
 {------------------------------------------------------------------------------
                                  SORTING LISTS
 
-This module provides properly parameterised insertion and merge sort functions,
-complete with associated functions for inserting and merging.  `isort' is the
-standard lazy version and can be used to the minimum k elements of a list in
-linear time.  The merge sort is based on a Bob Buckley's (Bob Buckley
+This module provides a properly parameterised merge sort function, complete
+with associated functions. It is based on a Bob Buckley's (Bob Buckley
 18-AUG-95) coding of Knuth's natural merge sort (see Vol. 2).  It seems to be
 fast in the average case; it makes use of natural runs in the data becomming
 linear on ordered data; and it completes in worst time O(n.log(n)).  It is
@@ -21,17 +19,6 @@ module Sort where
 
 -- Hide (<=) so that we don't get name shadowing warnings for it
 import Prelude hiding ((<=))
-
--- `isort' is an insertion sort and is here for historical reasons; msort is
--- better in almost every situation.
-
-isort:: (a->a->Bool) -> [a] -> [a]
-isort (<=) = foldr (insrt (<=)) []
-
-insrt:: (a->a->Bool) -> a -> [a] -> [a]
-insrt _    e [] = [e]
-insrt (<=) e l@(h:t) = if e<=h then e:l else h:insrt (<=) e t
-
 
 msort :: (a->a->Bool) -> [a] -> [a]
 msort _    [] = []                    -- (foldb f []) is undefined
