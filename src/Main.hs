@@ -28,17 +28,20 @@ import Paths_alex ( version, getDataDir )
 import Control.Exception as Exception ( block, unblock, catch, throw )
 #endif
 #if __GLASGOW_HASKELL__ >= 610
-import Control.Exception ( bracketOnError )
+import Control.Exception ( bracketOnError, handleJust )
 #endif
-import Control.Monad ( when, liftM )
+import System.IO.Error (isDoesNotExistError)
+import Control.Monad ( guard, when, liftM )
 import Data.Char ( chr )
 import Data.List ( isSuffixOf, nub )
 import Data.Version ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
-import System.Directory ( removeFile )
+import System.Directory ( renameFile, removeFile )
 import System.Environment ( getProgName, getArgs )
+import System.FilePath (splitFileName)
 import System.Exit ( ExitCode(..), exitWith )
 import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
+import qualified System.IO as IO ( openTempFileWithDefaultPermissions )
 #if __GLASGOW_HASKELL__ >= 612
 import System.IO ( hGetContents, hSetEncoding, utf8 )
 #endif
@@ -65,6 +68,37 @@ alexOpenFile file mode = do
 #else
 alexOpenFile = openFile
 #endif
+
+openTempFileWithDefaultPermissions :: FilePath -> String -> IO (FilePath, Handle)
+#if __GLASGOW_HASKELL__ >= 612
+openTempFileWithDefaultPermissions dir template = do
+  (file, h) <- IO.openTempFileWithDefaultPermissions dir template
+  hSetEncoding h utf8
+  return (file, h)
+#else
+openTempFileWithDefaultPermissions = IO.openTempFileWithDefaultPermissions
+#endif
+
+tryRemoveFile :: FilePath -> IO ()
+tryRemoveFile name = handleJust (guard . isDoesNotExistError) return (removeFile name)
+
+createAtomically :: FilePath -> (Handle -> IO a) -> IO a
+createAtomically o_file action = bracketOnError open cleanup $ \ (o_file_tmp, h) -> do
+  r <- action h
+  hClose h
+  renameFile o_file_tmp o_file
+  return r
+  where
+    open :: IO (FilePath, Handle)
+    open = openTempFileWithDefaultPermissions dir template
+      where
+        (dir, file) = splitFileName o_file
+        template = file ++ "~"
+
+    cleanup :: (FilePath, Handle) -> IO ()
+    cleanup (o_file_tmp, h) = do
+      hClose h
+      tryRemoveFile o_file_tmp
 
 -- `main' decodes the command line arguments and calls `alex'.
 
@@ -169,11 +203,7 @@ alex cli file basename script = do
 
    scheme <- getScheme directives
 
-   -- open the output file; remove it if we encounter an error
-   bracketOnError
-        (alexOpenFile o_file WriteMode)
-        (\h -> do hClose h; removeFile o_file)
-        $ \out_h -> do
+   createAtomically o_file $ \ out_h -> do
 
    let   scanner2, scanner_final :: Scanner
          scs                     :: [StartCode]
@@ -242,7 +272,6 @@ alex cli file basename script = do
      tmplt <- alexReadFile $ template_dir ++ "/AlexTemplate.hs"
      hPutStr out_h tmplt
 
-   hClose out_h
    finish_info
 
 getScheme :: [Directive] -> IO Scheme
