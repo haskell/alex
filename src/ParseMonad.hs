@@ -64,7 +64,7 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
 -- assuming the usual eight character tab stops.
 
 data AlexPosn = AlexPn !Int !Int !Int
-        deriving (Eq,Show)
+        deriving (Eq, Show, Ord)
 
 alexStartPos :: AlexPosn
 alexStartPos = AlexPn 0 1 1
