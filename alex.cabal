@@ -1,6 +1,6 @@
 cabal-version: >= 1.10
 name: alex
-version: 3.2.7.3
+version: 3.2.7.4
 -- don't forget updating changelog.md!
 license: BSD3
 license-file: LICENSE
@@ -23,7 +23,7 @@ build-type: Simple
 
 tested-with:
         GHC == 9.6.1
-        GHC == 9.4.4
+        GHC == 9.4.5
         GHC == 9.2.7
         GHC == 9.0.2
         GHC == 8.10.7
