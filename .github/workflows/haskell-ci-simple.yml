@@ -1,0 +1,83 @@
+name: Build
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  main:
+    name: GHC ${{ matrix.ghc }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        ghc:
+          # - "8.0.2"
+          # - "8.2.2"
+          # - "8.4.4"
+          # - "8.6.5"
+          # - "8.8.4"
+          # - "8.10.7"
+          # - "9.0.2"
+          # - "9.2.7"
+          # - "9.4.5"
+          - "9.6.1"
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: haskell/actions/setup@v2.3.7
+      id: setup-haskell-cabal
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: "latest"
+        cabal-update: true
+
+    - uses: actions/cache@v3
+      name: Cache cabal stuff
+      with:
+        path: |
+          ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+          dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc }}
+
+    - name: Versions
+      run: |
+        cabal --version
+
+    - name: Install alex & happy
+      run: |
+        cd ../
+        cabal install alex happy
+
+    - name: Unpack
+      run: |
+        cp src/Parser.y src/Parser.y.boot
+        cp src/Scan.x src/Scan.x.boot
+        cabal sdist --ignore-project --output-directory .
+        cabal get alex-*.tar.gz
+
+    - name: Build
+      run: |
+        cd alex-*/
+        cabal build all --enable-tests --enable-benchmarks
+
+    - name: Test
+      run: |
+        cd alex-*/
+        export ALEX=$(cabal list-bin alex)
+        cabal run --enable-tests alex:test:tests
+
+    - name: Haddock
+      run: |
+        cd alex-*/
+        cabal haddock all
+
+    - name: Cabal check
+      run: |
+        cd alex-*/
+        cabal check
+
