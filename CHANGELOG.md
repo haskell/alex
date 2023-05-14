@@ -1,3 +1,9 @@
+## Change in 3.3.0
+
+* Add an `Ord` instance to `AlexPosn` (Issue [#233](https://github.com/haskell/alex/issues/233)).
+
+_Andreas Abel, 2023-05-14_
+
 ## Change in 3.2.7.4
 
  * The user-supplied "epilogue" Haskell code is now put _last_ in the generated file.
