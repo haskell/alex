@@ -24,12 +24,12 @@ jobs:
           - "8.10.7"
           - "9.0.2"
           - "9.2.7"
-          - "9.4.4"
+          - "9.4.5"
           - "9.6.1"
     steps:
     - uses: actions/checkout@v3
 
-    - uses: haskell/actions/setup@v2.3.7
+    - uses: haskell-actions/setup@v2
       id: setup-haskell-cabal
       with:
         ghc-version: ${{ matrix.ghc }}
