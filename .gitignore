@@ -2,6 +2,8 @@
 *.prof
 *~
 *.o
+*.dyn_hi
+*.dyn_o
 *.info
 /.ghc.environment.*
 /data/

@@ -153,7 +153,7 @@ alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
 
 #if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN)
 data AlexPosn = AlexPn !Int !Int !Int
-        deriving (Eq,Show)
+        deriving (Eq, Show, Ord)
 
 alexStartPos :: AlexPosn
 alexStartPos = AlexPn 0 1 1
