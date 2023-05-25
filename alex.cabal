@@ -1,6 +1,6 @@
 cabal-version: >= 1.10
 name: alex
-version: 3.3.0
+version: 3.3.0.0
 -- don't forget updating changelog.md!
 license: BSD3
 license-file: LICENSE

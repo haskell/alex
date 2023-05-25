@@ -1,9 +1,13 @@
-## Change in 3.3.0
+## Changes in 3.3.0.0
 
  * Add an `Ord` instance to `AlexPosn` (Issue [#233](https://github.com/haskell/alex/issues/233)).
+   This breaks developments that define their own (orphan) `instance Ord AlexPosn`.
+   If this is the derived stock instance, the fix is to delete the orphan instance and require
+   `build-tool-depends: alex:alex >= 3.3.0.0`.
+ * Switch to Haskell PVP versioning with four digits.
  * Tested with GHC 7.0 - 9.6.1.
 
-_Andreas Abel, 2023-05-14_
+_Andreas Abel, 2023-05-25_
 
 ## Change in 3.2.7.4
 
