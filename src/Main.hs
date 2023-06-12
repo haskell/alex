@@ -312,18 +312,22 @@ getScheme directives =
                 dieAlex "%action directive not allowed with a wrapper"
               (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
-          | single == "posn" || single == "posn-bytestring" ->
+          | single == "posn" || single == "posn-bytestring" || single == "posn-strict-text" ->
             let
-              isByteString = single == "posn-bytestring"
+              strty = case single of 
+                "posn" -> Str
+                "posn-bytestring" -> Strict
+                "posn-strict-text" -> StrictText
+                _ -> error "invalid str type for posn"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
-                return Posn { posnByteString = isByteString,
+                return Posn { posnStrType = strty,
                               posnTypeInfo = Nothing }
               (Nothing, Just tokenty, Nothing) ->
-                return Posn { posnByteString = isByteString,
+                return Posn { posnStrType = strty,
                               posnTypeInfo = Just (Nothing, tokenty) }
               (Just _, Just tokenty, Nothing) ->
-                return Posn { posnByteString = isByteString,
+                return Posn { posnStrType = strty,
                               posnTypeInfo = Just (typeclass, tokenty) }
               (_, _, Just _) ->
                   dieAlex "%action directive not allowed with a wrapper"

@@ -122,16 +122,16 @@ outputDFA target _ _ scheme dfa
             . str ") => Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
-          Posn { posnByteString = isByteString,
+          Posn { posnStrType = strty,
                  posnTypeInfo = Just (Nothing, toktype) } ->
               str actions_nm . str " :: Array Int (AlexPosn -> "
-            . str (strtype isByteString) . str " -> " . str toktype
+            . str (show strty) . str " -> " . str toktype
             . str ")\n"
-          Posn { posnByteString = isByteString,
+          Posn { posnStrType = strty,
                  posnTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (AlexPosn -> "
-            . str (strtype isByteString) . str " -> " . str toktype
+            . str (show strty) . str " -> " . str toktype
             . str ")\n"
           Monad { monadByteString = isByteString,
                   monadTypeInfo = Just (Nothing, toktype) } ->
@@ -212,26 +212,26 @@ outputDFA target _ _ scheme dfa
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn ("
             . str (show strty) . str " -> " . str toktype . str ")\n"
-          Posn { posnByteString = isByteString,
+          Posn { posnStrType = strty,
                  posnTypeInfo = Just (Nothing, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> " . str intty
             . str " -> " . str "AlexInput -> " . str intty
             . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: () -> AlexInput -> Int -> AlexReturn (AlexPosn -> "
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str (show strty) . str " -> " . str toktype . str ")\n"
             . str "alexScan :: AlexInput -> Int -> AlexReturn (AlexPosn -> "
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
-          Posn { posnByteString = isByteString,
+            . str (show strty) . str " -> " . str toktype . str ")\n"
+          Posn { posnStrType = strty,
                  posnTypeInfo = Just (Just tyclasses, toktype) } ->
               str "alex_scan_tkn :: () -> AlexInput -> " . str intty
             . str " -> " . str "AlexInput -> " . str intty
             . str " -> AlexLastAcc -> (AlexLastAcc, AlexInput)\n"
             . str "alexScanUser :: (" . str tyclasses
             . str ") => () -> AlexInput -> Int -> AlexReturn (AlexPosn -> "
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str (show strty) . str " -> " . str toktype . str ")\n"
             . str "alexScan :: (" . str tyclasses
             . str ") => AlexInput -> Int -> AlexReturn (AlexPosn -> "
-            . str (strtype isByteString) . str " -> " . str toktype . str ")\n"
+            . str (show strty) . str " -> " . str toktype . str ")\n"
           Monad { monadTypeInfo = Just (Nothing, toktype),
                   monadByteString = isByteString,
                   monadUserState = userState } ->

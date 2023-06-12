@@ -16,7 +16,7 @@ module AbsSyn (
   RECtx(..),
   RExp(..), nullable,
   DFA(..), State(..), SNum, StartCode, Accept(..),
-  RightContext(..), showRCtx, strtype,
+  RightContext(..), showRCtx,
   encodeStartCodes, extractActions,
   Target(..),
   UsesPreds(..), usesPreds,
@@ -62,15 +62,10 @@ data Scheme
   | GScan { gscanTypeInfo :: Maybe (Maybe String, String) }
   | Basic { basicStrType :: StrType,
             basicTypeInfo :: Maybe (Maybe String, String) }
-  | Posn { posnByteString :: Bool,
+  | Posn { posnStrType :: StrType,
            posnTypeInfo :: Maybe (Maybe String, String) }
   | Monad { monadByteString :: Bool, monadUserState :: Bool,
             monadTypeInfo :: Maybe (Maybe String, String) }
-
-strtype :: Bool -> String
-strtype True = "ByteString.ByteString"
-strtype False = "String"
-
 
 wrapperCppDefs :: Scheme -> Maybe [String]
 wrapperCppDefs Default {} = Nothing
@@ -79,8 +74,10 @@ wrapperCppDefs Basic { basicStrType = Str } = Just ["ALEX_BASIC"]
 wrapperCppDefs Basic { basicStrType = Lazy } = Just ["ALEX_BASIC_BYTESTRING"]
 wrapperCppDefs Basic { basicStrType = Strict } = Just ["ALEX_STRICT_BYTESTRING"]
 wrapperCppDefs Basic { basicStrType = StrictText } = Just ["ALEX_STRICT_TEXT"]
-wrapperCppDefs Posn { posnByteString = False } = Just ["ALEX_POSN"]
-wrapperCppDefs Posn { posnByteString = True } = Just ["ALEX_POSN_BYTESTRING"]
+wrapperCppDefs Posn { posnStrType = Str } = Just ["ALEX_POSN"]
+wrapperCppDefs Posn { posnStrType = Lazy } = Just ["ALEX_POSN_BYTESTRING"]
+wrapperCppDefs Posn { posnStrType = Strict } = Just ["ALEX_POSN_BYTESTRING"]
+wrapperCppDefs Posn { posnStrType = StrictText } = Just ["ALEX_POSN_STRICT_TEXT"]
 wrapperCppDefs Monad { monadByteString = False,
                        monadUserState = False } = Just ["ALEX_MONAD"]
 wrapperCppDefs Monad { monadByteString = True,
@@ -371,14 +368,14 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str .
             basicTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => " .
       str (show strty) . str " -> " . str tokenty . nl
-    Posn { posnByteString = isByteString,
+    Posn { posnStrType = strty,
            posnTypeInfo = Just (Nothing, tokenty) } -> nl .
-      str fun . str " :: AlexPosn -> " . str (strtype isByteString) . str " -> "
+      str fun . str " :: AlexPosn -> " . str (show strty) . str " -> "
       . str tokenty . nl
-    Posn { posnByteString = isByteString,
+    Posn { posnStrType = strty,
            posnTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => AlexPosn -> " .
-      str (strtype isByteString) . str " -> " . str tokenty . nl
+      str (show strty) . str " -> " . str tokenty . nl
     Monad { monadByteString = isByteString,
             monadTypeInfo = Just (Nothing, tokenty) } -> nl .
       let
