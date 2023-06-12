@@ -8,7 +8,7 @@
 import Control.Applicative as App (Applicative (..))
 #endif
 
-#if defined(ALEX_STRICT_TEXT)
+#if defined(ALEX_STRICT_TEXT) || defined (ALEX_POSN_STRICT_TEXT)
 import qualified Data.Text
 #endif
 
@@ -88,6 +88,27 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
 #endif
 
 #if defined (ALEX_STRICT_TEXT)
+type AlexInput = (Char,           -- previous char
+                  [Byte],         -- pending bytes on current char
+                  Data.Text.Text) -- current input string
+
+ignorePendingBytes :: AlexInput -> AlexInput
+ignorePendingBytes (c,_ps,s) = (c,[],s)
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c,_bs,_s) = c
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
+alexGetByte (_,[],s) = case Data.Text.uncons s of
+                            Just (c, cs) ->
+                              case utf8Encode' c of
+                                (b, bs) -> Just (b, (c, bs, cs))
+                            Nothing ->
+                              Nothing
+#endif
+
+#if defined (ALEX_POSN_STRICT_TEXT)
 type AlexInput = (AlexPosn,       -- current position,
                   Char,           -- previous char
                   [Byte],         -- pending bytes on current char
@@ -179,7 +200,7 @@ alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
 -- `move_pos' calculates the new position after traversing a given character,
 -- assuming the usual eight character tab stops.
 
-#if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN) || defined (ALEX_STRICT_TEXT)
+#if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN) || defined (ALEX_POSN_STRICT_TEXT)
 data AlexPosn = AlexPn !Int !Int !Int
         deriving (Eq, Show, Ord)
 
@@ -408,14 +429,26 @@ alexScanTokens str = go (AlexInput '\n' str 0)
 
 #ifdef ALEX_STRICT_TEXT
 -- alexScanTokens :: Data.Text.Text -> [token]
-alexScanTokens str = go (alexStartPos,'\n',[],str)
-  where go inp__@(_,_,_bs,s) =
+alexScanTokens str = go ('\n',[],str)
+  where go inp__@(_,_bs,s) =
           case alexScan inp__ 0 of
                 AlexEOF -> []
                 AlexError _ -> error "lexical error"
                 AlexSkip  inp__' _len  -> go inp__'
                 AlexToken inp__' len act -> act (Data.Text.take len s) : go inp__'
 #endif
+
+#ifdef ALEX_POSN_STRICT_TEXT
+-- alexScanTokens :: Data.Text.Text -> [token]
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp__@(pos,_,_bs,s) =
+          case alexScan inp__ 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexSkip  inp__' _len  -> go inp__'
+                AlexToken inp__' len act -> act pos (Data.Text.take len s) : go inp__'
+#endif
+
 
 -- -----------------------------------------------------------------------------
 -- Posn wrapper

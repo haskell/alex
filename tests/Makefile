@@ -76,7 +76,8 @@ TESTS = \
         tokens_scan_user.x \
         tokens_strict_bytestring.x \
         unicode.x \
-        strict_text_typeclass.x
+        strict_text_typeclass.x \
+        posn_typeclass_strict_text.x
 
 # NOTE: `cabal` will set the `alex_datadir` env-var accordingly before invoking the test-suite
 #TEST_ALEX_OPTS = --template=../data/
