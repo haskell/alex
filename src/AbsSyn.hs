@@ -49,12 +49,13 @@ data Directive
    | TokenType String
    deriving Show
 
-data StrType = Str | Lazy | Strict
+data StrType = Str | Lazy | Strict | StrictText
 
 instance Show StrType where
   show Str = "String"
   show Lazy = "ByteString.ByteString"
   show Strict = "ByteString.ByteString"
+  show StrictText = "Data.Text.Text"
 
 data Scheme
   = Default { defaultTypeInfo :: Maybe (Maybe String, String) }
@@ -77,6 +78,7 @@ wrapperCppDefs GScan {} = Just ["ALEX_GSCAN"]
 wrapperCppDefs Basic { basicStrType = Str } = Just ["ALEX_BASIC"]
 wrapperCppDefs Basic { basicStrType = Lazy } = Just ["ALEX_BASIC_BYTESTRING"]
 wrapperCppDefs Basic { basicStrType = Strict } = Just ["ALEX_STRICT_BYTESTRING"]
+wrapperCppDefs Basic { basicStrType = StrictText } = Just ["ALEX_STRICT_TEXT"]
 wrapperCppDefs Posn { posnByteString = False } = Just ["ALEX_POSN"]
 wrapperCppDefs Posn { posnByteString = True } = Just ["ALEX_POSN_BYTESTRING"]
 wrapperCppDefs Monad { monadByteString = False,

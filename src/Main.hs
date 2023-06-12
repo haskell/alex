@@ -290,12 +290,13 @@ getScheme directives =
               (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
           | single == "basic" || single == "basic-bytestring" ||
-            single == "strict-bytestring" ->
+            single == "strict-bytestring" || single == "strict-text" ->
             let
               strty = case single of
                 "basic" -> Str
                 "basic-bytestring" -> Lazy
                 "strict-bytestring" -> Strict
+                "strict-text" -> StrictText
                 _ -> error "Impossible case"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
