@@ -32,6 +32,8 @@ GHC_VERSION:=$(shell $(HC) --numeric-version)
 GHC_VERSION_WORDS=$(subst ., ,$(GHC_VERSION))
 GHC_MAJOR_VERSION=$(word 1,$(GHC_VERSION_WORDS))
 GHC_MINOR_VERSION=$(word 2,$(GHC_VERSION_WORDS))
+# Text dependency comes with GHC from 8.4 onwards
+GHC_SHIPS_WITH_TEXT:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 8 -o $(GHC_MAJOR_VERSION) -ge 8 -a $(GHC_MINOR_VERSION) -ge 4 ]; then echo "yes"; else echo "no"; fi)
 # -fwarn-incomplete-uni-patterns only from 7.4
 WARNS_FOR_GHC_GTEQ_7_4=-fwarn-incomplete-uni-patterns
 WARNS_FOR_GHC_LT_7_4=-fno-warn-lazy-unlifted-bindings
@@ -75,9 +77,19 @@ TESTS = \
         tokens_posn_bytestring.x \
         tokens_scan_user.x \
         tokens_strict_bytestring.x \
-        unicode.x \
-        strict_text_typeclass.x \
-        posn_typeclass_strict_text.x
+        unicode.x
+
+ifeq "$(GHC_SHIPS_WITH_TEXT)" "yes"
+TEXT_DEP = -package text
+
+TEXT_TESTS = \
+		strict_text_typeclass.x \
+		posn_typeclass_strict_text.x
+else
+TEXT_DEP =
+
+TEXT_TESTS =
+endif
 
 # NOTE: `cabal` will set the `alex_datadir` env-var accordingly before invoking the test-suite
 #TEST_ALEX_OPTS = --template=../data/
@@ -91,7 +103,7 @@ TEST_ALEX_OPTS=
 
 CLEAN_FILES += *.n.hs *.g.hs *.info *.hi *.o *.bin *.exe
 
-ALL_TEST_HS = $(shell echo $(TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs/g')
+ALL_TEST_HS = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs/g')
 
 ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 
@@ -99,7 +111,7 @@ ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 	./$<
 
 %$(HS_PROG_EXT) : %.hs
-	$(HC) $(HC_OPTS) -package array -package bytestring -package text $($*_LD_OPTS) $< -o $@
+	$(HC) $(HC_OPTS) -package array -package bytestring $(TEXT_DEP) $($*_LD_OPTS) $< -o $@
 
 all :: $(ALL_TESTS)
 
