@@ -133,17 +133,17 @@ outputDFA target _ _ scheme dfa
             . str ") => Array Int (AlexPosn -> "
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
-          Monad { monadByteString = isByteString,
+          Monad { monadStrType = strty,
                   monadTypeInfo = Just (Nothing, toktype) } ->
             let
-              actintty = if isByteString then "Int64" else "Int"
+              actintty = if strty == Lazy then "Int64" else "Int"
             in
               str actions_nm . str " :: Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
-          Monad { monadByteString = isByteString,
+          Monad { monadStrType = strty,
                   monadTypeInfo = Just (Just tyclasses, toktype) } ->
             let
-              actintty = if isByteString then "Int64" else "Int"
+              actintty = if strty == Lazy then "Int64" else "Int"
             in
               str actions_nm . str " :: (" . str tyclasses
             . str ") => Array Int (AlexInput -> "
@@ -233,10 +233,10 @@ outputDFA target _ _ scheme dfa
             . str ") => AlexInput -> Int -> AlexReturn (AlexPosn -> "
             . str (show strty) . str " -> " . str toktype . str ")\n"
           Monad { monadTypeInfo = Just (Nothing, toktype),
-                  monadByteString = isByteString,
+                  monadStrType = strty,
                   monadUserState = userState } ->
             let
-              actintty = if isByteString then "Int64" else "Int"
+              actintty = if strty == Lazy then "Int64" else "Int"
               userStateTy | userState = "AlexUserState"
                           | otherwise = "()"
             in
@@ -253,10 +253,10 @@ outputDFA target _ _ scheme dfa
             . str " -> Alex (" . str toktype . str "))\n"
             . str "alexMonadScan :: Alex (" . str toktype . str ")\n"
           Monad { monadTypeInfo = Just (Just tyclasses, toktype),
-                  monadByteString = isByteString,
+                  monadStrType = strty,
                   monadUserState = userState } ->
             let
-              actintty = if isByteString then "Int64" else "Int"
+              actintty = if strty == Lazy then "Int64" else "Int"
               userStateTy | userState = "AlexUserState"
                           | otherwise = "()"
             in

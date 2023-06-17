@@ -84,7 +84,8 @@ TEXT_DEP = -package text
 
 TEXT_TESTS = \
 		strict_text_typeclass.x \
-		posn_typeclass_strict_text.x
+		posn_typeclass_strict_text.x \
+		tokens_monadUserState_strict_text.x
 else
 TEXT_DEP =
 

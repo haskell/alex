@@ -50,6 +50,7 @@ data Directive
    deriving Show
 
 data StrType = Str | Lazy | Strict | StrictText
+  deriving Eq
 
 instance Show StrType where
   show Str = "String"
@@ -64,7 +65,8 @@ data Scheme
             basicTypeInfo :: Maybe (Maybe String, String) }
   | Posn { posnStrType :: StrType,
            posnTypeInfo :: Maybe (Maybe String, String) }
-  | Monad { monadByteString :: Bool, monadUserState :: Bool,
+  | Monad { monadStrType :: StrType,
+            monadUserState :: Bool,
             monadTypeInfo :: Maybe (Maybe String, String) }
 
 wrapperCppDefs :: Scheme -> Maybe [String]
@@ -78,14 +80,22 @@ wrapperCppDefs Posn { posnStrType = Str } = Just ["ALEX_POSN"]
 wrapperCppDefs Posn { posnStrType = Lazy } = Just ["ALEX_POSN_BYTESTRING"]
 wrapperCppDefs Posn { posnStrType = Strict } = Just ["ALEX_POSN_BYTESTRING"]
 wrapperCppDefs Posn { posnStrType = StrictText } = Just ["ALEX_POSN_STRICT_TEXT"]
-wrapperCppDefs Monad { monadByteString = False,
+wrapperCppDefs Monad { monadStrType = Str,
                        monadUserState = False } = Just ["ALEX_MONAD"]
-wrapperCppDefs Monad { monadByteString = True,
+wrapperCppDefs Monad { monadStrType = Strict,
                        monadUserState = False } = Just ["ALEX_MONAD_BYTESTRING"]
-wrapperCppDefs Monad { monadByteString = False,
+wrapperCppDefs Monad { monadStrType = Lazy,
+                       monadUserState = False } = Just ["ALEX_MONAD_BYTESTRING"]
+wrapperCppDefs Monad { monadStrType = StrictText,
+                       monadUserState = False } = Just ["ALEX_MONAD_STRICT_TEXT"]
+wrapperCppDefs Monad { monadStrType = Str,
                        monadUserState = True } = Just ["ALEX_MONAD", "ALEX_MONAD_USER_STATE"]
-wrapperCppDefs Monad { monadByteString = True,
+wrapperCppDefs Monad { monadStrType = Strict,
                        monadUserState = True } = Just ["ALEX_MONAD_BYTESTRING", "ALEX_MONAD_USER_STATE"]
+wrapperCppDefs Monad { monadStrType = Lazy,
+                       monadUserState = True } = Just ["ALEX_MONAD_BYTESTRING", "ALEX_MONAD_USER_STATE"]
+wrapperCppDefs Monad { monadStrType = StrictText,
+                       monadUserState = True } = Just ["ALEX_MONAD_STRICT_TEXT", "ALEX_MONAD_USER_STATE"]
 
 -- TODO: update this comment
 --
@@ -376,17 +386,17 @@ extractActions scheme scanner = (scanner{scannerTokens = new_tokens}, decl_str .
            posnTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       str fun . str " :: (" . str tyclasses . str ") => AlexPosn -> " .
       str (show strty) . str " -> " . str tokenty . nl
-    Monad { monadByteString = isByteString,
+    Monad { monadStrType = strty,
             monadTypeInfo = Just (Nothing, tokenty) } -> nl .
       let
-        actintty = if isByteString then "Int64" else "Int"
+        actintty = if strty == Lazy then "Int64" else "Int"
       in
         str fun . str " :: AlexInput -> " . str actintty . str " -> Alex ("
       . str tokenty . str ")" . nl
-    Monad { monadByteString = isByteString,
+    Monad { monadStrType = strty,
             monadTypeInfo = Just (Just tyclasses, tokenty) } -> nl .
       let
-        actintty = if isByteString then "Int64" else "Int"
+        actintty = if strty == Lazy then "Int64" else "Int"
       in
         str fun . str " :: (" . str tyclasses . str ") =>"
       . str " AlexInput -> " . str actintty
