@@ -122,13 +122,13 @@ alexInputPrevChar (_p,c,_bs,_s) = c
 
 alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
 alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
-alexGetByte (p,_,[],s) = case Data.Text.uncons s of 
-                            Just (c, cs) -> 
+alexGetByte (p,_,[],s) = case Data.Text.uncons s of
+                            Just (c, cs) ->
                               let p' = alexMove p c
                               in case utf8Encode' c of
                                    (b, bs) -> p' `seq`  Just (b, (p', c, bs, cs))
-                            Nothing -> 
-                              Nothing                               
+                            Nothing ->
+                              Nothing
 #endif
 
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
@@ -242,7 +242,7 @@ data AlexState = AlexState {
 
 -- Compile with -funbox-strict-fields for best results!
 
-#ifdef ALEX_MONAD 
+#ifdef ALEX_MONAD
 runAlex :: String -> Alex a -> Either String a
 runAlex input__ (Alex f)
    = case f (AlexState {alex_bytes = [],
@@ -306,7 +306,7 @@ instance Monad Alex where
   return = App.pure
 
 
-#ifdef ALEX_MONAD 
+#ifdef ALEX_MONAD
 alexGetInput :: Alex AlexInput
 alexGetInput
  = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} ->
@@ -327,7 +327,7 @@ alexGetInput
         Right (s, (pos,c,bs,inp__))
 #endif
 
-#ifdef ALEX_MONAD 
+#ifdef ALEX_MONAD
 alexSetInput :: AlexInput -> Alex ()
 alexSetInput (pos,c,bs,inp__)
  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of

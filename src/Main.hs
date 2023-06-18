@@ -314,7 +314,7 @@ getScheme directives =
                 dieAlex "%typeclass directive without %token directive"
           | single == "posn" || single == "posn-bytestring" || single == "posn-strict-text" ->
             let
-              strty = case single of 
+              strty = case single of
                 "posn" -> Str
                 "posn-bytestring" -> Strict
                 "posn-strict-text" -> StrictText
@@ -338,7 +338,7 @@ getScheme directives =
             single == "monadUserState-bytestring" ||
             single == "monadUserState-strict-text" ->
             let
-              isText = single == "monad-strict-text" || 
+              isText = single == "monad-strict-text" ||
                        single == "monadUserState-strict-text"
               isByteString = single == "monad-bytestring" ||
                              single == "monadUserState-bytestring"
