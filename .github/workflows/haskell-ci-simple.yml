@@ -1,7 +1,15 @@
 name: Build
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+      - ci-*
+      - release-*
+  pull_request:
+    branches:
+      - master
+      - ci-*
+      - release-*
 
 defaults:
   run:
@@ -23,9 +31,9 @@ jobs:
           - "8.8.4"
           - "8.10.7"
           - "9.0.2"
-          - "9.2.7"
+          - "9.2.8"
           - "9.4.5"
-          - "9.6.1"
+          - "9.6.2"
     steps:
     - uses: actions/checkout@v3
 
@@ -80,4 +88,3 @@ jobs:
       run: |
         cd alex-*/
         cabal check
-
