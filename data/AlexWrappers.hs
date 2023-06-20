@@ -4,11 +4,16 @@
 -- This code is in the PUBLIC DOMAIN; you may copy it freely and use
 -- it for any purpose whatsoever.
 
-#if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING)
+#if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_MONAD_STRICT_TEXT)
 import Control.Applicative as App (Applicative (..))
 #endif
 
+#if defined(ALEX_STRICT_TEXT) || defined (ALEX_POSN_STRICT_TEXT) || defined(ALEX_MONAD_STRICT_TEXT)
+import qualified Data.Text
+#endif
+
 import Data.Word (Word8)
+
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
 import Data.Int (Int64)
@@ -82,6 +87,50 @@ alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
                                    (b, bs) -> p' `seq`  Just (b, (p', c, bs, s))
 #endif
 
+#if defined (ALEX_STRICT_TEXT)
+type AlexInput = (Char,           -- previous char
+                  [Byte],         -- pending bytes on current char
+                  Data.Text.Text) -- current input string
+
+ignorePendingBytes :: AlexInput -> AlexInput
+ignorePendingBytes (c,_ps,s) = (c,[],s)
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c,_bs,_s) = c
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (c,(b:bs),s) = Just (b,(c,bs,s))
+alexGetByte (_,[],s) = case Data.Text.uncons s of
+                            Just (c, cs) ->
+                              case utf8Encode' c of
+                                (b, bs) -> Just (b, (c, bs, cs))
+                            Nothing ->
+                              Nothing
+#endif
+
+#if defined (ALEX_POSN_STRICT_TEXT) || defined(ALEX_MONAD_STRICT_TEXT)
+type AlexInput = (AlexPosn,       -- current position,
+                  Char,           -- previous char
+                  [Byte],         -- pending bytes on current char
+                  Data.Text.Text) -- current input string
+
+ignorePendingBytes :: AlexInput -> AlexInput
+ignorePendingBytes (p,c,_ps,s) = (p,c,[],s)
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (_p,c,_bs,_s) = c
+
+alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
+alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
+alexGetByte (p,_,[],s) = case Data.Text.uncons s of
+                            Just (c, cs) ->
+                              let p' = alexMove p c
+                              in case utf8Encode' c of
+                                   (b, bs) -> p' `seq`  Just (b, (p', c, bs, cs))
+                            Nothing ->
+                              Nothing
+#endif
+
 #if defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 type AlexInput = (AlexPosn,     -- current position,
                   Char,         -- previous char
@@ -151,7 +200,7 @@ alexGetByte (AlexInput {alexStr=cs,alexBytePos=n}) =
 -- `move_pos' calculates the new position after traversing a given character,
 -- assuming the usual eight character tab stops.
 
-#if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN)
+#if defined(ALEX_POSN) || defined(ALEX_MONAD) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_GSCAN) || defined (ALEX_POSN_STRICT_TEXT) || defined(ALEX_MONAD_STRICT_TEXT)
 data AlexPosn = AlexPn !Int !Int !Int
         deriving (Eq, Show, Ord)
 
@@ -167,14 +216,20 @@ alexMove (AlexPn a l c) _    = AlexPn (a+1)  l     (c+1)
 -- -----------------------------------------------------------------------------
 -- Monad (default and with ByteString input)
 
-#if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING)
+#if defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_MONAD_STRICT_TEXT)
 data AlexState = AlexState {
         alex_pos :: !AlexPosn,  -- position at current input location
-#ifndef ALEX_MONAD_BYTESTRING
+#ifdef ALEX_MONAD_STRICT_TEXT
+        alex_inp :: Data.Text.Text,
+        alex_chr :: !Char,
+        alex_bytes :: [Byte],
+#endif /* ALEX_MONAD_STRICT_TEXT */
+#ifdef ALEX_MONAD
         alex_inp :: String,     -- the current input
         alex_chr :: !Char,      -- the character before the input
         alex_bytes :: [Byte],
-#else /* ALEX_MONAD_BYTESTRING */
+#endif /* ALEX_MONAD */
+#ifdef ALEX_MONAD_BYTESTRING
         alex_bpos:: !Int64,     -- bytes consumed so far
         alex_inp :: ByteString.ByteString,      -- the current input
         alex_chr :: !Char,      -- the character before the input
@@ -187,15 +242,10 @@ data AlexState = AlexState {
 
 -- Compile with -funbox-strict-fields for best results!
 
-#ifndef ALEX_MONAD_BYTESTRING
+#ifdef ALEX_MONAD
 runAlex :: String -> Alex a -> Either String a
 runAlex input__ (Alex f)
    = case f (AlexState {alex_bytes = [],
-#else /* ALEX_MONAD_BYTESTRING */
-runAlex :: ByteString.ByteString -> Alex a -> Either String a
-runAlex input__ (Alex f)
-   = case f (AlexState {alex_bpos = 0,
-#endif /* ALEX_MONAD_BYTESTRING */
                         alex_pos = alexStartPos,
                         alex_inp = input__,
                         alex_chr = '\n',
@@ -204,6 +254,35 @@ runAlex input__ (Alex f)
 #endif
                         alex_scd = 0}) of Left msg -> Left msg
                                           Right ( _, a ) -> Right a
+#endif
+
+#ifdef ALEX_MONAD_BYTESTRING
+runAlex :: ByteString.ByteString -> Alex a -> Either String a
+runAlex input__ (Alex f)
+   = case f (AlexState {alex_bpos = 0,
+                        alex_pos = alexStartPos,
+                        alex_inp = input__,
+                        alex_chr = '\n',
+#ifdef ALEX_MONAD_USER_STATE
+                        alex_ust = alexInitUserState,
+#endif
+                        alex_scd = 0}) of Left msg -> Left msg
+                                          Right ( _, a ) -> Right a
+#endif
+
+#ifdef ALEX_MONAD_STRICT_TEXT
+runAlex :: Data.Text.Text -> Alex a -> Either String a
+runAlex input__ (Alex f)
+   = case f (AlexState {alex_bytes = [],
+                        alex_pos = alexStartPos,
+                        alex_inp = input__,
+                        alex_chr = '\n',
+#ifdef ALEX_MONAD_USER_STATE
+                        alex_ust = alexInitUserState,
+#endif
+                        alex_scd = 0}) of Left msg -> Left msg
+                                          Right ( _, a ) -> Right a
+#endif
 
 newtype Alex a = Alex { unAlex :: AlexState -> Either String (AlexState, a) }
 
@@ -226,28 +305,51 @@ instance Monad Alex where
                                 Right (s',a) -> unAlex (k a) s'
   return = App.pure
 
+
+#ifdef ALEX_MONAD
 alexGetInput :: Alex AlexInput
 alexGetInput
-#ifndef ALEX_MONAD_BYTESTRING
  = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} ->
         Right (s, (pos,c,bs,inp__))
-#else /* ALEX_MONAD_BYTESTRING */
+#endif
+
+#ifdef ALEX_MONAD_BYTESTRING
+alexGetInput :: Alex AlexInput
+alexGetInput
  = Alex $ \s@AlexState{alex_pos=pos,alex_bpos=bpos,alex_chr=c,alex_inp=inp__} ->
         Right (s, (pos,c,inp__,bpos))
-#endif /* ALEX_MONAD_BYTESTRING */
+#endif
 
+#ifdef ALEX_MONAD_STRICT_TEXT
+alexGetInput :: Alex AlexInput
+alexGetInput
+ = Alex $ \s@AlexState{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} ->
+        Right (s, (pos,c,bs,inp__))
+#endif
+
+#ifdef ALEX_MONAD
 alexSetInput :: AlexInput -> Alex ()
-#ifndef ALEX_MONAD_BYTESTRING
 alexSetInput (pos,c,bs,inp__)
  = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
-#else /* ALEX_MONAD_BYTESTRING */
+                    state__@(AlexState{}) -> Right (state__, ())
+#endif
+
+#ifdef ALEX_MONAD_BYTESTRING
+alexSetInput :: AlexInput -> Alex ()
 alexSetInput (pos,c,inp__,bpos)
  = Alex $ \s -> case s{alex_pos=pos,
                        alex_bpos=bpos,
                        alex_chr=c,
                        alex_inp=inp__} of
-#endif /* ALEX_MONAD_BYTESTRING */
-                  state__@(AlexState{}) -> Right (state__, ())
+                    state__@(AlexState{}) -> Right (state__, ())
+#endif
+
+#ifdef ALEX_MONAD_STRICT_TEXT
+alexSetInput :: AlexInput -> Alex ()
+alexSetInput (pos,c,bs,inp__)
+ = Alex $ \s -> case s{alex_pos=pos,alex_chr=c,alex_bytes=bs,alex_inp=inp__} of
+                    state__@(AlexState{}) -> Right (state__, ())
+#endif
 
 alexError :: String -> Alex a
 alexError message = Alex $ const $ Left message
@@ -266,12 +368,9 @@ alexSetUserState :: AlexUserState -> Alex ()
 alexSetUserState ss = Alex $ \s -> Right (s{alex_ust=ss}, ())
 #endif /* !defined(ALEX_MONAD_BYTESTRING) && defined(ALEX_MONAD_USER_STATE) */
 
+#ifdef ALEX_MONAD
 alexMonadScan = do
-#ifndef ALEX_MONAD_BYTESTRING
   inp__ <- alexGetInput
-#else /* ALEX_MONAD_BYTESTRING */
-  inp__@(_,_,_,n) <- alexGetInput
-#endif /* ALEX_MONAD_BYTESTRING */
   sc <- alexGetStartCode
   case alexScan inp__ sc of
     AlexEOF -> alexEOF
@@ -279,22 +378,55 @@ alexMonadScan = do
     AlexSkip  inp__' _len -> do
         alexSetInput inp__'
         alexMonadScan
-#ifndef ALEX_MONAD_BYTESTRING
     AlexToken inp__' len action -> do
-#else /* ALEX_MONAD_BYTESTRING */
-    AlexToken inp__'@(_,_,_,n') _ action -> let len = n'-n in do
-#endif /* ALEX_MONAD_BYTESTRING */
         alexSetInput inp__'
         action (ignorePendingBytes inp__) len
+#endif
+
+#ifdef ALEX_MONAD_BYTESTRING
+alexMonadScan = do
+  inp__@(_,_,_,n) <- alexGetInput
+  sc <- alexGetStartCode
+  case alexScan inp__ sc of
+    AlexEOF -> alexEOF
+    AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+    AlexSkip  inp__' _len -> do
+        alexSetInput inp__'
+        alexMonadScan
+    AlexToken inp__'@(_,_,_,n') _ action -> let len = n'-n in do
+        alexSetInput inp__'
+        action (ignorePendingBytes inp__) len
+#endif
+
+#ifdef ALEX_MONAD_STRICT_TEXT
+alexMonadScan = do
+  inp__ <- alexGetInput
+  sc <- alexGetStartCode
+  case alexScan inp__ sc of
+    AlexEOF -> alexEOF
+    AlexError ((AlexPn _ line column),_,_,_) -> alexError $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+    AlexSkip  inp__' _len -> do
+        alexSetInput inp__'
+        alexMonadScan
+    AlexToken inp__' len action -> do
+        alexSetInput inp__'
+        action (ignorePendingBytes inp__) len
+#endif
 
 -- -----------------------------------------------------------------------------
 -- Useful token actions
 
-#ifndef ALEX_MONAD_BYTESTRING
+#ifdef ALEX_MONAD
 type AlexAction result = AlexInput -> Int -> Alex result
-#else /* ALEX_MONAD_BYTESTRING */
+#endif
+
+#ifdef ALEX_MONAD_BYTESTRING
 type AlexAction result = AlexInput -> Int64 -> Alex result
-#endif /* ALEX_MONAD_BYTESTRING */
+#endif
+
+#ifdef ALEX_MONAD_STRICT_TEXT
+type AlexAction result = AlexInput -> Int -> Alex result
+#endif
 
 -- just ignore this token and scan another one
 -- skip :: AlexAction result
@@ -310,14 +442,22 @@ andBegin :: AlexAction result -> Int -> AlexAction result
   alexSetStartCode code
   action input__ len
 
-#ifndef ALEX_MONAD_BYTESTRING
+#ifdef ALEX_MONAD
 token :: (AlexInput -> Int -> token) -> AlexAction token
-#else /* ALEX_MONAD_BYTESTRING */
-token :: (AlexInput -> Int64 -> token) -> AlexAction token
-#endif /* ALEX_MONAD_BYTESTRING */
 token t input__ len = return (t input__ len)
-#endif /* defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING) */
+#endif
 
+#ifdef ALEX_MONAD_BYTESTRING
+token :: (AlexInput -> Int64 -> token) -> AlexAction token
+token t input__ len = return (t input__ len)
+#endif
+
+#ifdef ALEX_MONAD_STRICT_TEXT
+token :: (AlexInput -> Int -> token) -> AlexAction token
+token t input__ len = return (t input__ len)
+#endif
+
+#endif /* defined(ALEX_MONAD) || defined(ALEX_MONAD_BYTESTRING) || defined(ALEX_MONAD_STRICT_TEXT) */
 
 -- -----------------------------------------------------------------------------
 -- Basic wrapper
@@ -376,6 +516,28 @@ alexScanTokens str = go (AlexInput '\n' str 0)
                   let len = alexBytePos inp__' - alexBytePos inp__ in
                   act (ByteString.take len (alexStr inp__)) : go inp__'
 
+#endif
+
+#ifdef ALEX_STRICT_TEXT
+-- alexScanTokens :: Data.Text.Text -> [token]
+alexScanTokens str = go ('\n',[],str)
+  where go inp__@(_,_bs,s) =
+          case alexScan inp__ 0 of
+                AlexEOF -> []
+                AlexError _ -> error "lexical error"
+                AlexSkip  inp__' _len  -> go inp__'
+                AlexToken inp__' len act -> act (Data.Text.take len s) : go inp__'
+#endif
+
+#ifdef ALEX_POSN_STRICT_TEXT
+-- alexScanTokens :: Data.Text.Text -> [token]
+alexScanTokens str = go (alexStartPos,'\n',[],str)
+  where go inp__@(pos,_,_bs,s) =
+          case alexScan inp__ 0 of
+                AlexEOF -> []
+                AlexError ((AlexPn _ line column),_,_,_) -> error $ "lexical error at line " ++ (show line) ++ ", column " ++ (show column)
+                AlexSkip  inp__' _len  -> go inp__'
+                AlexToken inp__' len act -> act pos (Data.Text.take len s) : go inp__'
 #endif
 
 

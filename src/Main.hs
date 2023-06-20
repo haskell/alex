@@ -290,12 +290,13 @@ getScheme directives =
               (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
           | single == "basic" || single == "basic-bytestring" ||
-            single == "strict-bytestring" ->
+            single == "strict-bytestring" || single == "strict-text" ->
             let
               strty = case single of
                 "basic" -> Str
                 "basic-bytestring" -> Lazy
                 "strict-bytestring" -> Strict
+                "strict-text" -> StrictText
                 _ -> error "Impossible case"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
@@ -311,42 +312,50 @@ getScheme directives =
                 dieAlex "%action directive not allowed with a wrapper"
               (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
-          | single == "posn" || single == "posn-bytestring" ->
+          | single == "posn" || single == "posn-bytestring" || single == "posn-strict-text" ->
             let
-              isByteString = single == "posn-bytestring"
+              strty = case single of
+                "posn" -> Str
+                "posn-bytestring" -> Strict
+                "posn-strict-text" -> StrictText
+                _ -> error "invalid str type for posn"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
-                return Posn { posnByteString = isByteString,
+                return Posn { posnStrType = strty,
                               posnTypeInfo = Nothing }
               (Nothing, Just tokenty, Nothing) ->
-                return Posn { posnByteString = isByteString,
+                return Posn { posnStrType = strty,
                               posnTypeInfo = Just (Nothing, tokenty) }
               (Just _, Just tokenty, Nothing) ->
-                return Posn { posnByteString = isByteString,
+                return Posn { posnStrType = strty,
                               posnTypeInfo = Just (typeclass, tokenty) }
               (_, _, Just _) ->
                   dieAlex "%action directive not allowed with a wrapper"
               (Just _, Nothing, Nothing) ->
                 dieAlex "%typeclass directive without %token directive"
-          | single == "monad" || single == "monad-bytestring" ||
+          | single == "monad" || single == "monad-bytestring" || single == "monad-strict-text" ||
             single == "monadUserState" ||
-            single == "monadUserState-bytestring" ->
+            single == "monadUserState-bytestring" ||
+            single == "monadUserState-strict-text" ->
             let
+              isText = single == "monad-strict-text" ||
+                       single == "monadUserState-strict-text"
               isByteString = single == "monad-bytestring" ||
                              single == "monadUserState-bytestring"
               userState = single == "monadUserState" ||
-                          single == "monadUserState-bytestring"
+                          single == "monadUserState-bytestring" ||
+                          single == "monadUserState-strict-text"
             in case (typeclass, token, action) of
               (Nothing, Nothing, Nothing) ->
-                return Monad { monadByteString = isByteString,
+                return Monad { monadStrType = if isByteString then Lazy else if isText then StrictText else Str,
                                monadUserState = userState,
                                monadTypeInfo = Nothing }
               (Nothing, Just tokenty, Nothing) ->
-                return Monad { monadByteString = isByteString,
+                return Monad { monadStrType = if isByteString then Lazy else if isText then StrictText else Str,
                                monadUserState = userState,
                                monadTypeInfo = Just (Nothing, tokenty) }
               (Just _, Just tokenty, Nothing) ->
-                return Monad { monadByteString = isByteString,
+                return Monad { monadStrType = if isByteString then Lazy else if isText then StrictText else Str,
                                monadUserState = userState,
                                monadTypeInfo = Just (typeclass, tokenty) }
               (_, _, Just _) ->

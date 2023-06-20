@@ -92,6 +92,9 @@ extra-source-files:
         tests/issue_119.x
         tests/issue_141.x
         tests/issue_197.x
+        tests/strict_text_typeclass.x
+        tests/posn_typeclass_strict_text.x
+        tests/tokens_monadUserState_strict_text.x
 
 source-repository head
     type:     git

@@ -577,6 +577,143 @@ The ``monadUserState-bytestring`` wrapper is the same as the ``monadUserState`` 
 All of the actions in your lexical specification have the same type as in the ``monadUserState`` wrapper.
 It is only the types of the function to run the monad and the type of the ``token`` function that change.
 
+The text wrappers
+~~~~~~~~~~~~~~~~~
+
+The ``strict-text``, ``posn-strict-text`` and ``monad-strict-text`` wrappers are variations on the ``basic``, ``posn`` and ``monad`` wrappers that use strict ``Text``\ s as the input and token types instead of an ordinary ``String``.
+
+The point of using these wrappers is that ``Text``\ s provide a more memory efficient representation of an input stream.
+They can also be somewhat faster to process.
+Note that using these wrappers adds a dependency on the ``Data.Text`` modules, which live in the ``text`` package.
+
+Note also that by default tokens share space with the input ``Text`` which has the advantage that it does not need to make a copy but it also prevents the input from being garbage collected.
+It may make sense in some applications to use ``Text``'s ``copy`` function to unshare tokens that will be kept for a long time, to allow the original input to be collected.
+
+The "strict-text" wrapper
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``strict-text`` wrapper is the same as the ``basic`` wrapper but with strict ``Text`` instead of ``String``:
+
+.. code-block:: haskell
+
+   import           Data.Text (Text)
+   import qualified Data.Text as Text
+
+   type AlexInput =
+     ( Char      -- previous char
+     , [Byte]    -- rest of the bytes for the current char
+     , Text      -- rest of the input Text
+     )
+
+   alexGetByte       :: AlexInput -> Maybe (Char, AlexInput)
+
+   alexInputPrevChar :: AlexInput -> Char
+
+   -- alexScanTokens :: Text -> [token]
+
+All of the actions in your lexical specification should have type:
+
+.. code-block:: haskell
+
+   { ... } :: Text -> token
+
+for some type ``token``.
+
+The "posn-strict-text" wrapper
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``posn-strict-text`` wrapper is the same as the ``posn`` wrapper but with strict ``Text`` instead of ``String``:
+
+.. code-block:: haskell
+
+   import           Data.Text (Text)
+   import qualified Data.Text as Text
+
+   type AlexInput =
+     ( AlexPosn      -- current position,
+     , Char          -- previous char
+     , [Byte]        -- rest of the bytes for the current char
+     , Text          -- current input Text
+     )
+
+   -- alexScanTokens :: Text -> [token]
+
+All of the actions in your lexical specification should have type:
+
+.. code-block:: haskell
+
+   { ... } :: AlexPosn -> Text -> token
+
+for some type ``token``.
+
+The "monad-strict-text" wrapper
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``monad-strict-text`` wrapper is the same as the ``monad`` wrapper but with strict ``Text`` instead of ``String``:
+
+.. code-block:: haskell
+
+   import           Data.Text (Text)
+   import qualified Data.Text as Text
+
+   data AlexState = AlexState
+     { alex_pos   :: !AlexPosn  -- position at current input location
+     , alex_inp   :: Text       -- the current input
+     , alex_chr   :: !Char      -- the character before the input
+     , alex_bytes :: [Byte]     -- rest of the bytes for the current char
+     , alex_scd   :: !Int       -- the current startcode
+     }
+
+   newtype Alex a = Alex { unAlex :: AlexState
+                                  -> Either String (AlexState, a) }
+
+   instance Functor     Alex where ...
+   instance Applicative Alex where ...
+   instance Monad       Alex where ...
+
+   runAlex :: Text -> Alex a -> Either String a
+
+   type AlexInput =
+     ( AlexPosn                 -- current position,
+     , Char                     -- previous char
+     , [Byte]                   -- rest of the bytes for the current char
+     , Text                     -- current input string
+     )
+
+   -- token :: (AlexInput -> Int -> token) -> AlexAction token
+
+All of the actions in your lexical specification have the same type as in the ``monad`` wrapper.
+It is only the types of the function to run the monad and the type of the ``token`` function that change.
+
+The "monadUserState-strict-text" wrapper
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The ``monadUserState-strict-text`` wrapper is the same as the ``monadUserState`` wrapper but with strict ``Text`` instead of ``String``:
+
+.. code-block:: haskell
+
+   import           Data.Text (Text)
+   import qualified Data.Text as Text
+
+   data AlexState = AlexState
+     { alex_pos   :: !AlexPosn     -- position at current input location
+     , alex_inp   :: Text          -- the current input
+     , alex_chr   :: !Char         -- the character before the input
+     , alex_bytes :: [Byte]        -- rest of the bytes for the current char
+     , alex_scd   :: !Int          -- the current startcode
+     , alex_ust  :: AlexUserState  -- AlexUserState will be defined in the user program
+     }
+
+   newtype Alex a = Alex { unAlex :: AlexState
+                                  -> Either String (AlexState, a) }
+
+   runAlex :: Text -> Alex a -> Either String a
+
+   -- token :: (AlexInput -> Int -> token) -> AlexAction token
+
+All of the actions in your lexical specification have the same type as in the ``monadUserState`` wrapper.
+It is only the types of the function to run the monad and the type of the ``token`` function that change.
+
 .. _types:
 
 Type Signatures and Typeclasses
