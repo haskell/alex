@@ -1,0 +1,32 @@
+# Files checked by `fix-whitespace` for whitespace violations.
+#
+# - Trailing whitespace.
+# - Trailing empty lines.
+# - Final line not ending in a newline characters.
+# - Tabs.
+
+excluded-dirs:
+- .git
+- .stack-work
+- dist
+- dist-newstyle
+- old-docbook
+
+included-files:
+# Some file types make use of tabs which we do not convert just now (2023-06-20),
+# so these are commented out.
+- .gitignore
+# - .mailmap
+- LICENSE
+# - "*.bat"
+- "*.c"
+- "*.cabal"
+- "*.hs"
+- "*.md"
+- "*.project"
+- "*.py"
+- "*.rst"
+- "*.sh"
+- "*.txt"
+# - "*.x"
+# - "*.y"

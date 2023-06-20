@@ -1,0 +1,15 @@
+name: Whitespace
+on:
+  push:
+  pull_request:
+
+jobs:
+  check-whitespace:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v3
+
+    - name: Check for whitespace violations
+      uses: andreasabel/fix-whitespace-action@v1
