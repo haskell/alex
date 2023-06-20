@@ -9,7 +9,7 @@ Source Code Repository
 ----------------------
 
 Alex is hosted on `GitHub <https://github.com/haskell/alex>`__.
-As previously discussed in `bug-reports`_, we use the built-in `GitHub issue tracker <https://github.com/haskell/alex/issues>`__ for Alex.
+As previously discussed in :ref:`bug-reports`, we use the built-in `GitHub issue tracker <https://github.com/haskell/alex/issues>`__ for Alex.
 We also use `GitHub pull requests <https://github.com/haskell/alex/pulls>`__ for managing changes;
 feel free to submit them!
 

@@ -66,11 +66,11 @@ Other contributors
 ~~~~~~~~~~~~~~~~~~
 
 The data is in the Git history.
-GitHub can render that in `various ways <https://github.com/simonmar/alex/graphs/contributors>`__.
+GitHub can render that in `various ways <https://github.com/haskell/alex/graphs/contributors>`__.
 
 The documentation itself
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 This documentation is based the original documentation written by Alex's original authors using DocBook.
 
-It was Converted to reStructuredText / Sphinx / readthedocs.org by Andreas Abel in February 2022.
+It was converted to reStructuredText / Sphinx / readthedocs.org by Andreas Abel in February 2022.
