@@ -60,7 +60,7 @@ elems = eltsFM
 fromList :: Ord k => [(k,a)] -> Map k a
 fromList = listToFM
 
-fromListWith :: Ord k => (a -> a -> a) -> [(k,a)] -> Map k a 
+fromListWith :: Ord k => (a -> a -> a) -> [(k,a)] -> Map k a
 fromListWith c = addListToFM_C (flip c) emptyFM
 
 toAscList :: Map k a -> [(k,a)]

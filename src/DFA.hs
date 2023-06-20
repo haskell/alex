@@ -1,12 +1,12 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- DFA.hs, part of Alex
 --
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
 --
 -- This module generates a DFA from a scanner by first converting it
 -- to an NFA and then converting the NFA with the subset construction.
--- 
+--
 -- See the chapter on `Finite Automata and Lexical Analysis' in the
 -- dragon book for an excellent overview of the algorithms in this
 -- module.
@@ -29,31 +29,31 @@ import Data.Maybe ( fromJust )
 
 -- (This section should logically belong to the DFA module but it has been
 -- placed here to make this module self-contained.)
---  
+--
 -- `DFA' provides an alternative to `Scanner' (described in the RExp module);
 -- it can be used directly to scan text efficiently.  Additionally it has an
 -- extra place holder for holding action functions for generating
 -- application-specific tokens.  When this place holder is not being used, the
 -- unit type will be used.
---  
+--
 -- Each state in the automaton consist of a list of `Accept' values, descending
 -- in priority, and an array mapping characters to new states.  As the array
 -- may only cover a sub-range of the characters, a default state number is
 -- given in the third field.  By convention, all transitions to the -1 state
 -- represent invalid transitions.
---  
+--
 -- A list of accept states is provided for as the original specification may
 -- have been ambiguous, in which case the highest priority token should be
 -- taken (the one appearing earliest in the specification); this can not be
 -- calculated when the DFA is generated in all cases as some of the tokens may
 -- be associated with leading or trailing context or start codes.
---  
+--
 -- `scan_token' (see above) can deal with unconditional accept states more
 -- efficiently than those associated with context; to save it testing each time
 -- whether the list of accept states contains an unconditional state, the flag
 -- in the first field of `St' is set to true whenever the list contains an
 -- unconditional state.
---  
+--
 -- The `Accept' structure contains the priority of the token being accepted
 -- (lower numbers => higher priorities), the name of the token, a place holder
 -- that can be used for storing the `action' function for constructing the
@@ -61,7 +61,7 @@ import Data.Maybe ( fromJust )
 -- (listing the start codes that the scanner must be in for the token to be
 -- accepted; empty => no restriction), the leading and trailing context (both
 -- `Nothing' if there is none).
---  
+--
 -- The leading context consists simply of a character predicate that will
 -- return true if the last character read is acceptable.  The trailing context
 -- consists of an alternative starting state within the DFA; if this `sub-dfa'
@@ -185,10 +185,10 @@ in_pdfa ss (DFA _ mp) = ss `Map.member` mp
 
 mk_int_dfa:: NFA -> DFA StateSet a -> DFA SNum a
 mk_int_dfa nfa (DFA start_states mp)
-  = DFA [0 .. length start_states-1] 
+  = DFA [0 .. length start_states-1]
         (Map.fromList [ (lookup' st, cnv pds) | (st, pds) <- Map.toAscList mp ])
   where
-        mp' = Map.fromList (zip (start_states ++ 
+        mp' = Map.fromList (zip (start_states ++
                                  (map fst . Map.toAscList) (foldr Map.delete mp start_states)) [0..])
 
         lookup' = fromJust . flip Map.lookup mp'
@@ -200,9 +200,9 @@ mk_int_dfa nfa (DFA start_states mp)
 
                 accs' = map cnv_acc accs
                 cnv_acc (Acc p a lctx rctx) = Acc p a lctx rctx'
-                  where rctx' = 
+                  where rctx' =
                           case rctx of
-                                RightContextRExp s -> 
+                                RightContextRExp s ->
                                   RightContextRExp (lookup' (mk_ss nfa [s]))
                                 other -> other
 
@@ -221,7 +221,7 @@ mk_int_dfa nfa (DFA start_states mp)
 -- some initial segment of the array may be omitted) or the value that 255 maps
 -- to (in which case a final segment of the array may be omitted), hence the
 -- calculation of `(df,bds)'.
---  
+--
 -- Note that empty arrays are avoided as they can cause severe problems for
 -- some popular Haskell compilers.
 

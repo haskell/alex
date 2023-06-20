@@ -91,7 +91,7 @@ scc:: Graph -> GForest
 scc g = dff' (reverse (top_sort (reverse_graph g))) g
 
 top_sort:: Graph -> [Int]
-top_sort = postorder . dff 
+top_sort = postorder . dff
 
 
 -- `dff' computes the depth-first forest.  It works by unrolling the

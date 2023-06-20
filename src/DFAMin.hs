@@ -62,7 +62,7 @@ import qualified Data.List as List
 --
 -- % The second for loop that iterates over R mutates Q,
 -- % but it does not affect the third for loop that iterates over Q.
--- % Because once X refines Y into Y1 and Y2, Y1 and Y2 can't be more refined by X. 
+-- % Because once X refines Y into Y1 and Y2, Y1 and Y2 can't be more refined by X.
 
 minimizeDFA :: forall a. Ord a => DFA Int a -> DFA Int a
 minimizeDFA  dfa@(DFA { dfa_start_states = starts,

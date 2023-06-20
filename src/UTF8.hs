@@ -8,7 +8,7 @@ import Data.Char
 -- Could also be imported:
 
 import Codec.Binary.UTF8.Light as UTF8
- 
+
 encode :: Char -> [Word8]
 encode c = head (UTF8.encodeUTF8' [UTF8.c2w c])
 

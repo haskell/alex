@@ -1,5 +1,5 @@
 -- -----------------------------------------------------------------------------
--- 
+--
 -- NFA.hs, part of Alex
 --
 -- (c) Chris Dornan 1995-2000, Simon Marlow 2003
@@ -7,7 +7,7 @@
 -- The `scanner2nfa' takes a `Scanner' (see the `RExp' module) and
 -- generates its equivalent nondeterministic finite automaton.  NFAs
 -- are turned into DFAs in the DFA module.
--- 
+--
 -- See the chapter on `Finite Automata and Lexical Analysis' in the
 -- dragon book for an excellent overview of the algorithms in this
 -- module.
@@ -61,7 +61,7 @@ instance Show NState where
 -- (listing the start codes that the scanner must be in for the token to be
 -- accepted; empty => no restriction), the leading and trailing context (both
 -- `Nothing' if there is none).
---  
+--
 -- The leading context consists simply of a character predicate that will
 -- return true if the last character read is acceptable.  The trailing context
 -- consists of an alternative starting state within the DFA; if this `sub-dfa'
@@ -84,13 +84,13 @@ scanner2nfa enc Scanner{scannerTokens = toks} startcodes
           -- make a start state for each start code (these will be
           -- numbered from zero).
           start_states <- sequence (replicate (length startcodes) newState)
-          
+
           -- construct the NFA for each token
           tok_states <- zipWithM do_token toks [0..]
 
           -- make an epsilon edge from each state state to each
           -- token that is acceptable in that state
-          zipWithM_ (tok_transitions (zip toks tok_states)) 
+          zipWithM_ (tok_transitions (zip toks tok_states))
                 startcodes start_states
 
         where
@@ -104,7 +104,7 @@ scanner2nfa enc Scanner{scannerTokens = toks} startcodes
                                         return NoRightContext
                                   RightContextCode code' ->
                                         return (RightContextCode code')
-                                  RightContextRExp re' -> do 
+                                  RightContextRExp re' -> do
                                         r_b <- newState
                                         r_e <- newState
                                         rexp2nfa r_b r_e re'
@@ -123,7 +123,7 @@ scanner2nfa enc Scanner{scannerTokens = toks} startcodes
 -- NFA creation from a regular expression
 
 -- rexp2nfa B E R generates an NFA that begins in state B, recognises
--- R, and ends in state E only if R has been recognised. 
+-- R, and ends in state E only if R has been recognised.
 
 rexp2nfa :: SNum -> SNum -> RExp -> NFAM ()
 rexp2nfa b e Eps    = epsilonEdge b e
@@ -176,7 +176,7 @@ instance Monad NFAM where
 
 runNFA :: Encoding -> NFAM () -> NFA
 runNFA e m = case unN m 0 Map.empty e of
-                (s, nfa_map, ()) -> -- trace ("runNfa.." ++ show (Map.toAscList nfa_map)) $ 
+                (s, nfa_map, ()) -> -- trace ("runNfa.." ++ show (Map.toAscList nfa_map)) $
                                     e_close (array (0,s-1) (Map.toAscList nfa_map))
 
 e_close:: Array Int NState -> NFA
@@ -202,8 +202,8 @@ anyBytes from n to = do
 bytesEdge :: SNum -> [Byte] -> [Byte] -> SNum -> NFAM ()
 bytesEdge from [] [] to = epsilonEdge from to
 bytesEdge from [x] [y] to = byteEdge from (byteSetRange x y) to -- (OPTIMISATION)
-bytesEdge from (x:xs) (y:ys) to 
-    | x == y = do 
+bytesEdge from (x:xs) (y:ys) to
+    | x == y = do
         s <- newState
         byteEdge from (byteSetSingleton x) s
         bytesEdge s xs ys to
@@ -216,7 +216,7 @@ bytesEdge from (x:xs) (y:ys) to
            byteEdge from (byteSetSingleton y) t
            bytesEdge t (fmap (const 0x00) xs) ys to
 
-        when ((x+1) <= (y-1)) $ do 
+        when ((x+1) <= (y-1)) $ do
            u <- newState
            byteEdge from (byteSetRange (x+1) (y-1)) u
            anyBytes u (length xs) to
@@ -224,11 +224,11 @@ bytesEdge _ _ _ _ = undefined -- hide compiler warning
 
 charEdge :: SNum -> CharSet -> SNum -> NFAM ()
 charEdge from charset to = do
-  -- trace ("charEdge: " ++ (show $ charset) ++ " => " ++ show (byteRanges charset)) $ 
+  -- trace ("charEdge: " ++ (show $ charset) ++ " => " ++ show (byteRanges charset)) $
   e <- getEncoding
   forM_ (byteRanges e charset) $ \(xs,ys) -> do
     bytesEdge from xs ys to
-    
+
 
 
 byteEdge :: SNum -> ByteSet -> SNum -> NFAM ()
@@ -236,13 +236,13 @@ byteEdge from charset to = N $ \s n _ -> (s, addEdge n, ())
  where
    addEdge n =
      case Map.lookup from n of
-       Nothing -> 
+       Nothing ->
            Map.insert from (NSt [] [] [(charset,to)]) n
        Just (NSt acc eps trans) ->
            Map.insert from (NSt acc eps ((charset,to):trans)) n
 
 epsilonEdge :: SNum -> SNum -> NFAM ()
-epsilonEdge from to 
+epsilonEdge from to
  | from == to = return ()
  | otherwise  = N $ \s n _ -> let n' = addEdge n in n' `seq` (s, n', ())
  where
@@ -254,7 +254,7 @@ epsilonEdge from to
 accept :: SNum -> Accept Code -> NFAM ()
 accept state new_acc = N $ \s n _ -> (s, addAccept n, ())
  where
-   addAccept n = 
+   addAccept n =
      case Map.lookup state n of
        Nothing ->
            Map.insert state (NSt [new_acc] [] []) n
