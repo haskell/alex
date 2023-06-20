@@ -1,3 +1,13 @@
+## Changes in 3.4.0.0
+
+ * New wrappers to lex strict `Text`:
+   `strict-text`, `posn-strict-text`, `monad-strict-text` and `monadUserState-strict-text`
+   (PR [#240](https://github.com/haskell/alex/pull/240)).
+   These complement the existing wrappers for `String` and `ByteString`.
+ * Tested with GHC 7.0 - 9.6.2.
+
+_Andreas Abel, 2023-06-20_
+
 ## Changes in 3.3.0.0
 
  * Add an `Ord` instance to `AlexPosn` (Issue [#233](https://github.com/haskell/alex/issues/233)).

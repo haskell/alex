@@ -1,12 +1,12 @@
 cabal-version: >= 1.10
 name: alex
-version: 3.3.0.0
+version: 3.4.0.0
 -- don't forget updating changelog.md!
 license: BSD3
 license-file: LICENSE
 copyright: (c) Chis Dornan, Simon Marlow
 author: Chris Dornan and Simon Marlow
-maintainer: Simon Marlow <marlowsd@gmail.com>
+maintainer: https://github.com/haskell/alex
 bug-reports: https://github.com/haskell/alex/issues
 stability: stable
 homepage: http://www.haskell.org/alex/
