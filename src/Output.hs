@@ -24,7 +24,8 @@ import Data.Array.Unboxed ( UArray, elems, (!), array, listArray )
 import Data.Maybe (isJust)
 import Data.Bits
 import Data.Char ( ord, chr )
-import Data.List ( maximumBy, sortBy, groupBy, mapAccumR )
+import Data.List ( maximumBy, sortBy, mapAccumR )
+import qualified Data.List.NonEmpty as List1
 
 -- -----------------------------------------------------------------------------
 -- Printing the output
@@ -399,10 +400,10 @@ mkTables dfa = -- trace (show (defaults)) $
         best_default :: [(Int,SNum)] -> SNum
         best_default prod_list
            | null sorted = -1
-           | otherwise   = snd (head (maximumBy lengths eq))
+           | otherwise   = snd (List1.head (maximumBy lengths eq))
            where sorted  = sortBy compareSnds prod_list
                  compareSnds (_,a) (_,b) = compare a b
-                 eq = groupBy (\(_,a) (_,b) -> a == b) sorted
+                 eq = List1.groupBy (\(_,a) (_,b) -> a == b) sorted
                  lengths  a b = length a `compare` length b
 
         -- remove all the default productions from the DFA
@@ -493,18 +494,19 @@ findFreeOffset :: Int
                -> [(Int, Int)]
                -> ST s Int
 findFreeOffset off check off_arr state = do
-    -- offset 0 isn't allowed
+
+  -- offset 0 isn't allowed
   if off == 0 then try_next else do
 
     -- don't use an offset we've used before
-  b <- readArray off_arr off
-  if b /= 0 then try_next else do
+    b <- readArray off_arr off
+    if b /= 0 then try_next else do
 
-    -- check whether the actions for this state fit in the table
-  ok <- fits off state check
-  if ok then return off else try_next
- where
-        try_next = findFreeOffset (off+1) check off_arr state
+      -- check whether the actions for this state fit in the table
+      ok <- fits off state check
+      if ok then return off else try_next
+  where
+    try_next = findFreeOffset (off+1) check off_arr state
 
 -- This is an inner loop, so we use some strictness hacks, and avoid
 -- array bounds checks (unsafeRead instead of readArray) to speed

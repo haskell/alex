@@ -1,3 +1,12 @@
+## Changes in 3.4.0.1
+
+ * Address new `x-partial` warning of GHC 9.8.
+ * Alex 3.4.0.1 needs GHC 8.0 or higher to build.
+   The code it generates is the same as 3.4.0.0, so it will likely work for older GHCs.
+ * Tested with GHC 8.0 - 9.8.1.
+
+_Andreas Abel, 2023-10-29_
+
 ## Changes in 3.4.0.0
 
  * New wrappers to lex strict `Text`:

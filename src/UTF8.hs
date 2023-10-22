@@ -1,8 +1,14 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedLists  #-}
+
 module UTF8 where
 
-import Data.Word
-import Data.Bits
-import Data.Char
+import Data.Word ( Word8 )
+import Data.Bits ( (.&.), shiftR )
+import Data.Char ( ord )
+
+import qualified Data.List.NonEmpty as List1
+type List1 = List1.NonEmpty
 
 {-
 -- Could also be imported:
@@ -15,8 +21,8 @@ encode c = head (UTF8.encodeUTF8' [UTF8.c2w c])
 -}
 
 -- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
-encode :: Char -> [Word8]
-encode = map fromIntegral . go . ord
+encode :: Char -> List1 Word8
+encode = fmap fromIntegral . go . ord
  where
   go oc
    | oc <= 0x7f       = [oc]

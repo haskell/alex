@@ -1,8 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-name-shadowing #-}
 
-{-# LANGUAGE PatternGuards       #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE CPP #-}
 
 module DFAMin (minimizeDFA) where
 
@@ -11,9 +9,9 @@ import AbsSyn
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.IntSet (IntSet)
-import qualified Data.IntSet as IS
+import qualified Data.IntSet as IntSet
 import Data.IntMap (IntMap)
-import qualified Data.IntMap as IM
+import qualified Data.IntMap as IntMap
 import qualified Data.List as List
 
 -- % Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
@@ -82,7 +80,7 @@ minimizeDFA  dfa@(DFA { dfa_start_states = starts,
       number :: Int -> [EquivalenceClass] -> [(Int, EquivalenceClass)]
       number _ [] = []
       number n (ss:sss) =
-        case filter (`IS.member` ss) starts of
+        case filter (`IntSet.member` ss) starts of
           []      -> (n,ss) : number (n+1) sss
           starts' -> map (,ss) starts' ++ number n sss
           -- if one of the states of the minimized DFA corresponds
@@ -91,12 +89,12 @@ minimizeDFA  dfa@(DFA { dfa_start_states = starts,
 
       states :: [(Int, State Int a)]
       states = [
-                let old_states = map (lookup statemap) (IS.toList equiv)
-                    accs = map fix_acc (state_acc (head old_states))
+                let old_states = map (lookup statemap) (IntSet.toList equiv)
+                    accs = map fix_acc (state_acc (headWithDefault undefined old_states))
                            -- accepts should all be the same
-                    out  = IM.fromList [ (b, get_new old)
+                    out  = IntMap.fromList [ (b, get_new old)
                                            | State _ out <- old_states,
-                                             (b,old) <- IM.toList out ]
+                                             (b,old) <- IntMap.toList out ]
                 in (n, State accs out)
                | (n, equiv) <- numbered_states
                ]
@@ -116,7 +114,7 @@ minimizeDFA  dfa@(DFA { dfa_start_states = starts,
 
       old_to_new :: Map Int Int
       old_to_new = Map.fromList [ (s,n) | (n,ss) <- numbered_states,
-                                          s <- IS.toList ss ]
+                                          s <- IntSet.toList ss ]
 
 type EquivalenceClass = IntSet
 
@@ -129,7 +127,7 @@ groupEquivStates DFA { dfa_states = statemap }
        where acc (State as _) = not (List.null as)
 
     nonaccepting_states :: EquivalenceClass
-    nonaccepting_states = IS.fromList (Map.keys nonaccepting)
+    nonaccepting_states = IntSet.fromList (Map.keys nonaccepting)
 
     -- group the accepting states into equivalence classes
     accept_map :: Map [Accept a] [Int]
@@ -139,11 +137,11 @@ groupEquivStates DFA { dfa_states = statemap }
              (Map.toList accepting)
 
     accept_groups :: [EquivalenceClass]
-    accept_groups = map IS.fromList (Map.elems accept_map)
+    accept_groups = map IntSet.fromList (Map.elems accept_map)
 
     init_r, init_q :: [EquivalenceClass]
     init_r  -- Issue #71: each EquivalenceClass needs to be a non-empty set
-      | IS.null nonaccepting_states = []
+      | IntSet.null nonaccepting_states = []
       | otherwise                   = [nonaccepting_states]
     init_q = accept_groups
 
@@ -155,10 +153,10 @@ groupEquivStates DFA { dfa_states = statemap }
     -- since a transition function might not be an injective.
     -- This is a cache of the information needed to compute xs below
     bigmap :: IntMap (IntMap EquivalenceClass)
-    bigmap = IM.fromListWith (IM.unionWith IS.union)
-                [ (i, IM.singleton to (IS.singleton from))
+    bigmap = IntMap.fromListWith (IntMap.unionWith IntSet.union)
+                [ (i, IntMap.singleton to (IntSet.singleton from))
                 | (from, state) <- Map.toList statemap,
-                  (i,to) <- IM.toList (state_out state) ]
+                  (i,to) <- IntMap.toList (state_out state) ]
 
     -- The outer loop: recurse on each set in R and Q
     go :: [EquivalenceClass] -> [EquivalenceClass] -> [EquivalenceClass]
@@ -169,17 +167,17 @@ groupEquivStates DFA { dfa_states = statemap }
                  -> EquivalenceClass        -- subset of codomain of original transition function
                  -> EquivalenceClass        -- preimage of given subset
 #if MIN_VERSION_containers(0, 6, 0)
-        preimage invMap a = IS.unions (IM.restrictKeys invMap a)
+        preimage invMap a = IntSet.unions (IntMap.restrictKeys invMap a)
 #else
-        preimage invMap a = IS.unions [IM.findWithDefault IS.empty s invMap | s <- IS.toList a]
+        preimage invMap a = IntSet.unions [IntMap.findWithDefault IntSet.empty s invMap | s <- IntSet.toList a]
 #endif
 
         xs :: [EquivalenceClass]
         xs =
           [ x
-          | invMap <- IM.elems bigmap
+          | invMap <- IntMap.elems bigmap
           , let x = preimage invMap a
-          , not (IS.null x)
+          , not (IntSet.null x)
           ]
 
         refineWith
@@ -187,12 +185,12 @@ groupEquivStates DFA { dfa_states = statemap }
           -> EquivalenceClass -- input equivalence class
           -> Maybe (EquivalenceClass, EquivalenceClass) -- refined equivalence class
         refineWith x y =
-          if IS.null y1 || IS.null y2
+          if IntSet.null y1 || IntSet.null y2
             then Nothing
             else Just (y1, y2)
           where
-            y1 = IS.intersection y x
-            y2 = IS.difference   y x
+            y1 = IntSet.intersection y x
+            y2 = IntSet.difference   y x
 
         go0 (r,q) x = go1 r [] []
           where
@@ -201,11 +199,16 @@ groupEquivStates DFA { dfa_states = statemap }
             go1 (y:r) r' q' = case refineWith x y of
               Nothing                       -> go1 r (y:r') q'
               Just (y1, y2)
-                | IS.size y1 <= IS.size y2  -> go1 r (y2:r') (y1:q')
-                | otherwise                 -> go1 r (y1:r') (y2:q')
+                | IntSet.size y1 <= IntSet.size y2 -> go1 r (y2:r') (y1:q')
+                | otherwise                        -> go1 r (y1:r') (y2:q')
 
             -- iterates over Q
             go2 []    q' = q'
             go2 (y:q) q' = case refineWith x y of
               Nothing       -> go2 q (y:q')
               Just (y1, y2) -> go2 q (y1:y2:q')
+
+-- To pacify GHC 9.8's warning about 'head'
+headWithDefault :: a -> [a] -> a
+headWithDefault a []    = a
+headWithDefault _ (a:_) = a

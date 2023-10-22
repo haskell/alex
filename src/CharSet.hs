@@ -10,6 +10,8 @@
 --
 -- ----------------------------------------------------------------------------}
 
+{-# LANGUAGE OverloadedLists #-}
+
 module CharSet (
   setSingleton,
 
@@ -36,19 +38,30 @@ module CharSet (
   byteSetElem
   ) where
 
-import Data.Array
-import Data.Ranged
-import Data.Word
-import Data.Maybe (catMaybes)
-import Data.Char (chr,ord)
-import UTF8
+import           Data.Array         ( Array, array )
+import           Data.Char          ( chr, ord )
+import           Data.Maybe         ( catMaybes )
+import           Data.Word          ( Word8 )
+import           Data.List.NonEmpty ( pattern (:|), (<|) )
+import qualified Data.List.NonEmpty as List1
+
+import           UTF8               ( List1, encode )
+import           Data.Ranged
+  ( Boundary( BoundaryAbove, BoundaryAboveAll, BoundaryBelow, BoundaryBelowAll )
+  , DiscreteOrdered, Range( Range ), RSet
+  , makeRangedSet
+  , rSetDifference, rSetEmpty, rSetHas, rSetNegation, rSetRanges, rSetUnion, rSingleton
+  )
+
+-- import Data.Semigroup (sconcat)
+-- import qualified Data.Foldable      as Fold
 
 type Byte = Word8
 -- Implementation as functions
 type CharSet = RSet Char
 type ByteSet = RSet Byte
 -- type Utf8Set = RSet [Byte]
-type Utf8Range = Span [Byte]
+type Utf8Range = Span (List1 Byte)
 
 data Encoding = Latin1 | UTF8
               deriving (Eq, Show)
@@ -83,16 +96,19 @@ charSetComplement = rSetNegation
 charSetRange :: Char -> Char -> CharSet
 charSetRange c1 c2 = makeRangedSet [Range (BoundaryBelow c1) (BoundaryAbove c2)]
 
+{-# INLINE bytes #-}
+bytes :: [Byte]
+bytes = [minBound..maxBound]
+
 byteSetToArray :: ByteSet -> Array Byte Bool
-byteSetToArray set = array (fst (head ass), fst (last ass)) ass
-  where ass = [(c,rSetHas set c) | c <- [0..0xff]]
+byteSetToArray set = array (minBound, maxBound) [(c, rSetHas set c) | c <- bytes]
 
 byteSetElems :: ByteSet -> [Byte]
-byteSetElems set = [c | c <- [0 .. 0xff], rSetHas set c]
+byteSetElems set = filter (rSetHas set) bytes
 
 charToRanges :: Encoding -> CharSet -> [Utf8Range]
 charToRanges Latin1 =
-    map (fmap ((: []).fromIntegral.ord)) -- Span [Byte]
+    map (fmap ((:| []) . fromIntegral . ord)) -- Span [Byte]
   . catMaybes
   . fmap (charRangeToCharSpan False)
   . rSetRanges
@@ -105,20 +121,20 @@ charToRanges UTF8 =
   . rSetRanges
 
 -- | Turns a range of characters expressed as a pair of UTF-8 byte sequences into a set of ranges, in which each range of the resulting set is between pairs of sequences of the same length
-toUtfRange :: Span [Byte] -> [Span [Byte]]
-toUtfRange (Span x y) = fix x y
+toUtfRange :: Span (List1 Byte) -> [Span (List1 Byte)]
+toUtfRange (Span x y) = List1.toList $ fix x y
 
-fix :: [Byte] -> [Byte] -> [Span [Byte]]
+fix :: List1 Byte -> List1 Byte -> List1 (Span (List1 Byte))
 fix x y
     | length x == length y = [Span x y]
-    | length x == 1 = Span x [0x7F] : fix [0xC2,0x80] y
-    | length x == 2 = Span x [0xDF,0xBF] : fix [0xE0,0x80,0x80] y
-    | length x == 3 = Span x [0xEF,0xBF,0xBF] : fix [0xF0,0x80,0x80,0x80] y
+    | length x == 1 = Span x [0x7F] <| fix [0xC2,0x80] y
+    | length x == 2 = Span x [0xDF,0xBF] <| fix [0xE0,0x80,0x80] y
+    | length x == 3 = Span x [0xEF,0xBF,0xBF] <| fix [0xF0,0x80,0x80,0x80] y
     | otherwise = error "fix: incorrect input given"
 
 
-byteRangeToBytePair :: Span [Byte] -> ([Byte],[Byte])
-byteRangeToBytePair (Span x y) = (x,y)
+byteRangeToBytePair :: Span a -> (a, a)
+byteRangeToBytePair (Span x y) = (x, y)
 
 data Span a = Span a a -- lower bound inclusive, higher bound exclusive
                        -- (SDM: upper bound inclusive, surely?)
@@ -143,8 +159,8 @@ charRangeToCharSpan uni (Range x y) = Just (Span (l x) (h y))
             BoundaryAboveAll | uni -> chr 0x10ffff
                              | otherwise -> chr 0xff
 
-byteRanges :: Encoding -> CharSet -> [([Byte],[Byte])]
-byteRanges enc =  fmap byteRangeToBytePair . charToRanges enc
+byteRanges :: Encoding -> CharSet -> [(List1 Byte, List1 Byte)]
+byteRanges enc = fmap byteRangeToBytePair . charToRanges enc
 
 byteSetRange :: Byte -> Byte -> ByteSet
 byteSetRange c1 c2 = makeRangedSet [Range (BoundaryBelow c1) (BoundaryAbove c2)]
@@ -164,4 +180,3 @@ charSetQuote s = "(\\c -> " ++ foldr (\x y -> x ++ " || " ++ y) "False" (map quo
           quoteH (BoundaryBelow a) = "c < " ++ show a
           quoteH (BoundaryAboveAll) = "True"
           quoteH (BoundaryBelowAll) = "False"
-

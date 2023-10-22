@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Data.Ranged.RangedSet (
    -- ** Ranged Set Type
    RSet,
@@ -33,7 +35,7 @@ import Data.Semigroup
 import Data.Monoid
 #endif
 
-import Data.List hiding (and, null)
+import qualified Data.List as List
 
 infixl 7 -/\-
 infixl 6 -\/-, -!-
@@ -60,19 +62,15 @@ instance DiscreteOrdered a => Monoid (RSet a) where
 -- | Determine if the ranges in the list are both in order and non-overlapping.
 -- If so then they are suitable input for the unsafeRangedSet function.
 validRangeList :: DiscreteOrdered v => [Range v] -> Bool
-
-validRangeList [] = True
-validRangeList [Range lower upper] = lower <= upper
-validRangeList rs = and $ zipWith okAdjacent rs (tail rs)
-   where
-      okAdjacent (Range lower1 upper1) (Range lower2 upper2) =
-         lower1 <= upper1 && upper1 <= lower2 && lower2 <= upper2
+validRangeList rs = and $
+  all (\ (Range lower upper) -> lower <= upper) rs :
+  zipWith (\ (Range _ upper1) (Range lower2 _) -> upper1 <= lower2) rs (drop 1 rs)
 
 
 -- | Rearrange and merge the ranges in the list so that they are in order and
 -- non-overlapping.
 normaliseRangeList :: DiscreteOrdered v => [Range v] -> [Range v]
-normaliseRangeList = normalise . sort . filter (not . rangeIsEmpty)
+normaliseRangeList = normalise . List.sort . filter (not . rangeIsEmpty)
 
 
 -- Private routine: normalise a range list that is known to be already sorted.

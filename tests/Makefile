@@ -32,14 +32,14 @@ GHC_VERSION:=$(shell $(HC) --numeric-version)
 GHC_VERSION_WORDS=$(subst ., ,$(GHC_VERSION))
 GHC_MAJOR_VERSION=$(word 1,$(GHC_VERSION_WORDS))
 GHC_MINOR_VERSION=$(word 2,$(GHC_VERSION_WORDS))
+
 # Text dependency comes with GHC from 8.4 onwards
 GHC_SHIPS_WITH_TEXT:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 8 -o $(GHC_MAJOR_VERSION) -ge 8 -a $(GHC_MINOR_VERSION) -ge 4 ]; then echo "yes"; else echo "no"; fi)
-# -fwarn-incomplete-uni-patterns only from 7.4
-WARNS_FOR_GHC_GTEQ_7_4=-fwarn-incomplete-uni-patterns
-WARNS_FOR_GHC_LT_7_4=-fno-warn-lazy-unlifted-bindings
-WARNS_DEP_GHC_GTEQ_7_4:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 7 -o $(GHC_MAJOR_VERSION) -ge 7 -a $(GHC_MINOR_VERSION) -ge 4 ]; then echo "$(WARNS_FOR_GHC_GTEQ_7_4)"; else echo "$(WARNS_FOR_GHC_LT_7_4)"; fi)
 
-HC_OPTS=-Wall $(WARNS_DEP_GHC_GTEQ_7_4) -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
+# Turn off x-partial warning (new in GHC 9.8)
+WARNS_DEP_GHC_GTEQ_9_8:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 9 -o $(GHC_MAJOR_VERSION) -ge 9 -a $(GHC_MINOR_VERSION) -ge 8 ]; then echo "-Wno-x-partial"; fi)
+
+HC_OPTS=-Wall $(WARNS_DEP_GHC_GTEQ_9_8) -fwarn-incomplete-uni-patterns -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
 
 .PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 

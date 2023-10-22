@@ -14,13 +14,15 @@
 --
 -- ----------------------------------------------------------------------------}
 
+{-# LANGUAGE CPP #-}
+
 module NFA where
 
 import AbsSyn
 import CharSet
 import DFS ( t_close, out )
 import Map ( Map )
-import qualified Map hiding ( Map )
+import qualified Map
 import Util ( str, space )
 
 #if __GLASGOW_HASKELL__ < 710
@@ -28,6 +30,7 @@ import Control.Applicative ( Applicative(..) )
 #endif
 import Control.Monad ( forM_, zipWithM, zipWithM_, when, liftM, ap )
 import Data.Array ( Array, (!), array, listArray, assocs, bounds )
+import qualified Data.List.NonEmpty as List1
 
 -- Each state of a nondeterministic automaton contains a list of `Accept'
 -- values, a list of epsilon transitions (an epsilon transition represents a
@@ -132,7 +135,7 @@ rexp2nfa b e (re1 :%% re2) = do
   s <- newState
   rexp2nfa b s re1
   rexp2nfa s e re2
-rexp2nfa b e (re1 :| re2) = do
+rexp2nfa b e (re1 :|| re2) = do
   rexp2nfa b e re1
   rexp2nfa b e re2
 rexp2nfa b e (Star re) = do
@@ -226,10 +229,8 @@ charEdge :: SNum -> CharSet -> SNum -> NFAM ()
 charEdge from charset to = do
   -- trace ("charEdge: " ++ (show $ charset) ++ " => " ++ show (byteRanges charset)) $
   e <- getEncoding
-  forM_ (byteRanges e charset) $ \(xs,ys) -> do
-    bytesEdge from xs ys to
-
-
+  forM_ (byteRanges e charset) $ \ (xs, ys) -> do
+    bytesEdge from (List1.toList xs) (List1.toList ys) to
 
 byteEdge :: SNum -> ByteSet -> SNum -> NFAM ()
 byteEdge from charset to = N $ \s n _ -> (s, addEdge n, ())
@@ -260,7 +261,6 @@ accept state new_acc = N $ \s n _ -> (s, addAccept n, ())
            Map.insert state (NSt [new_acc] [] []) n
        Just (NSt acc eps trans) ->
            Map.insert state (NSt (new_acc:acc) eps trans) n
-
 
 rctxt_accept :: Accept Code
 rctxt_accept = Acc 0 Nothing Nothing NoRightContext
