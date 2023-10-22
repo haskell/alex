@@ -14,23 +14,19 @@
 --
 -- ----------------------------------------------------------------------------}
 
-{-# LANGUAGE CPP #-}
-
 module NFA where
+
+import Control.Monad ( forM_, zipWithM, zipWithM_, when, liftM, ap )
+import Data.Array    ( Array, (!), array, listArray, assocs, bounds )
+import Data.Map      ( Map )
+import qualified Data.Map as Map
+import qualified Data.List.NonEmpty as List1
 
 import AbsSyn
 import CharSet
-import DFS ( t_close, out )
-import Map ( Map )
-import qualified Map
+import DFS  ( t_close, out )
 import Util ( str, space )
 
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative ( Applicative(..) )
-#endif
-import Control.Monad ( forM_, zipWithM, zipWithM_, when, liftM, ap )
-import Data.Array ( Array, (!), array, listArray, assocs, bounds )
-import qualified Data.List.NonEmpty as List1
 
 -- Each state of a nondeterministic automaton contains a list of `Accept'
 -- values, a list of epsilon transitions (an epsilon transition represents a
