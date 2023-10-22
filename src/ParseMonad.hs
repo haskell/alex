@@ -6,6 +6,8 @@
 --
 -- ----------------------------------------------------------------------------}
 
+{-# LANGUAGE CPP #-}
+
 module ParseMonad (
         AlexInput, alexInputPrevChar, alexGetChar, alexGetByte,
         AlexPosn(..), alexStartPos,
@@ -14,17 +16,19 @@ module ParseMonad (
         setStartCode, getStartCode, getInput, setInput,
  ) where
 
-import AbsSyn hiding ( StartCode )
+import AbsSyn  hiding ( StartCode )
 import CharSet ( CharSet )
-import Map ( Map )
-import qualified Map hiding ( Map )
+import Map     ( Map )
+import qualified Map
 import UTF8
 
 #if __GLASGOW_HASKELL__ < 710
 import Control.Applicative ( Applicative(..) )
 #endif
-import Control.Monad ( liftM, ap, when )
-import Data.Word (Word8)
+import Control.Monad       ( liftM, ap, when )
+import Data.Word           ( Word8 )
+import Data.List.NonEmpty  ( pattern (:|) )
+
 -- -----------------------------------------------------------------------------
 -- The input type
 --import Codec.Binary.UTF8.Light as UTF8
@@ -40,18 +44,20 @@ alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (_,c,_,_) = c
 
 
-alexGetChar :: AlexInput -> Maybe (Char,AlexInput)
-alexGetChar (_,_,[],[]) = Nothing
-alexGetChar (p,_,[],(c:s))  = let p' = alexMove p c in p' `seq`
-                                Just (c, (p', c, [], s))
-alexGetChar (_, _ ,_ : _, _) = undefined -- hide compiler warning
+alexGetChar :: AlexInput -> Maybe (Char, AlexInput)
+alexGetChar (_, _, [], [])  = Nothing
+alexGetChar (p, _, [], c:s) = p' `seq` Just (c, (p', c, [], s))
+  where
+    p' = alexMove p c
+alexGetChar (_, _ , _:_, _) = undefined -- hide compiler warning
 
-alexGetByte :: AlexInput -> Maybe (Byte,AlexInput)
-alexGetByte (p,c,(b:bs),s) = Just (b,(p,c,bs,s))
-alexGetByte (_,_,[],[]) = Nothing
-alexGetByte (p,_,[],(c:s))  = let p' = alexMove p c
-                                  (b:bs) = UTF8.encode c
-                              in p' `seq`  Just (b, (p', c, bs, s))
+alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
+alexGetByte (p, c, b:bs, s)   = Just (b, (p, c, bs, s))
+alexGetByte (_, _, [],   [])  = Nothing
+alexGetByte (p, _, [],   c:s) = p' `seq`  Just (b, (p', c, bs, s))
+  where
+    p' = alexMove p c
+    b :| bs = UTF8.encode c
 
 -- -----------------------------------------------------------------------------
 -- Token positions

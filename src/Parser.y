@@ -159,7 +159,7 @@ right_ctx :: { RightContext RExp }
 	| {- empty -}	{ NoRightContext }
 
 rexp	:: { RExp }
-	: alt '|' rexp 			{ $1 :| $3 }
+	: alt '|' rexp 			{ $1 :|| $3 }
 	| alt		 		{ $1 }
 
 alt	:: { RExp }

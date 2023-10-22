@@ -32,7 +32,7 @@ import Util ( str, nl )
 
 import Data.Maybe ( fromJust )
 
-infixl 4 :|
+infixl 4 :||
 infixl 5 :%%
 
 -- -----------------------------------------------------------------------------
@@ -200,7 +200,7 @@ usesPreds dfa
 -- `RExp' provides an abstract syntax for regular expressions.  `Eps' will
 -- match empty strings; `Ch p' matches strings containing a single character
 -- `c' if `p c' is true; `re1 :%% re2' matches a string if `re1' matches one of
--- its prefixes and `re2' matches the rest; `re1 :| re2' matches a string if
+-- its prefixes and `re2' matches the rest; `re1 :|| re2' matches a string if
 -- `re1' or `re2' matches it; `Star re', `Plus re' and `Ques re' can be
 -- expressed in terms of the other operators.  See the definitions of `ARexp'
 -- for a formal definition of the semantics of these operators.
@@ -209,7 +209,7 @@ data RExp
   = Eps            -- ^ Empty.
   | Ch CharSet     -- ^ Singleton.
   | RExp :%% RExp  -- ^ Sequence.
-  | RExp :| RExp   -- ^ Alternative.
+  | RExp :|| RExp   -- ^ Alternative.
   | Star RExp      -- ^ Zero or more repetitions.
   | Plus RExp      -- ^ One  or more repetitions.
   | Ques RExp      -- ^ Zero or one  repetitions.
@@ -218,7 +218,7 @@ instance Show RExp where
   showsPrec _ Eps = showString "()"
   showsPrec _ (Ch _) = showString "[..]"
   showsPrec _ (l :%% r)  = shows l . shows r
-  showsPrec _ (l :| r)  = shows l . ('|':) . shows r
+  showsPrec _ (l :|| r)  = shows l . ('|':) . shows r
   showsPrec _ (Star r) = shows r . ('*':)
   showsPrec _ (Plus r) = shows r . ('+':)
   showsPrec _ (Ques r) = shows r . ('?':)
@@ -228,7 +228,7 @@ nullable :: RExp -> Bool
 nullable Eps       = True
 nullable Ch{}      = False
 nullable (l :%% r) = nullable l && nullable r
-nullable (l :|  r) = nullable l || nullable r
+nullable (l :||  r) = nullable l || nullable r
 nullable Star{}    = True
 nullable (Plus r)  = nullable r
 nullable Ques{}    = True
@@ -264,7 +264,7 @@ arexp:: RExp -> ARexp
 arexp Eps = eps_ar
 arexp (Ch p) = ch_ar p
 arexp (re :%% re') = arexp re `seq_ar` arexp re'
-arexp (re :| re') = arexp re `bar_ar` arexp re'
+arexp (re :|| re') = arexp re `bar_ar` arexp re'
 arexp (Star re) = star_ar (arexp re)
 arexp (Plus re) = plus_ar (arexp re)
 arexp (Ques re) = ques_ar (arexp re)

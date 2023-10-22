@@ -11,11 +11,18 @@
 -------------------------------------------------------------------------------
 
 {
+{-# LANGUAGE CPP #-}
+
+-- Switch off partiality warning about 'head' and 'tail'
+#if __GLASGOW_HASKELL__ >= 908
+{-# OPTIONS_GHC -Wno-x-partial #-}
+#endif
+
 module Scan (lexer, AlexPosn(..), Token(..), Tkn(..), tokPosn, multiplicity) where
 
 import Data.Char
 import ParseMonad
---import Debug.Trace
+-- import Debug.Trace
 }
 
 $digit    = 0-9
@@ -123,7 +130,7 @@ zero      (p,_,_)   _  = return $ T p ZeroT
 string    (p,_,str) ln = return $ T p (StringT (extract ln str))
 bind      (p,_,str) _  = return $ T p (BindT (takeWhile isIdChar str))
 escape    (p,_,str) _  = return $ T p (CharT (esc str))
-decch     (p,_,str) ln = return $ T p (CharT (do_ech 10 ln (take (ln-1) (tail str))))
+decch     (p,_,str) ln = return $ T p (CharT (do_ech 10 ln (take (ln-1) (drop 1 str))))
 hexch     (p,_,str) ln = return $ T p (CharT (do_ech 16 ln (take (ln-2) (drop 2 str))))
 octch     (p,_,str) ln = return $ T p (CharT (do_ech 8  ln (take (ln-2) (drop 2 str))))
 char      (p,_,str) _  = return $ T p (CharT (head str))
@@ -143,7 +150,7 @@ isIdChar :: Char -> Bool
 isIdChar c = isAlphaNum c || c `elem` "_'"
 
 extract :: Int -> String -> String
-extract ln str = take (ln-2) (tail str)
+extract ln str = take (ln-2) (drop 1 str)
 
 do_ech :: Int -> Int -> String -> Char
 do_ech radix _ln str = chr (parseInt radix str)
@@ -176,7 +183,7 @@ parseInt radix ds = foldl1 (\n d -> n * radix + d) (map digitToInt ds)
 -- implementing a large chunk of the Haskell lexical syntax).
 
 code :: Action
-code (p,_,_inp) _ = do
+code (p, _, _inp) _ = do
   currentInput <- getInput
   go currentInput 1 ""
   where
@@ -222,10 +229,10 @@ code (p,_,_inp) _ = do
 
 lexError :: String -> P a
 lexError s = do
-  (_,_,_,input) <- getInput
-  failP (s ++ (if (not (null input))
-                  then " at " ++ show (head input)
-                  else " at end of file"))
+  (_, _, _, input) <- getInput
+  failP $ s ++ " at " ++ case input of
+    c:_ -> show c
+    []  -> "end of file"
 
 lexer :: (Token -> P a) -> P a
 lexer cont = lexToken >>= cont

@@ -1,4 +1,6 @@
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE NondecreasingIndentation #-}
+
 -- -----------------------------------------------------------------------------
 --
 -- Main.hs, part of Alex
