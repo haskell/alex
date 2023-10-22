@@ -9,7 +9,9 @@ import AbsSyn
 import Data.IntMap ( IntMap )
 import Data.IntSet ( IntSet )
 import Data.Map    ( Map )
+#if !MIN_VERSION_containers(0,6,0)
 import Data.Maybe  ( mapMaybe )
+#endif
 
 import qualified Data.Map    as Map
 import qualified Data.IntSet as IntSet
@@ -168,10 +170,10 @@ groupEquivStates DFA { dfa_states = statemap }
         preimage :: IntMap EquivalenceClass -- inversed transition function
                  -> EquivalenceClass        -- subset of codomain of original transition function
                  -> EquivalenceClass        -- preimage of given subset
-#if MIN_VERSION_containers(0, 6, 0)
-        preimage invMap a = IntSet.unions (IntMap.restrictKeys invMap a)
+#if MIN_VERSION_containers(0,6,0)
+        preimage invMap = IntSet.unions . IntMap.restrictKeys invMap
 #else
-        preimage invMap a = IntSet.unions [IntMap.findWithDefault IntSet.empty s invMap | s <- IntSet.toList a]
+        preimage invMap = IntSet.unions . mapMaybe (`IntMap.lookup` invMap) . IntSet.toList
 #endif
 
         xs :: [EquivalenceClass]
