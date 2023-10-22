@@ -6,13 +6,15 @@ module DFAMin (minimizeDFA) where
 
 import AbsSyn
 
-import Data.Map (Map)
-import qualified Data.Map as Map
-import Data.IntSet (IntSet)
+import Data.IntMap ( IntMap )
+import Data.IntSet ( IntSet )
+import Data.Map    ( Map )
+import Data.Maybe  ( mapMaybe )
+
+import qualified Data.Map    as Map
 import qualified Data.IntSet as IntSet
-import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-import qualified Data.List as List
+import qualified Data.List   as List
 
 -- % Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
 -- % X refines Y into Y1 and Y2 means

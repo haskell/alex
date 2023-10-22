@@ -6,8 +6,6 @@
 --
 -- ----------------------------------------------------------------------------}
 
-{-# LANGUAGE CPP #-}
-
 module ParseMonad (
         AlexInput, alexInputPrevChar, alexGetChar, alexGetByte,
         AlexPosn(..), alexStartPos,
@@ -16,18 +14,15 @@ module ParseMonad (
         setStartCode, getStartCode, getInput, setInput,
  ) where
 
-import AbsSyn  hiding ( StartCode )
-import CharSet ( CharSet )
-import Map     ( Map )
-import qualified Map
-import UTF8
-
-#if __GLASGOW_HASKELL__ < 710
-import Control.Applicative ( Applicative(..) )
-#endif
 import Control.Monad       ( liftM, ap, when )
-import Data.Word           ( Word8 )
+import Data.Map            ( Map )
 import Data.List.NonEmpty  ( pattern (:|) )
+import Data.Word           ( Word8 )
+import qualified Data.Map as Map
+
+import AbsSyn   hiding ( StartCode )
+import CharSet  ( CharSet )
+import UTF8
 
 -- -----------------------------------------------------------------------------
 -- The input type

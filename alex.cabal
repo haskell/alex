@@ -122,27 +122,25 @@ executable alex
   ghc-options: -Wall -Wcompat -rtsopts
 
   other-modules:
-        AbsSyn
-        CharSet
-        DFA
-        DFAMin
-        DFS
-        Info
-        Map
-        NFA
-        Output
-        Paths_alex
-        Parser
-        ParseMonad
-        Scan
-        Set
-        Sort
-        Util
-        UTF8
-        Data.Ranged
-        Data.Ranged.Boundaries
-        Data.Ranged.RangedSet
-        Data.Ranged.Ranges
+    AbsSyn
+    CharSet
+    DFA
+    DFAMin
+    DFS
+    Info
+    NFA
+    Output
+    Paths_alex
+    Parser
+    ParseMonad
+    Scan
+    Sort
+    Util
+    UTF8
+    Data.Ranged
+    Data.Ranged.Boundaries
+    Data.Ranged.RangedSet
+    Data.Ranged.Ranges
 
 test-suite tests
   type: exitcode-stdio-1.0

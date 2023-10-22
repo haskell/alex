@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE NondecreasingIndentation #-}
 
 -- -----------------------------------------------------------------------------
@@ -17,56 +16,39 @@ import DFA
 import DFAMin
 import NFA
 import Info
-import Map ( Map )
-import qualified Map hiding ( Map )
 import Output
-import ParseMonad ( runP, Warning(..) )
+import ParseMonad            ( runP, Warning(..) )
 import Parser
 import Scan
-import Util ( hline )
-import Paths_alex ( version, getDataDir )
+import Util                  ( hline )
+import Paths_alex            ( version, getDataDir )
 
-#if __GLASGOW_HASKELL__ < 610
-import Control.Exception as Exception ( block, unblock, catch, throw )
-#endif
-#if __GLASGOW_HASKELL__ >= 610
-import Control.Exception ( bracketOnError )
-#endif
-import Control.Monad ( when, liftM )
-import Data.Char ( chr )
-import Data.List ( isSuffixOf, nub )
-import Data.Version ( showVersion )
+import Control.Exception     ( bracketOnError )
+import Control.Monad         ( when, liftM )
+import Data.Char             ( chr )
+import Data.List             ( isSuffixOf, nub )
+import Data.Map              ( Map )
+import Data.Version          ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
-import System.Directory ( removeFile )
-import System.Environment ( getProgName, getArgs )
-import System.Exit ( ExitCode(..), exitWith )
-import System.IO ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn )
-#if __GLASGOW_HASKELL__ >= 612
-import System.IO ( hGetContents, hSetEncoding, utf8 )
-#endif
+import System.Directory      ( removeFile )
+import System.Environment    ( getProgName, getArgs )
+import System.Exit           ( ExitCode(..), exitWith )
+import System.IO             ( stderr, Handle, IOMode(..), openFile, hClose, hPutStr, hPutStrLn
+                             , hGetContents, hSetEncoding, utf8 )
+import qualified Data.Map    as Map
 
 -- We need to force every file we open to be read in
 -- as UTF8
 alexReadFile :: FilePath -> IO String
-#if __GLASGOW_HASKELL__ >= 612
-alexReadFile file = do
-  h <- alexOpenFile file ReadMode
-  hGetContents h
-#else
-alexReadFile = readFile
-#endif
+alexReadFile file = hGetContents =<< alexOpenFile file ReadMode
 
 -- We need to force every file we write to be written
 -- to as UTF8
 alexOpenFile :: FilePath -> IOMode -> IO Handle
-#if __GLASGOW_HASKELL__ >= 612
 alexOpenFile file mode = do
   h <- openFile file mode
   hSetEncoding h utf8
   return h
-#else
-alexOpenFile = openFile
-#endif
 
 -- `main' decodes the command line arguments and calls `alex'.
 
@@ -523,19 +505,3 @@ die s = hPutStr stderr s >> exitWith (ExitFailure 1)
 
 dieAlex :: String -> IO a
 dieAlex s = getProgramName >>= \prog -> die (prog ++ ": " ++ s)
-
-#if __GLASGOW_HASKELL__ < 610
-bracketOnError
-        :: IO a         -- ^ computation to run first (\"acquire resource\")
-        -> (a -> IO b)  -- ^ computation to run last (\"release resource\")
-        -> (a -> IO c)  -- ^ computation to run in-between
-        -> IO c         -- returns the value from the in-between computation
-bracketOnError before after thing =
-  block (do
-    a <- before
-    r <- Exception.catch
-           (unblock (thing a))
-           (\e -> do { after a; throw e })
-    return r
- )
-#endif

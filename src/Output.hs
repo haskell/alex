@@ -13,7 +13,7 @@ module Output (outputDFA) where
 import AbsSyn
 import CharSet
 import Util
-import qualified Map
+import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 
 import Control.Monad.ST ( ST, runST )

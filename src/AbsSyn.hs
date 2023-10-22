@@ -23,14 +23,14 @@ module AbsSyn (
   StrType(..)
   ) where
 
-import CharSet ( CharSet, Encoding )
-import Map ( Map )
-import qualified Map hiding ( Map )
-import Data.IntMap (IntMap)
-import Sort ( nub' )
-import Util ( str, nl )
+import CharSet     ( CharSet, Encoding )
+import Data.Maybe  ( fromJust )
+import Data.Map    ( Map )
+import Data.IntMap ( IntMap )
+import Sort        ( nub' )
+import Util        ( str, nl )
+import qualified Data.Map as Map
 
-import Data.Maybe ( fromJust )
 
 infixl 4 :||
 infixl 5 :%%

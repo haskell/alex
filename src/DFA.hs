@@ -16,7 +16,7 @@
 module DFA(scanner2dfa) where
 
 import AbsSyn
-import qualified Map
+import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import NFA
 import Sort ( msort, nub' )
