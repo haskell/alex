@@ -21,3 +21,4 @@
 .stack-work
 cabal.sandbox.config
 /src/TAGS
+/TAGS
