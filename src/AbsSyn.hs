@@ -27,10 +27,9 @@ import CharSet     ( CharSet, Encoding )
 import Data.Maybe  ( fromJust )
 import Data.Map    ( Map )
 import Data.IntMap ( IntMap )
-import Sort        ( nub' )
 import Util        ( str, nl )
 import qualified Data.Map as Map
-
+import qualified Data.Set as Set
 
 infixl 4 :||
 infixl 5 :%%
@@ -330,10 +329,14 @@ encodeStartCodes scan = (scan', 0 : map snd name_code_pairs, sc_hdr)
 
         code_map = Map.fromList name_code_pairs
 
-        name_code_pairs = zip (nub' (<=) nms) [1..]
+        name_code_pairs = zip nms [1..]
 
-        nms = [nm | RECtx{reCtxStartCodes = scs} <- scannerTokens scan,
-                    (nm,_) <- scs, nm /= "0"]
+        nms = Set.toAscList . Set.fromList $
+                [ nm
+                | RECtx{ reCtxStartCodes = scs } <- scannerTokens scan
+                , (nm, _) <- scs
+                , nm /= "0"
+                ]
 
 
 -- Grab the code fragments for the token actions, and replace them

@@ -134,7 +134,6 @@ executable alex
     Parser
     ParseMonad
     Scan
-    Sort
     Util
     UTF8
     Data.Ranged

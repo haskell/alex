@@ -13,17 +13,20 @@
 --
 -- ----------------------------------------------------------------------------}
 
-module DFA(scanner2dfa) where
+module DFA (scanner2dfa) where
+
+import Data.Array    ( (!) )
+import Data.Function ( on )
+import Data.Maybe    ( fromJust )
+
+import qualified Data.IntMap as IntMap
+import qualified Data.IntSet as IntSet
+import qualified Data.Map    as Map
+import qualified Data.List   as List
 
 import AbsSyn
-import qualified Data.Map as Map
-import qualified Data.IntMap as IntMap
 import NFA
-import Sort ( msort, nub' )
 import CharSet
-
-import Data.Array ( (!) )
-import Data.Maybe ( fromJust )
 
 {-                        Defined in the Scan Module
 
@@ -128,21 +131,18 @@ nfa2pdfa nfa pdfa (ss:umkd)
                    | Acc _ _ _ (RightContextRExp s) <- accs ]
 
         outs :: [(ByteSet,SNum)]
-        outs =  [ out | s <- ss, out <- nst_outs (nfa!s) ]
+        outs =  [ out | s <- ss, out <- nst_outs (nfa ! s) ]
 
-        accs = sort_accs [acc| s<-ss, acc<-nst_accs (nfa!s)]
+        accs = sort_accs [ acc | s <- ss, acc <- nst_accs (nfa ! s) ]
 
 -- `sort_accs' sorts a list of accept values into descending order of priority,
 -- eliminating any elements that follow an unconditional accept value.
 
-sort_accs:: [Accept a] -> [Accept a]
-sort_accs accs = foldr chk [] (msort le accs)
+sort_accs :: [Accept a] -> [Accept a]
+sort_accs accs = foldr chk [] $ List.sortBy (compare `on` accPrio) accs
         where
         chk acc@(Acc _ _ Nothing NoRightContext) _   = [acc]
         chk acc                                  rst = acc:rst
-
-        le (Acc{accPrio = n}) (Acc{accPrio=n'}) = n<=n'
-
 
 
 {------------------------------------------------------------------------------
@@ -160,19 +160,17 @@ sort_accs accs = foldr chk [] (msort le accs)
 
 type StateSet = [SNum]
 
-new_pdfa:: Int -> NFA -> DFA StateSet a
+new_pdfa :: Int -> NFA -> DFA StateSet a
 new_pdfa starts nfa
- = DFA { dfa_start_states = start_ss,
-         dfa_states = Map.empty
+ = DFA { dfa_start_states = [ List.sort $ nst_cl $ nfa ! n | n <- [0 .. starts - 1] ]
+       , dfa_states       = Map.empty
        }
- where
-        start_ss = [ msort (<=) (nst_cl(nfa!n)) | n <- [0..(starts-1)]]
 
  -- starts is the number of start states
 
 -- constructs the epsilon-closure of a set of NFA states
-mk_ss:: NFA -> [SNum] -> StateSet
-mk_ss nfa l = nub' (<=) [s'| s<-l, s'<-nst_cl(nfa!s)]
+mk_ss :: NFA -> [SNum] -> StateSet
+mk_ss nfa l = IntSet.toAscList $ IntSet.fromList [ s' | s <- l, s' <- nst_cl (nfa ! s) ]
 
 add_pdfa:: StateSet -> State StateSet a -> DFA StateSet a -> DFA StateSet a
 add_pdfa ss pst (DFA st mp) = DFA st (Map.insert ss pst mp)
@@ -205,44 +203,3 @@ mk_int_dfa nfa (DFA start_states mp)
                                 RightContextRExp s ->
                                   RightContextRExp (lookup' (mk_ss nfa [s]))
                                 other -> other
-
-{-
-
--- `mk_st' constructs a state node from the list of accept values and a list of
--- transitions.  The transitions list all the valid transitions out of the
--- node; all invalid transitions should be represented in the array by state
--- -1.  `mk_st' has to work out whether the accept states contain an
--- unconditional entry, in which case the first field of `St' should be true,
--- and which default state to use in constructing the array (the array may span
--- a sub-range of the character set, the state number given the third argument
--- of `St' being taken as the default if an input character lies outside the
--- range).  The default values is chosen to minimise the bounds of the array
--- and so there are two candidates: the value that 0 maps to (in which case
--- some initial segment of the array may be omitted) or the value that 255 maps
--- to (in which case a final segment of the array may be omitted), hence the
--- calculation of `(df,bds)'.
---
--- Note that empty arrays are avoided as they can cause severe problems for
--- some popular Haskell compilers.
-
-mk_st:: [Accept Code] -> [(Char,Int)] -> State Code
-mk_st accs as =
-        if null as
-           then St accs (-1) (listArray ('0','0') [-1])
-           else St accs df (listArray bds [arr!c| c<-range bds])
-        where
-        bds = if sz==0 then ('0','0') else bds0
-
-        (sz,df,bds0) | sz1 < sz2 = (sz1,df1,bds1)
-                     | otherwise = (sz2,df2,bds2)
-
-        (sz1,df1,bds1) = mk_bds(arr!chr 0)
-        (sz2,df2,bds2) = mk_bds(arr!chr 255)
-
-        mk_bds df = (t-b, df, (chr b, chr (255-t)))
-                where
-                b = length (takeWhile id [arr!c==df| c<-['\0'..'\xff']])
-                t = length (takeWhile id [arr!c==df| c<-['\xff','\xfe'..'\0']])
-
-        arr = listArray ('\0','\xff') (take 256 (repeat (-1))) // as
--}
