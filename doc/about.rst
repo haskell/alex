@@ -3,7 +3,7 @@
 About Alex
 ==========
 
-Alex can always be obtained from its `home page <http://www.haskell.org/alex>`__.
+Alex can always be obtained from its `home page <https://www.haskell.org/alex>`__.
 The latest source code lives in the `git repository <https://github.com/haskell/alex>`__ on ``GitHub``.
 
 Releases
@@ -19,7 +19,7 @@ Reporting issues with Alex
 
 Please report bugs on the `Alex issue tracker <https://github.com/haskell/alex/issues>`__.
 There are no specific mailing lists for the discussion of Alex-related matters,
-but such topics should be fine on the `Haskell Cafe <http://www.haskell.org/mailman/listinfo/haskell-cafe>`__ mailing list.
+but such topics should be fine on the `Haskell Cafe <https://www.haskell.org/mailman/listinfo/haskell-cafe>`__ mailing list.
 
 License
 -------

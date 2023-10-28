@@ -111,7 +111,7 @@ then the output filename can be specified using the ``-o`` option:
    $ alex Tokens.x -o Main.hs
 
 The resulting module is Haskell 98 compatible.
-It can also be readily used with a `Happy <http://www.haskell.org/happy/>`__ parser.
+It can also be readily used with a `Happy <https://www.haskell.org/happy/>`__ parser.
 
 .. [1]
    That is, unless you have any patterns that require a long lookahead.
