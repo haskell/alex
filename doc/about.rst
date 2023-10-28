@@ -3,7 +3,7 @@
 About Alex
 ==========
 
-Alex can always be obtained from its `home page <http://www.haskell.org/alex>`__.
+Alex can always be obtained from its `home page <https://hackage.haskell.org/package/alex>`__.
 The latest source code lives in the `git repository <https://github.com/haskell/alex>`__ on ``GitHub``.
 
 Releases
