@@ -21,7 +21,7 @@ From `Stackage <https://www.stackage.org/package/alex>`__ via `Stack <https://ha
 
    $ stack install alex
 
-Moreover, recent versions of ``cabal`` will automatically install the required version of ``alex`` based on ``build-tools``/``build-tool-depends`` `declarations <http://cabal.readthedocs.io/en/latest/developing-packages.html#pkg-field-build-tool-depends>`__.
+Moreover, recent versions of ``cabal`` will automatically install the required version of ``alex`` based on ``build-tools``/``build-tool-depends`` `declarations <https://cabal.readthedocs.io/en/3.10/cabal-package.html#pkg-field-build-tool-depends>`__.
 
 Operating System way
 --------------------
