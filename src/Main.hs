@@ -53,19 +53,26 @@ alexOpenFile file mode = do
 -- `main' decodes the command line arguments and calls `alex'.
 
 main:: IO ()
-main =  do
- args <- getArgs
- case getOpt Permute argInfo args of
+main = do
+  args <- getArgs
+  case getOpt Permute argInfo args of
     (cli,_,[]) | DumpHelp `elem` cli -> do
         prog <- getProgramName
         bye (usageInfo (usageHeader prog) argInfo)
     (cli,_,[]) | DumpVersion `elem` cli ->
         bye copyright
+    (cli,_,[]) | DumpNumericVersion `elem` cli ->
+        bye projectVersion
+    (cli,_,[]) | OptVerbose `elem` cli ->
+        failure "Option '--verbose' not yet implemented"
     (cli,[file],[]) ->
         runAlex cli file
-    (_,_,errors) -> do
-        prog <- getProgramName
-        die (concat errors ++ usageInfo (usageHeader prog) argInfo)
+    (_,_,errors) ->
+        failure $ concat errors
+  where
+    failure err = do
+      prog <- getProgramName
+      die (err ++ usageInfo (usageHeader prog) argInfo)
 
 projectVersion :: String
 projectVersion = showVersion version
@@ -462,8 +469,10 @@ data CLIFlags
   | OptTabSize String
   | OptTemplateDir FilePath
   | OptLatin1
+  | OptVerbose
   | DumpHelp
   | DumpVersion
+  | DumpNumericVersion
   deriving Eq
 
 argInfo :: [OptDescr CLIFlags]
@@ -482,10 +491,14 @@ argInfo  = [
         "set tab size to be used in the generated lexer (default: 8)",
    Option ['d'] ["debug"] (NoArg OptDebugParser)
         "produce a debugging scanner",
+   Option ['v'] ["verbose"] (NoArg OptVerbose)
+        "be verbose (not yet implemented)",
    Option ['?'] ["help"] (NoArg DumpHelp)
         "display this help and exit",
-   Option ['V','v'] ["version"] (NoArg DumpVersion)  -- ToDo: -v is deprecated!
+   Option ['V'] ["version"] (NoArg DumpVersion)
         "output version information and exit"
+  ,Option [] ["numeric-version"] (NoArg DumpNumericVersion)
+        "output the version number and exit"
   ]
 
 -- -----------------------------------------------------------------------------

@@ -1,3 +1,9 @@
+## Unreleased
+
+ * Add option `--numeric-version`.
+ * Remove deprecated `-v` as alias for `--version`.
+ * Add `-v` as placeholder for a future `--verbose` option.
+
 ## Changes in 3.4.0.1
 
  * Address new `x-partial` warning of GHC 9.8.
