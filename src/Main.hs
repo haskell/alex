@@ -406,6 +406,7 @@ import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
 
 import_debug :: String
 import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
+                 "import Data.Char (chr)\n" ++
                  "import System.IO\n" ++
                  "import System.IO.Unsafe\n" ++
                  "import Debug.Trace\n" ++
