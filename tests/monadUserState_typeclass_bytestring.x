@@ -70,6 +70,11 @@ lex inp =
   let
     lexAll =
       do
+        -- Andreas Abel, 2023-12-30, issue #220:
+        -- Test that alex{G,S}etUserState are in scope.
+        u <- alexGetUserState
+        alexSetUserState (u + 1)
+
         res <- alexMonadScan
         case res of
           EOF -> return []

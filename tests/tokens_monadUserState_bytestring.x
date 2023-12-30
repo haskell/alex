@@ -28,30 +28,39 @@ tokens :-
 tok f (p,_,input,_) len = return (f p (B.take (fromIntegral len) input))
 
 -- The token type:
-data Token =
-	Let AlexPosn		|
-	In  AlexPosn		|
-	Sym AlexPosn Char	|
-        Var AlexPosn String     |
-	Int AlexPosn Int	|
-        Err AlexPosn            |
-        EOF
-        deriving (Eq,Show)
+data Token
+  = Let AlexPosn
+  | In  AlexPosn
+  | Sym AlexPosn Char
+  | Var AlexPosn String
+  | Int AlexPosn Int
+  | Err AlexPosn
+  | EOF
+  deriving (Eq,Show)
 
 alexEOF = return EOF
 
 main = if test1 /= result1 then do print test1; exitFailure
-			   else exitWith ExitSuccess
+                           else exitWith ExitSuccess
 
 type AlexUserState = ()
 alexInitUserState = ()
 
 scanner str = runAlex str $ do
-  let loop = do tk <- alexMonadScan
-                if tk == EOF
-                        then return [tk]
-			else do toks <- loop
-                                return (tk:toks)
+  let
+    loop = do
+
+      -- Andreas Abel, 2023-12-30, issue #220:
+      -- Test that alex{G,S}etUserState are in scope.
+      () <- alexGetUserState
+      alexSetUserState ()
+
+      tk <- alexMonadScan
+      if tk == EOF
+          then return [tk]
+          else do
+            toks <- loop
+            return (tk:toks)
   loop
 
 test1 = case scanner "  let in 012334\n=+*foo bar__'" of
