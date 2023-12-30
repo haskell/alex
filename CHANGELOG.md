@@ -3,6 +3,8 @@
  * Add option `--numeric-version`.
  * Remove deprecated `-v` as alias for `--version`.
  * Add `-v` as placeholder for a future `--verbose` option.
+ * Make `alex{G,S}etUserState` available with the `monadUserState-bytestring` wrapper
+   [Issue #220](https://github.com/haskell/alex/issues/220).
 
 ## Changes in 3.4.0.1
 
