@@ -5,6 +5,8 @@
  * Add `-v` as placeholder for a future `--verbose` option.
  * Make `alex{G,S}etUserState` available with the `monadUserState-bytestring` wrapper
    [Issue #220](https://github.com/haskell/alex/issues/220).
+ * Debugging lexer: print character in addition to its ASCII code
+   [PR #252](https://github.com/haskell/alex/pull/252).
 
 ## Changes in 3.4.0.1
 
