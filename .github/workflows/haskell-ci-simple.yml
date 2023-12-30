@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest]
         ghc:
           - "8.0.2"
           # Andreas, 2023-06-20, reduce CI load, keep only extremal GHC versions
@@ -33,9 +33,15 @@ jobs:
           # - "8.10.7"
           # - "9.0.2"
           # - "9.2.8"
-          - "9.4.7"
+          - "9.4.8"
           - "9.6.3"
           - "9.8.1"
+        include:
+          - ghc: "9.8.1"
+            os:  macos-latest
+          - ghc: "9.8.1"
+            os:  windows-latest
+
     steps:
     - uses: actions/checkout@v4
 
