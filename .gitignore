@@ -14,9 +14,9 @@
 /examples/*.bin
 /examples/*.exe
 /old-*/
-/tests/*.[gn].hs
-/tests/*.[gn].bin
-/tests/*.[gn].exe
+/tests/*.[dgn].hs
+/tests/*.[dgn].bin
+/tests/*.[dgn].exe
 .cabal-sandbox
 .stack-work
 cabal.sandbox.config
