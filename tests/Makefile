@@ -39,7 +39,7 @@ GHC_SHIPS_WITH_TEXT:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 8 -o $(GHC_MAJOR_VERS
 # Turn off x-partial warning (new in GHC 9.8)
 WARNS_DEP_GHC_GTEQ_9_8:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 9 -o $(GHC_MAJOR_VERSION) -ge 9 -a $(GHC_MINOR_VERSION) -ge 8 ]; then echo "-Wno-x-partial"; fi)
 
-HC_OPTS=-Wall $(WARNS_DEP_GHC_GTEQ_9_8) -fwarn-incomplete-uni-patterns -fno-warn-missing-signatures -fno-warn-unused-imports -fno-warn-tabs -Werror
+HC_OPTS=-Wall $(WARNS_DEP_GHC_GTEQ_9_8) -fwarn-incomplete-uni-patterns -Werror
 
 .PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
 

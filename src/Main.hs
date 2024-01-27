@@ -364,12 +364,25 @@ injectCode (Just (AlexPn _ ln _,code)) filename hdl = do
   hPutStrLn hdl code
 
 optsToInject :: Target -> [CLIFlags] -> [String]
-optsToInject target _ = optNoWarnings : "{-# LANGUAGE CPP #-}" : case target of
-  GhcTarget -> ["{-# LANGUAGE MagicHash #-}"]
-  _         -> []
+optsToInject target _ = concat
+  [ optNoWarnings
+  , [ "{-# LANGUAGE CPP #-}" ]
+  , [ "{-# LANGUAGE MagicHash #-}" | target == GhcTarget ]
+  ]
 
-optNoWarnings :: String
-optNoWarnings = "{-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}"
+-- List here all harmless warnings caused by Alex-generated code.
+--
+-- These will be suppressed so that they are not printed
+-- when users turn on @-Wall@ in their lexer project.
+--
+optNoWarnings :: [String]
+optNoWarnings =
+  map (("{-# OPTIONS_GHC -fno-warn-" ++) . (++ " #-}"))
+    [ "missing-signatures"
+    , "tabs"
+    , "unused-binds"
+    , "unused-imports"
+    ]
 
 importsToInject :: Target -> [CLIFlags] -> String
 importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
