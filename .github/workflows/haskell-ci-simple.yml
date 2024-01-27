@@ -3,13 +3,9 @@ on:
   push:
     branches:
       - master
-      - ci-*
-      - release-*
   pull_request:
     branches:
       - master
-      - ci-*
-      - release-*
 
 defaults:
   run:
@@ -34,7 +30,7 @@ jobs:
           # - "9.0.2"
           # - "9.2.8"
           - "9.4.8"
-          - "9.6.3"
+          - "9.6.4"
           - "9.8.1"
         include:
           - ghc: "9.8.1"
@@ -52,7 +48,7 @@ jobs:
         cabal-version: "latest"
         cabal-update: true
 
-    - uses: actions/cache@v3
+    - uses: actions/cache@v4
       name: Cache cabal stuff
       with:
         path: |
@@ -84,7 +80,8 @@ jobs:
     - name: Test
       run: |
         cd alex-*/
-        export ALEX=$(cabal list-bin alex)
+        ALEX="$(cabal list-bin alex)"
+        export ALEX
         cabal run --enable-tests alex:test:tests
 
     - name: Haddock

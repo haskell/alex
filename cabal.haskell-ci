@@ -1,4 +1,4 @@
-branches: master ci-* release-*
+branches: master
 
 -- -- For bootstrapping:
 -- apt: alex happy
