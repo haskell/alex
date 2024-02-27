@@ -438,9 +438,7 @@ import_glaexts =
 import_debug :: [String]
 import_debug =
   [ "import Data.Char (chr)"
-  , "import System.IO"
-  , "import System.IO.Unsafe"
-  , "import Debug.Trace"
+  , "import qualified Debug.Trace"
   ]
 
 templateDir :: IO FilePath -> [CLIFlags] -> IO FilePath

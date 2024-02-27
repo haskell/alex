@@ -112,24 +112,24 @@ alexScanUser user__ input__ IBOX(sc)
     case alexGetByte input__ of
       Nothing ->
 #ifdef ALEX_DEBUG
-                                   trace ("End of input.") $
+                                   Debug.Trace.trace ("End of input.") $
 #endif
                                    AlexEOF
       Just _ ->
 #ifdef ALEX_DEBUG
-                                   trace ("Error.") $
+                                   Debug.Trace.trace ("Error.") $
 #endif
                                    AlexError input__'
 
   (AlexLastSkip input__'' len, _) ->
 #ifdef ALEX_DEBUG
-    trace ("Skipping.") $
+    Debug.Trace.trace ("Skipping.") $
 #endif
     AlexSkip input__'' len
 
   (AlexLastAcc k input__''' len, _) ->
 #ifdef ALEX_DEBUG
-    trace ("Accept.") $
+    Debug.Trace.trace ("Accept.") $
 #endif
     AlexToken input__''' len (alex_actions ! k)
 
@@ -147,7 +147,7 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
      Nothing -> (new_acc, input__)
      Just (c, new_input) ->
 #ifdef ALEX_DEBUG
-      trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c ++ " " ++ (show . chr . fromIntegral) c) $
+      Debug.Trace.trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c ++ " " ++ (show . chr . fromIntegral) c) $
 #endif
       case fromIntegral c of { IBOX(ord_c) ->
         let
