@@ -40,9 +40,6 @@
 #ifdef ALEX_GHC
 data AlexAddr = AlexA# Addr#
 -- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
-#if __GLASGOW_HASKELL__ < 503
-uncheckedShiftL# = shiftL#
-#endif
 
 {-# INLINE alexIndexInt16OffAddr #-}
 alexIndexInt16OffAddr :: AlexAddr -> Int# -> Int#
@@ -90,13 +87,8 @@ alexIndexInt32OffAddr arr off = arr ! off
 #endif
 
 #ifdef ALEX_GHC
-
-#if __GLASGOW_HASKELL__ < 503
-quickIndex arr i = arr ! i
-#else
 -- GHC >= 503, unsafeAt is available from Data.Array.Base.
 quickIndex = unsafeAt
-#endif
 #else
 quickIndex arr i = arr ! i
 #endif

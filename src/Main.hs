@@ -393,40 +393,25 @@ importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
         debug_imports  | OptDebugParser `elem` cli = import_debug
                        | otherwise                 = ""
 
--- CPP is turned on for -fglasogw-exts, so we can use conditional
--- compilation.  We need to #include "config.h" to get hold of
+-- We need to #include "ghcconfig.h" to get hold of
 -- WORDS_BIGENDIAN (see AlexTemplate.hs).
 
 always_imports :: String
-always_imports = "#if __GLASGOW_HASKELL__ >= 603\n" ++
-                 "#include \"ghcconfig.h\"\n" ++
-                 "#elif defined(__GLASGOW_HASKELL__)\n" ++
-                 "#include \"config.h\"\n" ++
-                 "#endif\n" ++
-                 "#if __GLASGOW_HASKELL__ >= 503\n" ++
+always_imports = "#include \"ghcconfig.h\"\n" ++
                  "import Data.Array\n" ++
-                 "#else\n" ++
-                 "import Array\n" ++
-                 "#endif\n"
+                 ""
 
 import_glaexts :: String
-import_glaexts = "#if __GLASGOW_HASKELL__ >= 503\n" ++
-                 "import Data.Array.Base (unsafeAt)\n" ++
+import_glaexts = "import Data.Array.Base (unsafeAt)\n" ++
                  "import GHC.Exts\n" ++
-                 "#else\n" ++
-                 "import GlaExts\n" ++
-                 "#endif\n"
+                 ""
 
 import_debug :: String
-import_debug   = "#if __GLASGOW_HASKELL__ >= 503\n" ++
-                 "import Data.Char (chr)\n" ++
+import_debug   = "import Data.Char (chr)\n" ++
                  "import System.IO\n" ++
                  "import System.IO.Unsafe\n" ++
                  "import Debug.Trace\n" ++
-                 "#else\n" ++
-                 "import IO\n" ++
-                 "import IOExts\n" ++
-                 "#endif\n"
+                 ""
 
 templateDir :: IO FilePath -> [CLIFlags] -> IO FilePath
 templateDir def cli
