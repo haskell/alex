@@ -26,7 +26,7 @@ import Paths_alex            ( version, getDataDir )
 import Control.Exception     ( bracketOnError )
 import Control.Monad         ( when, liftM )
 import Data.Char             ( chr )
-import Data.List             ( isSuffixOf, nub )
+import Data.List             ( intercalate, isSuffixOf, nub )
 import Data.Map              ( Map )
 import Data.Version          ( showVersion )
 import System.Console.GetOpt ( getOpt, usageInfo, ArgOrder(..), OptDescr(..), ArgDescr(..) )
@@ -385,33 +385,63 @@ optNoWarnings =
     ]
 
 importsToInject :: Target -> [CLIFlags] -> String
-importsToInject _ cli = always_imports ++ debug_imports ++ glaexts_import
+importsToInject _ cli = unlines $
+  always_imports ++ debug_imports ++ glaexts_import
   where
         glaexts_import | OptGhcTarget `elem` cli    = import_glaexts
-                       | otherwise                  = ""
+                       | otherwise                  = []
 
         debug_imports  | OptDebugParser `elem` cli = import_debug
-                       | otherwise                 = ""
+                       | otherwise                 = []
 
 -- We need to #include "ghcconfig.h" to get hold of
 -- WORDS_BIGENDIAN (see AlexTemplate.hs).
 
-always_imports :: String
-always_imports = "#include \"ghcconfig.h\"\n" ++
-                 "import Data.Array\n" ++
-                 ""
+always_imports :: [String]
+always_imports =
+  [ "#include \"ghcconfig.h\""
+  , "import Data.Array"
+  ]
 
-import_glaexts :: String
-import_glaexts = "import Data.Array.Base (unsafeAt)\n" ++
-                 "import GHC.Exts\n" ++
-                 ""
+import_glaexts :: [String]
+import_glaexts =
+  [ "import Data.Array.Base (unsafeAt)"
+  , "import GHC.Exts (" ++ imports ++ ")"
+  , "import qualified GHC.Exts"
+  ]
+  where
+    -- We can import anything mentioning # safely,
+    -- assuming the user code does not make use of
+    -- MagicHash.
+    imports = intercalate ","
+      [ "Addr#"
+      , "Int#"
+      , "Int(I#)"
+      , "(*#)"
+      , "(+#)"
+      , "(-#)"
+      , "(==#)"
+      , "(>=#)"
+      , "indexCharOffAddr#"
+      , "indexInt16OffAddr#"
+      , "indexInt32OffAddr#"
+      , "int2Word#"
+      , "narrow16Int#"
+      , "narrow32Int#"
+      , "negateInt#"
+      , "or#"
+      , "ord#"
+      , "uncheckedShiftL#"
+      , "word2Int#"
+      ]
 
-import_debug :: String
-import_debug   = "import Data.Char (chr)\n" ++
-                 "import System.IO\n" ++
-                 "import System.IO.Unsafe\n" ++
-                 "import Debug.Trace\n" ++
-                 ""
+import_debug :: [String]
+import_debug =
+  [ "import Data.Char (chr)"
+  , "import System.IO"
+  , "import System.IO.Unsafe"
+  , "import Debug.Trace"
+  ]
 
 templateDir :: IO FilePath -> [CLIFlags] -> IO FilePath
 templateDir def cli

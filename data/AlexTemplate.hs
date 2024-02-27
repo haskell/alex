@@ -13,8 +13,8 @@
 #  define FAST_INT Int#
 -- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
 #  if __GLASGOW_HASKELL__ > 706
-#    define GTE(n,m) (tagToEnum# (n >=# m))
-#    define EQ(n,m) (tagToEnum# (n ==# m))
+#    define GTE(n,m) (GHC.Exts.tagToEnum# (n >=# m))
+#    define EQ(n,m) (GHC.Exts.tagToEnum# (n ==# m))
 #  else
 #    define GTE(n,m) (n >=# m)
 #    define EQ(n,m) (n ==# m)
@@ -53,7 +53,7 @@ alexIndexInt16OffAddr (AlexA# arr) off =
         off' = off *# 2#
 #else
 #if __GLASGOW_HASKELL__ >= 901
-  int16ToInt#
+  GHC.Exts.int16ToInt#
 #endif
     (indexInt16OffAddr# arr off)
 #endif
@@ -78,7 +78,7 @@ alexIndexInt32OffAddr (AlexA# arr) off =
    off' = off *# 4#
 #else
 #if __GLASGOW_HASKELL__ >= 901
-  int32ToInt#
+  GHC.Exts.int32ToInt#
 #endif
     (indexInt32OffAddr# arr off)
 #endif
