@@ -1,3 +1,14 @@
+## Changes in 3.5.1.0
+
+* Drop generating output for GHC < 6.4.
+* Use qualified imports in generated code (except for `Prelude`)
+  ([Issue #258](https://github.com/haskell/alex/issues/258)).
+* Suppress warnings `tabs` and `unused-imports` for generated code
+  ([Issue #255](https://github.com/haskell/alex/issues/255)).
+* Tested with GHC 8.0 - 9.8.2.
+
+_Andreas Abel, 2024-02-29_
+
 ## Changes in 3.5.0.0
 
  * Add option `--numeric-version`.
