@@ -58,7 +58,7 @@ alexIndexInt16OffAddr (AlexA# arr) off =
     (indexInt16OffAddr# arr off)
 #endif
 #else
-alexIndexInt16OffAddr arr off = arr ! off
+alexIndexInt16OffAddr = (Data.Array.!)
 #endif
 
 #ifdef ALEX_GHC
@@ -83,14 +83,14 @@ alexIndexInt32OffAddr (AlexA# arr) off =
     (indexInt32OffAddr# arr off)
 #endif
 #else
-alexIndexInt32OffAddr arr off = arr ! off
+alexIndexInt32OffAddr = (Data.Array.!)
 #endif
 
 #ifdef ALEX_GHC
 -- GHC >= 503, unsafeAt is available from Data.Array.Base.
 quickIndex = unsafeAt
 #else
-quickIndex arr i = arr ! i
+quickIndex = (Data.Array.!)
 #endif
 
 -- -----------------------------------------------------------------------------
@@ -131,7 +131,7 @@ alexScanUser user__ input__ IBOX(sc)
 #ifdef ALEX_DEBUG
     Debug.Trace.trace ("Accept.") $
 #endif
-    AlexToken input__''' len (alex_actions ! k)
+    AlexToken input__''' len ((Data.Array.!) alex_actions k)
 
 
 -- Push the input through the DFA, remembering the most recent accepting
@@ -218,7 +218,7 @@ alexPrevCharIs c _ input__ _ _ = c == alexInputPrevChar input__
 alexPrevCharMatches f _ input__ _ _ = f (alexInputPrevChar input__)
 
 --alexPrevCharIsOneOfPred :: Array Char Bool -> AlexAccPred _
-alexPrevCharIsOneOf arr _ input__ _ _ = arr ! alexInputPrevChar input__
+alexPrevCharIsOneOf arr _ input__ _ _ = arr Data.Array.! alexInputPrevChar input__
 
 --alexRightContext :: Int -> AlexAccPred _
 alexRightContext IBOX(sc) user__ _ _ input__ =

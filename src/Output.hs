@@ -73,9 +73,9 @@ outputDFA target _ _ scheme dfa
         . str "  \"" . str (hex_chars ints) . str "\"#\n"
 
       _ ->
-          str nm . str " :: Array Int Int\n"
+          str nm . str " :: Data.Array.Array Int Int\n"
         . str nm . str " = "
-        . formatArray "listArray" upper_bound (map shows ints)
+        . formatArray "Data.Array.listArray" upper_bound (map shows ints)
         . nl
 
     outputAccept :: ShowS
@@ -84,7 +84,7 @@ outputDFA target _ _ scheme dfa
       -- see: https://github.com/simonmar/alex/issues/98
       -- str accept_nm . str " :: Array Int (AlexAcc " . str userStateTy . str ")\n"
         str accept_nm . str " = "
-      . formatArray "listArray" n_states (snd (mapAccumR outputAccs 0 accept))
+      . formatArray "Data.Array.listArray" n_states (snd (mapAccumR outputAccs 0 accept))
       . nl
 
     gscanActionType res =
@@ -95,43 +95,43 @@ outputDFA target _ _ scheme dfa
       where
         (nacts, acts) = mapAccumR outputActs 0 accept
         actionsArray :: ShowS
-        actionsArray = formatArray "array" nacts (concat acts)
+        actionsArray = formatArray "Data.Array.array" nacts (concat acts)
         body :: ShowS
         body = str actions_nm . str " = " . actionsArray . nl
         signature :: ShowS
         signature = case scheme of
           Default { defaultTypeInfo = Just (Nothing, actionty) } ->
-              str actions_nm . str " :: Array Int (" . str actionty . str ")\n"
+              str actions_nm . str " :: Data.Array.Array Int (" . str actionty . str ")\n"
           Default { defaultTypeInfo = Just (Just tyclasses, actionty) } ->
               str actions_nm . str " :: (" . str tyclasses
-            . str ") => Array Int (" . str actionty . str ")\n"
+            . str ") => Data.Array.Array Int (" . str actionty . str ")\n"
           GScan { gscanTypeInfo = Just (Nothing, toktype) } ->
-              str actions_nm . str " :: Array Int ("
+              str actions_nm . str " :: Data.Array.Array Int ("
             . gscanActionType toktype . str ")\n"
           GScan { gscanTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
-            . str ") => Array Int ("
+            . str ") => Data.Array.Array Int ("
             . gscanActionType toktype . str ")\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Nothing, toktype) } ->
-              str actions_nm . str " :: Array Int ("
+              str actions_nm . str " :: Data.Array.Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
           Basic { basicStrType = strty,
                   basicTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
-            . str ") => Array Int ("
+            . str ") => Data.Array.Array Int ("
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
           Posn { posnStrType = strty,
                  posnTypeInfo = Just (Nothing, toktype) } ->
-              str actions_nm . str " :: Array Int (AlexPosn -> "
+              str actions_nm . str " :: Data.Array.Array Int (AlexPosn -> "
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
           Posn { posnStrType = strty,
                  posnTypeInfo = Just (Just tyclasses, toktype) } ->
               str actions_nm . str " :: (" . str tyclasses
-            . str ") => Array Int (AlexPosn -> "
+            . str ") => Data.Array.Array Int (AlexPosn -> "
             . str (show strty) . str " -> " . str toktype
             . str ")\n"
           Monad { monadStrType = strty,
@@ -139,7 +139,7 @@ outputDFA target _ _ scheme dfa
             let
               actintty = if strty == Lazy then "Int64" else "Int"
             in
-              str actions_nm . str " :: Array Int (AlexInput -> "
+              str actions_nm . str " :: Data.Array.Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
           Monad { monadStrType = strty,
                   monadTypeInfo = Just (Just tyclasses, toktype) } ->
@@ -147,11 +147,11 @@ outputDFA target _ _ scheme dfa
               actintty = if strty == Lazy then "Int64" else "Int"
             in
               str actions_nm . str " :: (" . str tyclasses
-            . str ") => Array Int (AlexInput -> "
+            . str ") => Data.Array.Array Int (AlexInput -> "
             . str actintty . str " -> Alex(" . str toktype . str "))\n"
           _ ->
               -- No type signature: we don't know what the type of the actions is.
-              -- str accept_nm . str " :: Array Int (Accept Code)\n"
+              -- str accept_nm . str " :: Data.Array.Array Int (Accept Code)\n"
               id
 
 
@@ -323,7 +323,7 @@ outputDFA target _ _ scheme dfa
         = str code
 
     -- outputArr arr
-        -- = str "array " . shows (bounds arr) . space
+        -- = str "Data.Array.array " . shows (bounds arr) . space
         -- . shows (assocs arr)
 
 -- -----------------------------------------------------------------------------

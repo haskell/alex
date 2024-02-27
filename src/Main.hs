@@ -400,7 +400,7 @@ importsToInject _ cli = unlines $
 always_imports :: [String]
 always_imports =
   [ "#include \"ghcconfig.h\""
-  , "import Data.Array"
+  , "import qualified Data.Array"
   ]
 
 import_glaexts :: [String]
