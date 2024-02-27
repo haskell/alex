@@ -7,6 +7,11 @@
 -- DFA minimization crashed with "Prelude head: empty list" because
 -- empty set of non-accepting states was treated as empty equivalence
 -- class of states.
+--
+-- Issue #258, 2024-02-27, Andreas Abel:
+-- Since GHC 9.4, type 'Symbol' conflicts with 'GHC.Exts.Symbol'
+-- which was imported by alex <= 3.5.0.0
+-- because of an unqualified import of 'GHC.Exts'.
 
 module Main (main) where
 
@@ -14,7 +19,7 @@ import System.Exit
 }
 
 %wrapper "posn"
-%token   "Token"
+%token   "Symbol"
 
 $whitespace  = [\ \n\t]
 @whitespaces = $whitespace*
@@ -25,7 +30,10 @@ $whitespace  = [\ \n\t]
 "a"          { \ _ _ -> A           }
 
 {
-data Token = Whitespaces | A
+-- Calling the token type 'Symbol' will trigger a clash with GHC.Exts.Symbol
+-- if the lexer is built with alex <= 3.5.0.0.
+
+data Symbol = Whitespaces | A
   deriving (Eq, Show)
 
 input           = "aa    \n\taa   \t  \n  a"
