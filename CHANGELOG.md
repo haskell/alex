@@ -1,3 +1,8 @@
+## Changes in 3.5.2.0
+
+* Use `byteSwap16#` and `byteSwap32#` on big-endian architectures instead of
+  handrolling the implementation.
+
 ## Changes in 3.5.1.0
 
 * Drop generating output for GHC < 6.4.
