@@ -1,0 +1,49 @@
+name: emulated
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Emulation is incredibly slow and memory demanding. It seems that any
+  # executable with GHC RTS takes at least 7-8 Gb of RAM, so we can run
+  # `cabal` or `ghc` on their own, but cannot run them both at the same time,
+  # striking out `cabal test`. Instead we rely on system packages and invoke
+  # `ghc --make` manually, and even so `ghc -O` is prohibitively expensive.
+  emulated:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        arch: ['s390x', 'ppc64le']
+    steps:
+    - uses: actions/checkout@v3
+    - uses: uraimo/run-on-arch-action@v2.7.2
+      timeout-minutes: 60
+      with:
+        arch: ${{ matrix.arch }}
+        distro: ubuntu_rolling
+        githubToken: ${{ github.token }}
+        install: |
+          apt-get update -y
+          apt-get install -y ghc alex happy
+        run: |
+          (cd src/; alex -g Scan.x; happy -ag Parser.y)
+          # Need to remove mention of the Cabal path module, and then substitutes
+          #   getDataDir  |->  return "/pwd/data/"
+          #   version     |->  undefined
+          sed -i '/^import Paths_alex.*$/d' src/Main.hs #
+          # The nested sed here escapes / into \/ so that the outer sed doesn't
+          # interpret the forward slashes. You're welcome.
+          sed -i "s/getDataDir/\(return \"$(pwd | sed 's/\//\\\//g')\\/data\"\)/g" src/Main.hs
+          sed -i "s/version/undefined/g" src/Main.hs
+          ghc -XHaskell2010 -XPatternSynonyms -XFlexibleContexts -XMagicHash -XCPP -XNondecreasingIndentation -XScopedTypeVariables -XTupleSections \
+              -package array -package containers -package directory \
+              -isrc src/Main.hs \
+              -o alex
+          ./alex -g tests/simple.x
+          ghc -package array tests/simple.hs -o simple
+          ./simple +RTS -s
