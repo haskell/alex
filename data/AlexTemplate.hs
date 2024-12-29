@@ -94,7 +94,7 @@ data AlexReturn a
 
 -- alexScan :: AlexInput -> StartCode -> AlexReturn a
 alexScan input__ IBOX(sc)
-  = alexScanUser undefined input__ IBOX(sc)
+  = alexScanUser (error "alex rule requiring context was invoked by alexScan; use alexScanUser instead?") input__ IBOX(sc)
 
 alexScanUser user__ input__ IBOX(sc)
   = case alex_scan_tkn user__ input__ ILIT(0) input__ sc AlexNone of
