@@ -5,6 +5,8 @@
 -- Error happens when using alexScan with a lexer that
 -- inspects the context.
 
+{-# LANGUAGE ScopedTypeVariables #-}
+
 import Control.Exception
 import Data.List (isInfixOf)
 }
