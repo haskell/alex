@@ -1,7 +1,11 @@
 name: emulated
 on:
-  - push
-  - pull_request
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 defaults:
   run:
@@ -20,12 +24,12 @@ jobs:
       matrix:
         arch: ['s390x', 'ppc64le']
     steps:
-    - uses: actions/checkout@v3
-    - uses: uraimo/run-on-arch-action@v2.7.2
+    - uses: actions/checkout@v4
+    - uses: uraimo/run-on-arch-action@v2
       timeout-minutes: 60
       with:
         arch: ${{ matrix.arch }}
-        distro: ubuntu_rolling
+        distro: ubuntu_latest
         githubToken: ${{ github.token }}
         install: |
           apt-get update -y
