@@ -107,9 +107,13 @@ TEST_ALEX_OPTS=
 
 CLEAN_FILES += *.n.hs *.g.hs *.d.hs *.info *.hi *.o *.bin *.exe
 
-ALL_TEST_HS = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs \1.d.hs/g')
+TESTS_HS       = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs/g')
+TESTS_HS_DEBUG = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.d.hs/g')
+TESTS_HS_ALL   = $(TESTS_HS) $(TESTS_HS_DEBUG)
 
-ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
+BASIC_TESTS = $(patsubst %.hs, %.run, $(TESTS_HS))
+DEBUG_TESTS = $(patsubst %.hs, %.run, $(TESTS_HS_DEBUG))
+ALL_TESTS   = $(BASIC_TESTS) $(DEBUG_TESTS)
 
 %.run : %$(HS_PROG_EXT)
 	./$<
@@ -119,16 +123,14 @@ ALL_TESTS = $(patsubst %.hs, %.run, $(ALL_TEST_HS))
 
 all :: $(ALL_TESTS)
 
+tests :: $(BASIC_TESTS)
+
+tests-debug :: $(DEBUG_TESTS)
+
 .PHONY: clean debug
 
 clean:
 	rm -f $(CLEAN_FILES)
-
-# NOTE: The `../dist` path belows don't aren't accurate anymore for recent cabals
-interact:
-	ghci -cpp -i../src -i../dist/build/autogen -i../dist/build/alex/alex-tmp Main -fbreak-on-exception
-# -args='--template=.. simple.x -o simple.n.hs'
-# :set args --template=.. simple.x -o simple.n.hs
 
 debug :
 	@echo ALEX      = $(ALEX)
