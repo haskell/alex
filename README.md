@@ -1,6 +1,6 @@
 # Alex: A Lexical Analyser Generator
 
-[![Haskell-CI](https://github.com/haskell/alex/actions/workflows/haskell-ci.yml/badge.svg)](https://github.com/haskell/alex/actions/workflows/haskell-ci.yml)
+[![CI](https://github.com/haskell/alex/actions/workflows/ci.yml/badge.svg)](https://github.com/haskell/alex/actions/workflows/ci.yml)
 
 Alex is a tool for generating lexical analysers, also known as "lexers" and "scanners", in Haskell.
 The lexical analysers implement a description of the tokens to be recognised in the form of regular expressions.
