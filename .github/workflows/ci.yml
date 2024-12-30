@@ -21,29 +21,29 @@ jobs:
         os: [ubuntu-latest]
         ghc:
           - "8.0.2"
-          # Andreas, 2023-06-20, reduce CI load, keep only extremal GHC versions
-          # - "8.2.2"
-          # - "8.4.4"
-          # - "8.6.5"
-          # - "8.8.4"
-          # - "8.10.7"
-          # - "9.0.2"
-          # - "9.2.8"
-          # - "9.4.8"
+          - "8.2.2"
+          - "8.4.4"
+          - "8.6.5"
+          - "8.8.4"
+          - "8.10.7"
+          - "9.0.2"
+          - "9.2.8"
+          - "9.4.8"
           - "9.6.6"
           - "9.8.2"
           - "9.10.1"
+          - "9.12.1"
         include:
-          - ghc: "9.10.1"
+          - ghc: "9.12.1"
             os:  macos-latest
-          - ghc: "9.10.1"
+          - ghc: "9.12.1"
             os:  windows-latest
 
     steps:
     - uses: actions/checkout@v4
 
     - uses: haskell-actions/setup@v2
-      id: setup-haskell-cabal
+      id: setup
       with:
         ghc-version: ${{ matrix.ghc }}
         cabal-version: "latest"
@@ -53,7 +53,7 @@ jobs:
       name: Cache cabal stuff
       with:
         path: |
-          ${{ steps.setup-haskell-cabal.outputs.cabal-store }}
+          ${{ steps.setup.outputs.cabal-store }}
           dist-newstyle
         key: ${{ runner.os }}-${{ matrix.ghc }}
 
@@ -84,6 +84,13 @@ jobs:
         ALEX="$(cabal list-bin alex)"
         export ALEX
         cabal run --enable-tests alex:test:tests
+
+    - name: Test (with debugging)
+      run: |
+        cd alex-*/
+        ALEX="$(cabal list-bin alex)"
+        export ALEX
+        cabal run --enable-tests alex:test:tests-debug
 
     - name: Haddock
       run: |
