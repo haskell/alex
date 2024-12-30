@@ -1,7 +1,13 @@
 ## Changes in 3.5.2.0
 
 * Use `byteSwap16#` and `byteSwap32#` on big-endian architectures instead of
-  handrolling the implementation.
+  handrolling the implementation
+  ([PR #260](https://github.com/haskell/alex/pull/260)).
+* More descriptive error in `alexScan`; inline `alexScanUser`
+  ([PR #262](https://github.com/haskell/alex/pull/262)).
+* Tested with GHC 8.0 - 9.12.1.
+
+_Andreas Abel, 2024-12-30_
 
 ## Changes in 3.5.1.0
 
