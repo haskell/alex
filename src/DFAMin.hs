@@ -2,13 +2,13 @@
 
 module DFAMin (minimizeDFA) where
 
-import           AbsSyn
+import AbsSyn
 
-import           Control.Monad (guard)
-import           Data.Foldable (fold)
-import           Data.IntMap   (IntMap)
-import           Data.IntSet   (IntSet)
-import           Data.Map      (Map)
+import Control.Monad (guard)
+import Data.Foldable (fold)
+import Data.IntMap   (IntMap)
+import Data.IntSet   (IntSet)
+import Data.Map      (Map)
 
 import qualified Data.IntMap   as IntMap
 import qualified Data.IntSet   as IntSet
