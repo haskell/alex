@@ -1,218 +1,255 @@
-{-# OPTIONS_GHC -fno-warn-name-shadowing #-}
-
 {-# LANGUAGE CPP #-}
 
 module DFAMin (minimizeDFA) where
 
-import AbsSyn
+import           AbsSyn
 
-import Data.IntMap ( IntMap )
-import Data.IntSet ( IntSet )
-import Data.Map    ( Map )
-#if !MIN_VERSION_containers(0,6,0)
-import Data.Maybe  ( mapMaybe )
-#endif
+import           Control.Monad (guard)
+import           Data.IntMap   (IntMap)
+import           Data.IntSet   (IntSet)
+import           Data.Map      (Map)
 
-import qualified Data.Map    as Map
-import qualified Data.IntSet as IntSet
-import qualified Data.IntMap as IntMap
-import qualified Data.List   as List
+import qualified Data.IntMap   as IntMap
+import qualified Data.IntSet   as IntSet
+import qualified Data.List     as List
+import qualified Data.Map      as Map
 
--- % Hopcroft's Algorithm for DFA minimization (cut/pasted from Wikipedia):
--- % X refines Y into Y1 and Y2 means
--- %  Y1 := Y ∩ X
--- %  Y2 := Y \ X
--- %  where both Y1 and Y2 are nonempty
---
--- P := {{all accepting states}, {all nonaccepting states}};
--- Q := {{all accepting states}};
--- while (Q is not empty) do
---      choose and remove a set A from Q
---      for each c in ∑ do
---           let X be the set of states for which a transition on c leads to a state in A
---           for each set Y in P for which X refines Y into Y1 and Y2 do
---                replace Y in P by the two sets Y1 and Y2
---                if Y is in Q
---                     replace Y in Q by the same two sets
---                else
---                     add the smaller of the two sets to Q
---           end;
---      end;
--- end;
---
--- % X is a preimage of A under transition function.
+{- Note [Hopcroft's Algorithm]
 
--- % observation : Q is always subset of P
--- % let R = P \ Q. then following algorithm is the equivalent of the Hopcroft's Algorithm
---
--- R := {{all nonaccepting states}};
--- Q := {{all accepting states}};
--- while (Q is not empty) do
---      choose a set A from Q
---      remove A from Q and add it to R
---      for each c in ∑ do
---           let X be the set of states for which a transition on c leads to a state in A
---           for each set Y in R for which X refines Y into Y1 and Y2 do
---                replace Y in R by the greater of the two sets Y1 and Y2
---                add the smaller of the two sets to Q
---           end;
---           for each set Y in Q for which X refines Y into Y1 and Y2 do
---                replace Y in Q by the two sets Y1 and Y2
---           end;
---      end;
--- end;
---
--- % The second for loop that iterates over R mutates Q,
--- % but it does not affect the third for loop that iterates over Q.
--- % Because once X refines Y into Y1 and Y2, Y1 and Y2 can't be more refined by X.
+DFA minimization is implemented using Hopcroft's algorithm. It is defined on
+Wikipedia as follows.
 
+We assume the following definitions:
+    - Q is the set of all states in our DFA
+    - F is the subset of Q that contains all final (or "accepting") states
+    - ∑ is the set of input symbols (for us, [0..255])
+
+We use the phrase  "X refines Y into Y1 and Y2" to mean the following:
+    - Y1 := Y ∩ X
+    - Y2 := Y \ X
+    - |Y1| > 0
+    - |Y2| > 0
+
+The algorithm itself is defined thusly:
+
+    P := {F, Q \ F}
+    W := {F, Q \ F}
+    while (W is not empty) do
+      choose and remove a set A from W
+      for each c in Σ do
+        let X be the set of states for which a transition on c leads to a state in A
+        for each set Y in P that is refined by X into Y1 and Y2 do
+            replace Y in P by the two sets Y1 and Y2
+            if Y is in W
+                replace Y in W by Y1 and Y2
+            else
+                if |Y1| <= |Y2|
+                    add Y1 to W
+                else
+                    add Y2 to W
+
+
+Our implementation differs slightly, as we perform several optimizations.
+
+In the Wikipedia implementation, P and W are initialized to subsets of all sets
+of Q, specifically F and Q \ F. The exact subsets do not matter; what matters is
+the following:
+    - all states in Q should be in W
+    - equivalent states should all be in the same subset
+
+As per the first requirement, it would be fine for P and W to be initialized
+with a set that only contains Q. The second requirement stems from the fact that
+our partition "refining" can divide subsets, but we do not have a way to
+re-merge subsets.
+
+Our first optimization is that we use a more granular division of states in the
+initial set. Specifically, we group all states by their list of "accepts", since
+we know that for two states to be equivalent their list of "accepts" must be the
+same: the resulting subsets therefore meet our two stated criteria.
+
+
+Our second optimization relies on the observation that given that all states are
+in W, then all states will appear in A; as a result, instead of starting with a
+set P that contains all subsets, that we refine in parallel to W, we can instead
+start with an empty set R, and add each A to R before iterating over P. This
+makes updating R and W easier, and removes the need for the expensive "is Y in
+W" check.
+
+
+With those two optimizations, our implementation is therefore:
+
+    R := {}
+    W := {all "accept" subsets of Q}
+    while (W is not empty) do
+      choose and remove a set A from W
+      add A to R
+      for each c in Σ do
+        let X be the set of states for which a transition on c leads to a state in A
+        for each set Y in R that is refined by X into Y1 and Y2 do
+            replace Y in R by the two sets Y1 and Y2
+            if |Y1| <= |Y2|
+                add Y1 to Q
+            else
+                add Y2 to Q
+        for each set Y in Q that is refined by X into Y1 and Y2 do
+            replace Y in Q by the two sets Y1 and Y2
+
+
+-}
+
+-- | Reduce the number of states in the given DFA by grouping indistinguishable
+-- states.
 minimizeDFA :: forall a. Ord a => DFA Int a -> DFA Int a
-minimizeDFA  dfa@(DFA { dfa_start_states = starts,
-                        dfa_states       = statemap
-                      })
-  = DFA { dfa_start_states = starts,
-          dfa_states       = Map.fromList states }
+minimizeDFA dfa@(DFA starts statemap) = DFA starts (Map.fromList states)
   where
-      equiv_classes   :: [EquivalenceClass]
-      equiv_classes   = groupEquivStates dfa
+    equiv_classes :: [EquivalenceClass]
+    equiv_classes = groupEquivalentStates dfa
 
-      numbered_states :: [(Int, EquivalenceClass)]
-      numbered_states = number (length starts) equiv_classes
+    numbered_states :: [(Int, EquivalenceClass)]
+    numbered_states = number (length starts) equiv_classes
 
-      -- assign each state in the minimized DFA a number, making
-      -- sure that we assign the numbers [0..] to the start states.
-      number :: Int -> [EquivalenceClass] -> [(Int, EquivalenceClass)]
-      number _ [] = []
-      number n (ss:sss) =
-        case filter (`IntSet.member` ss) starts of
-          []      -> (n,ss) : number (n+1) sss
-          starts' -> map (,ss) starts' ++ number n sss
-          -- if one of the states of the minimized DFA corresponds
-          -- to multiple starts states, we just have to duplicate
-          -- that state.
+    -- assign each state in the minimized DFA a number, making
+    -- sure that we assign the numbers [0..] to the start states.
+    number :: Int -> [EquivalenceClass] -> [(Int, EquivalenceClass)]
+    number _ [] = []
+    number n (ss:sss) =
+      case filter (`IntSet.member` ss) starts of
+        []      -> (n,ss) : number (n+1) sss
+        starts' -> map (,ss) starts' ++ number n sss
+        -- if one of the states of the minimized DFA corresponds
+        -- to multiple starts states, we just have to duplicate
+        -- that state.
 
-      states :: [(Int, State Int a)]
-      states = [
-                let old_states = map (lookup statemap) (IntSet.toList equiv)
-                    accs = map fix_acc (state_acc (headWithDefault undefined old_states))
-                           -- accepts should all be the same
-                    out  = IntMap.fromList [ (b, get_new old)
-                                           | State _ out <- old_states,
-                                             (b,old) <- IntMap.toList out ]
-                in (n, State accs out)
-               | (n, equiv) <- numbered_states
-               ]
+    states :: [(Int, State Int a)]
+    states = do
+      (n, equiv) <- numbered_states
+      let old_states = map (lookupOrPanic statemap) (IntSet.toList equiv)
+          accepts = map fix_acc $ state_acc $ headOrPanic old_states
+          transitions = IntMap.fromList $ do
+            State _ out <- old_states
+            (b, old) <- IntMap.toList out
+            pure (b, get_new old)
+      pure (n, State accepts transitions)
 
-      fix_acc :: Accept a -> Accept a
-      fix_acc acc = acc { accRightCtx = fix_rctxt (accRightCtx acc) }
+    fix_acc :: Accept a -> Accept a
+    fix_acc acc = acc { accRightCtx = fix_rctxt (accRightCtx acc) }
 
-      fix_rctxt :: RightContext SNum -> RightContext SNum
-      fix_rctxt (RightContextRExp s) = RightContextRExp (get_new s)
-      fix_rctxt other = other
+    fix_rctxt :: RightContext SNum -> RightContext SNum
+    fix_rctxt (RightContextRExp s) = RightContextRExp (get_new s)
+    fix_rctxt other                = other
 
-      lookup :: Ord k => Map k v -> k -> v
-      lookup m k = Map.findWithDefault (error "minimizeDFA") k m
+    get_new :: Int -> Int
+    get_new = lookupOrPanic old_to_new
 
-      get_new :: Int -> Int
-      get_new = lookup old_to_new
+    old_to_new :: Map Int Int
+    old_to_new = Map.fromList $ do
+      (n,ss) <- numbered_states
+      s <- IntSet.toList ss
+      pure (s,n)
 
-      old_to_new :: Map Int Int
-      old_to_new = Map.fromList [ (s,n) | (n,ss) <- numbered_states,
-                                          s <- IntSet.toList ss ]
+    headOrPanic :: forall x. [x] -> x
+    headOrPanic []    = error "minimizeDFA: empty equivalence class"
+    headOrPanic (x:_) = x
+
+    lookupOrPanic :: forall x. Map Int x -> Int -> x
+    lookupOrPanic m k = case Map.lookup k m of
+      Nothing -> error "minimizeDFA: state not found"
+      Just x  -> x
+
 
 type EquivalenceClass = IntSet
 
-groupEquivStates :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
-groupEquivStates DFA { dfa_states = statemap }
-  = go init_r init_q
-  where
-    accepting, nonaccepting :: Map Int (State Int a)
-    (accepting, nonaccepting) = Map.partition acc statemap
-       where acc (State as _) = not (List.null as)
 
-    nonaccepting_states :: EquivalenceClass
-    nonaccepting_states = IntSet.fromList (Map.keys nonaccepting)
+-- | Creates the subset of Q that are used to initialize W.
+--
+-- As per the two conditions listed in Note [Hopcroft's Algorithm], we have two
+-- requirements: the union of all resulting sets must be equivalent to Q the set
+-- of all states, and all equivalent states must be in the same subsets.
+--
+-- We group states by their list of 'Accept'.
+initialSubsets :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
+initialSubsets dfa = Map.elems $ Map.fromListWith IntSet.union $ do
+  (stateIndex, State accepts _transitions) <- Map.toList $ dfa_states dfa
+  pure (accepts, IntSet.singleton stateIndex)
 
-    -- group the accepting states into equivalence classes
-    accept_map :: Map [Accept a] [Int]
-    accept_map = {-# SCC "accept_map" #-}
-      List.foldl' (\m (n,s) -> Map.insertWith (++) (state_acc s) [n] m)
-             Map.empty
-             (Map.toList accepting)
 
-    accept_groups :: [EquivalenceClass]
-    accept_groups = map IntSet.fromList (Map.elems accept_map)
+-- | Creates a cache of all reverse transitions for a given DFA.
+--
+-- To each token c in Σ, this map contains a reverse map of transitions.
+-- That is, for each c, we have a map that, to a state s, associate the set
+-- of states that can reach s via c.
+--
+-- Given that the actual value of c is never actually required, we flatten the
+-- result into a list.
+generateReverseTransitionCache :: forall a. Ord a => DFA Int a -> [IntMap EquivalenceClass]
+generateReverseTransitionCache dfa = IntMap.elems $
+  IntMap.fromListWith (IntMap.unionWith IntSet.union) $ do
+    (startingState, stateInfo) <- Map.toList $ dfa_states dfa
+    (token, targetState) <- IntMap.toList $ state_out stateInfo
+    pure (token, IntMap.singleton targetState (IntSet.singleton startingState))
 
-    init_r, init_q :: [EquivalenceClass]
-    init_r  -- Issue #71: each EquivalenceClass needs to be a non-empty set
-      | IntSet.null nonaccepting_states = []
-      | otherwise                   = [nonaccepting_states]
-    init_q = accept_groups
 
-    -- a map from token T to
-    --   a map from state S to the set of states that transition to
-    --   S on token T
-    -- bigmap is an inversed transition function classified by each input token.
-    -- the codomain of each inversed function is a set of states rather than single state
-    -- since a transition function might not be an injective.
-    -- This is a cache of the information needed to compute xs below
-    bigmap :: IntMap (IntMap EquivalenceClass)
-    bigmap = IntMap.fromListWith (IntMap.unionWith IntSet.union)
-                [ (i, IntMap.singleton to (IntSet.singleton from))
-                | (from, state) <- Map.toList statemap,
-                  (i,to) <- IntMap.toList (state_out state) ]
-
-    -- The outer loop: recurse on each set in R and Q
-    go :: [EquivalenceClass] -> [EquivalenceClass] -> [EquivalenceClass]
-    go r [] = r
-    go r (a:q) = uncurry go $ List.foldl' go0 (a:r,q) xs
-      where
-        preimage :: IntMap EquivalenceClass -- inversed transition function
-                 -> EquivalenceClass        -- subset of codomain of original transition function
-                 -> EquivalenceClass        -- preimage of given subset
+-- | Given an IntMap and an IntSet, restrict the IntMap to the keys that are
+-- within the IntSet.
+--
+-- This function is equivalent to 'IntMap.restrictKeys', but provided for
+-- compatibility with older versions of containers.
+restrictKeys :: forall a. IntMap a -> IntSet -> IntMap a
+restrictKeys m s =
 #if MIN_VERSION_containers(0,6,0)
-        preimage invMap = IntSet.unions . IntMap.restrictKeys invMap
+    IntMap.restrictKeys m s
 #else
-        preimage invMap = IntSet.unions . mapMaybe (`IntMap.lookup` invMap) . IntSet.toList
+    IntMap.filterWithKey (\k _ -> k `IntSet.member` s) m
 #endif
 
-        xs :: [EquivalenceClass]
-        xs =
-          [ x
-          | invMap <- IntMap.elems bigmap
-          , let x = preimage invMap a
-          , not (IntSet.null x)
-          ]
 
-        refineWith
-          :: EquivalenceClass -- preimage set that bisects the input equivalence class
-          -> EquivalenceClass -- input equivalence class
-          -> Maybe (EquivalenceClass, EquivalenceClass) -- refined equivalence class
-        refineWith x y =
-          if IntSet.null y1 || IntSet.null y2
-            then Nothing
-            else Just (y1, y2)
-          where
-            y1 = IntSet.intersection y x
-            y2 = IntSet.difference   y x
+-- | Given two sets X and Y, compute their intersection and difference.
+-- Only returns both if both are non-empty, otherwise return neither.
+refine
+  :: EquivalenceClass
+  -> EquivalenceClass
+  -> Maybe (EquivalenceClass, EquivalenceClass)
+refine x y =
+  if IntSet.null intersection || IntSet.null difference
+    then Nothing
+    else Just (intersection, difference)
+  where
+    intersection = IntSet.intersection y x
+    difference   = IntSet.difference   y x
 
-        go0 (r,q) x = go1 r [] []
-          where
-            -- iterates over R
-            go1 []    r' q' = (r', go2 q q')
-            go1 (y:r) r' q' = case refineWith x y of
-              Nothing                       -> go1 r (y:r') q'
-              Just (y1, y2)
-                | IntSet.size y1 <= IntSet.size y2 -> go1 r (y2:r') (y1:q')
-                | otherwise                        -> go1 r (y1:r') (y2:q')
 
-            -- iterates over Q
-            go2 []    q' = q'
-            go2 (y:q) q' = case refineWith x y of
-              Nothing       -> go2 q (y:q')
-              Just (y1, y2) -> go2 q (y1:y2:q')
+-- | Given a DFA, compute all sets of equivalent states.
+--
+-- See Note [Hopcroft's Algorithm]
+groupEquivalentStates :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
+groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
+  where
+    reverseTransitionCache :: [IntMap EquivalenceClass]
+    reverseTransitionCache = generateReverseTransitionCache dfa
 
--- To pacify GHC 9.8's warning about 'head'
-headWithDefault :: a -> [a] -> a
-headWithDefault a []    = a
-headWithDefault _ (a:_) = a
+    -- while W isn't empty, pick an A from W, add it to R
+    -- and iterate on X for each c in ∑
+    outerLoop :: ([EquivalenceClass], [EquivalenceClass]) -> [EquivalenceClass]
+    outerLoop (r,  []) = r
+    outerLoop (r, a:w) = outerLoop $ List.foldl' refineWithX (a:r,w) $ do
+      allPreviousStates <- reverseTransitionCache
+      let x = IntSet.unions $ restrictKeys allPreviousStates a
+      guard $ not $ IntSet.null x
+      pure x
+
+    -- given X, refine values in R, refine values in W, and finally combine the
+    -- results to obtain the new values of R an W
+    refineWithX (r, w) x =
+      let (r', w') = unzip $ map (processR x) r
+          w''      = concatMap (processW x) w
+      in (concat r', concat w' ++ w'')
+
+    processR x y = case refine x y of
+      Nothing -> ([y], [])
+      Just (y1, y2)
+        | IntSet.size y1 <= IntSet.size y2 -> ([y2], [y1])
+        | otherwise                        -> ([y1], [y2])
+
+    processW x y = case refine x y of
+      Nothing       -> [y]
+      Just (y1, y2) -> [y1, y2]
