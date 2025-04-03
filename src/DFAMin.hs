@@ -175,9 +175,9 @@ initialSubsets dfa = Map.elems $ Map.fromListWith IntSet.union $ do
 
 -- | Creates a cache of all reverse transitions for a given DFA.
 --
--- To each token c in Σ, this map contains a reverse map of transitions.
--- That is, for each c, we have a map that, to a state s, associate the set
--- of states that can reach s via c.
+-- To each token c in Σ, the resulting map contains a reverse map of
+-- transitions. That is, for each c, we have a map that, to a state
+-- s, associate the set of states that can reach s via c.
 --
 -- Given that the actual value of c is never actually required, we flatten the
 -- result into a list.
@@ -192,8 +192,8 @@ generateReverseTransitionCache dfa = IntMap.elems $
 -- | Given an IntMap and an IntSet, restrict the IntMap to the keys that are
 -- within the IntSet.
 --
--- This function is equivalent to 'IntMap.restrictKeys', but provided for
--- compatibility with older versions of containers.
+-- This function is a simple wrapper around 'IntMap.restrictKeys',
+-- provided for compatibility with older versions of containers.
 restrictKeys :: forall a. IntMap a -> IntSet -> IntMap a
 restrictKeys m s =
 #if MIN_VERSION_containers(0,6,0)
@@ -220,15 +220,15 @@ refine x y =
 
 -- | Given a DFA, compute all sets of equivalent states.
 --
--- See Note [Hopcroft's Algorithm]
+-- See Note [Hopcroft's Algorithm] for details.
 groupEquivalentStates :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
 groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
   where
     reverseTransitionCache :: [IntMap EquivalenceClass]
     reverseTransitionCache = generateReverseTransitionCache dfa
 
-    -- while W isn't empty, pick an A from W, add it to R
-    -- and iterate on X for each c in ∑
+    -- While W isn't empty, pick an A from W, add it to R
+    -- and iterate on X for each c in ∑.
     outerLoop :: ([EquivalenceClass], [EquivalenceClass]) -> [EquivalenceClass]
     outerLoop (r,  []) = r
     outerLoop (r, a:w) = outerLoop $ List.foldl' refineWithX (a:r,w) $ do
@@ -237,8 +237,11 @@ groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
       guard $ not $ IntSet.null x
       pure x
 
-    -- given X, refine values in R, refine values in W, and finally combine the
-    -- results to obtain the new values of R an W
+    -- Given X, refine values in R, refine values in W, and finally combine the
+    -- results to obtain the new values of R an W.
+    -- We can do both steps in parallel, since the new values to add in W while
+    -- we process R are already defined and don't need to be processed when
+    -- iterating over the original value of W.
     refineWithX (r, w) x =
       let (r', w') = unzip $ map (processR x) r
           w''      = concatMap (processW x) w
