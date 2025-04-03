@@ -5,6 +5,7 @@ module DFAMin (minimizeDFA) where
 import           AbsSyn
 
 import           Control.Monad (guard)
+import           Data.Foldable (fold)
 import           Data.IntMap   (IntMap)
 import           Data.IntSet   (IntSet)
 import           Data.Map      (Map)
@@ -233,7 +234,7 @@ groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
     outerLoop (r,  []) = r
     outerLoop (r, a:w) = outerLoop $ List.foldl' refineWithX (a:r,w) $ do
       allPreviousStates <- reverseTransitionCache
-      let x = IntSet.unions $ IntMap.elems $ restrictKeys allPreviousStates a
+      let x = fold $ restrictKeys allPreviousStates a
       guard $ not $ IntSet.null x
       pure x
 
