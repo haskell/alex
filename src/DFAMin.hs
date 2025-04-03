@@ -233,7 +233,7 @@ groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
     outerLoop (r,  []) = r
     outerLoop (r, a:w) = outerLoop $ List.foldl' refineWithX (a:r,w) $ do
       allPreviousStates <- reverseTransitionCache
-      let x = IntSet.unions $ restrictKeys allPreviousStates a
+      let x = IntSet.unions $ IntMap.elems $ restrictKeys allPreviousStates a
       guard $ not $ IntSet.null x
       pure x
 
