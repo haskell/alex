@@ -9,6 +9,9 @@
 --   states, and could result in different states being erroneously
 --   considered equivalent, which in turn could resulting in the wrong
 --   rule being selected at runtime.
+--
+-- This version of the test fails with the minimizer as implemented
+-- pre 4f0b51b8c370d0dd0f9c65af98282789f1cb035f.
 
 import Control.Monad (when)
 import System.Exit
@@ -18,8 +21,8 @@ import System.Exit
 %wrapper "basic"
 
 tokens :-
-  [abc]  { Left }
   "abc"  { const $ Right "abc" }
+  [abc]  { Left }
 
 {
 
