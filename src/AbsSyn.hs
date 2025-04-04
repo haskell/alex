@@ -123,7 +123,7 @@ data RightContext r
   = NoRightContext
   | RightContextRExp r
   | RightContextCode Code
-  deriving (Eq,Ord)
+  deriving (Eq, Ord, Functor)
 
 instance Show RECtx where
   showsPrec _ (RECtx scs _ r rctx code) =

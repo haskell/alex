@@ -115,6 +115,7 @@ executable alex
   default-language:
     Haskell2010
   default-extensions:
+    DeriveFunctor
     PatternSynonyms
     ScopedTypeVariables
     TupleSections

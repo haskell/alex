@@ -124,42 +124,49 @@ minimizeDFA dfa@(DFA starts statemap) = DFA starts $ Map.fromList new_states
         -- if one of the states of the minimized DFA corresponds
         -- to multiple starts states, we just have to duplicate
         -- that state.
+      where
+        -- All the start states in ss (starts_ss) are assigned this equivalence class.
+        -- The remaining ones are passed to the recursive call.
+        (starts_ss, starts_other) = List.partition (`IntSet.member` ss) unassigned_starts
+        continue n' = number n' starts_other sss
 
-    states :: [(Int, State Int a)]
-    states = do
-      (n, equiv) <- numbered_states
-      let old_states = map (lookupOrPanic statemap) (IntSet.toList equiv)
-          accepts = map fix_acc $ state_acc $ headOrPanic old_states
-          transitions = IntMap.fromList $ do
-            State _ out <- old_states
-            (b, old) <- IntMap.toList out
-            pure (b, get_new old)
-      pure (n, State accepts transitions)
+    -- Mapping new state numbers to their state description.
+    new_states :: [(NewSNum, State NewSNum a)]
+    new_states = map (second class_to_new_state) numbered_states
+
+    -- Translate an equivalence class of old states into a new state description.
+    class_to_new_state :: EquivalenceClass -> State NewSNum a
+    class_to_new_state =
+        -- A new state is constructed from any of the old states in the equivalence class.
+        -- It does not matter which old state we pick since by construction of the classes
+        -- they have the same behavior, both in their output (accepts) and their transitions.
+        -- Since IntSet does not have a method to give an arbitrary element
+        -- (ideally the one that is fastest to retrieve)
+        -- we use findMin (always succeeds because the IntSet is non-empty).
+        old_state_to_new_state . lookupOrPanic statemap . IntSet.findMin
+      where
+        lookupOrPanic = flip $ Map.findWithDefault panic
+        panic = error "alex::DFAMin.minimizeDFA: panic: state not found"
+
+    -- Convert all state numbers in the State structure to new ones.
+    old_state_to_new_state :: State OldSNum a -> State NewSNum a
+    old_state_to_new_state (State old_accepts old_transitions) =
+      State (map fix_acc old_accepts) (fmap get_new old_transitions)
 
     fix_acc :: Accept a -> Accept a
-    fix_acc acc = acc { accRightCtx = fix_rctxt (accRightCtx acc) }
+    fix_acc acc = acc { accRightCtx = fmap get_new $ accRightCtx acc }
 
-    fix_rctxt :: RightContext SNum -> RightContext SNum
-    fix_rctxt (RightContextRExp s) = RightContextRExp (get_new s)
-    fix_rctxt other                = other
+    get_new :: OldSNum -> NewSNum
+    get_new k = IntMap.findWithDefault panic k old_to_new
+      where
+        panic = error "alex::DFAMin.minimizeDFA: panic: state not found"
 
-    get_new :: Int -> Int
-    get_new = lookupOrPanic old_to_new
-
-    old_to_new :: Map Int Int
-    old_to_new = Map.fromList $ do
+    -- Memoized translation of old state numbers to new state numbers.
+    old_to_new :: IntMap NewSNum
+    old_to_new = IntMap.fromList $ do
       (n,ss) <- numbered_states
       s <- IntSet.toList ss
       pure (s,n)
-
-    headOrPanic :: forall x. [x] -> x
-    headOrPanic []    = error "minimizeDFA: empty equivalence class"
-    headOrPanic (x:_) = x
-
-    lookupOrPanic :: forall x. Map Int x -> Int -> x
-    lookupOrPanic m k = case Map.lookup k m of
-      Nothing -> error "minimizeDFA: state not found"
-      Just x  -> x
 
 
 type EquivalenceClass = IntSet
