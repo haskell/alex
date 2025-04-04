@@ -5,10 +5,11 @@ module DFAMin (minimizeDFA) where
 import AbsSyn
 
 import Control.Monad (guard)
-import Data.Foldable (fold)
+import Data.Bifunctor (second)
+-- import Data.Foldable (fold)
 import Data.IntMap   (IntMap)
 import Data.IntSet   (IntSet)
-import Data.Map      (Map)
+-- import Data.Map      (Map)
 
 import qualified Data.IntMap   as IntMap
 import qualified Data.IntSet   as IntSet
@@ -202,18 +203,18 @@ generateReverseTransitionCache dfa = IntMap.elems $
     pure (token, IntMap.singleton targetState (IntSet.singleton sourceState))
 
 
--- | Given an IntMap and an IntSet, restrict the IntMap to the keys that are
--- within the IntSet.
---
--- This function is a simple wrapper around 'IntMap.restrictKeys', provided for
--- compatibility with older versions of @containers@.
-restrictKeys :: forall a. IntMap a -> IntSet -> IntMap a
-restrictKeys m s =
-#if MIN_VERSION_containers(0,6,0)
-    IntMap.restrictKeys m s
-#else
-    IntMap.filterWithKey (\k _ -> k `IntSet.member` s) m
-#endif
+-- -- | Given an IntMap and an IntSet, restrict the IntMap to the keys that are
+-- -- within the IntSet.
+-- --
+-- -- This function is a simple wrapper around 'IntMap.restrictKeys', provided for
+-- -- compatibility with older versions of @containers@.
+-- restrictKeys :: forall a. IntMap a -> IntSet -> IntMap a
+-- restrictKeys m s =
+-- #if MIN_VERSION_containers(0,6,0)
+--     IntMap.restrictKeys m s
+-- #else
+--     IntMap.filterWithKey (\k _ -> k `IntSet.member` s) m
+-- #endif
 
 
 -- | Given two sets X and Y, compute their intersection and difference.
@@ -245,8 +246,12 @@ groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
     outerLoop :: ([EquivalenceClass], [EquivalenceClass]) -> [EquivalenceClass]
     outerLoop (r,  []) = r
     outerLoop (r, a:w) = outerLoop $ List.foldl' refineWithX (a:r,w) $ do
-      allPreviousStates <- reverseTransitionCache
-      let x = fold $ restrictKeys allPreviousStates a
+      allPreviousStates  :: IntMap EquivalenceClass <- reverseTransitionCache
+      -- let x = fold $ restrictKeys allPreviousStates a
+      -- Is 'restrictKeys' here really better than the following simpler filter?
+      -- The given asymptotics does look better, but aren't there overheads to create a balanced 'IntMap'
+      -- just to destroy it immediately with a 'fold'?
+      let x = IntSet.unions $ map (\ (tgt, srcs) -> if tgt `IntSet.member` a then srcs else IntSet.empty) $ IntMap.toList allPreviousStates
       guard $ not $ IntSet.null x
       pure x
 
