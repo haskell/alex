@@ -98,25 +98,29 @@ With those two optimizations, our implementation is therefore:
 
 -}
 
+type OldSNum = Int -- ^ Old state number
+type NewSNum = Int -- ^ New state number
+
 -- | Reduce the number of states in the given DFA by grouping indistinguishable
 -- states.
-minimizeDFA :: forall a. Ord a => DFA Int a -> DFA Int a
-minimizeDFA dfa@(DFA starts statemap) = DFA starts (Map.fromList states)
+minimizeDFA :: forall a. Ord a => DFA OldSNum a -> DFA NewSNum a
+minimizeDFA dfa@(DFA starts statemap) = DFA starts $ Map.fromList new_states
   where
+    -- Group the states into classes according to the language they accept.
     equiv_classes :: [EquivalenceClass]
     equiv_classes = groupEquivalentStates dfa
 
-    numbered_states :: [(Int, EquivalenceClass)]
-    numbered_states = number (length starts) equiv_classes
+    -- A map from new state numbers to a class of equivalent old states.
+    numbered_states :: [(NewSNum, EquivalenceClass)]
+    numbered_states = number (length starts) starts equiv_classes
 
-    -- assign each state in the minimized DFA a number, making
+    -- Assign each state in the minimized DFA a number, making
     -- sure that we assign the numbers [0..] to the start states.
-    number :: Int -> [EquivalenceClass] -> [(Int, EquivalenceClass)]
-    number _ [] = []
-    number n (ss:sss) =
-      case filter (`IntSet.member` ss) starts of
-        []      -> (n,ss) : number (n+1) sss
-        starts' -> map (,ss) starts' ++ number n sss
+    number :: NewSNum -> [NewSNum] -> [EquivalenceClass] -> [(NewSNum, EquivalenceClass)]
+    number _ _ [] = []
+    number n unassigned_starts (ss:sss)
+      | null starts_ss = (n,ss) : continue (n+1)
+      | otherwise      = map (,ss) starts_ss ++ continue n
         -- if one of the states of the minimized DFA corresponds
         -- to multiple starts states, we just have to duplicate
         -- that state.
