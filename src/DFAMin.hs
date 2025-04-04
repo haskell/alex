@@ -17,8 +17,8 @@ import qualified Data.Map      as Map
 
 {- Note [Hopcroft's Algorithm]
 
-DFA minimization is implemented using Hopcroft's algorithm. It is defined on
-Wikipedia as follows.
+DFA minimization is implemented using Hopcroft's algorithm. The following
+definition is mostly copied from Wikipedia.
 
 We assume the following definitions:
     - Q is the set of all states in our DFA
@@ -52,14 +52,15 @@ The algorithm itself is defined thusly:
 
 Our implementation differs slightly, as we perform several optimizations.
 
-In the Wikipedia implementation, P and W are initialized to subsets of all sets
-of Q, specifically F and Q \ F. The exact subsets do not matter; what matters is
-the following:
-    - all states in Q should be in W
+In the Wikipedia implementation, P and W are initialized to two subsets of Q,
+specifically F and Q \ F. The exact subsets do not matter; what matters is the
+following:
+    - P and W should contain all Q states
     - equivalent states should all be in the same subset
 
-As per the first requirement, it would be fine for P and W to be initialized
-with a set that only contains Q. The second requirement stems from the fact that
+As per the first requirement, it would be fine for P and W to be initialized as
+a set that only contains Q. Using more fine-grained subsets reduces the amount
+of work that needs to be done. The second requirement stems from the fact that
 our partition "refining" can divide subsets, but we do not have a way to
 re-merge subsets.
 
@@ -89,12 +90,11 @@ With those two optimizations, our implementation is therefore:
         for each set Y in R that is refined by X into Y1 and Y2 do
             replace Y in R by the two sets Y1 and Y2
             if |Y1| <= |Y2|
-                add Y1 to Q
+                add Y1 to W
             else
-                add Y2 to Q
-        for each set Y in Q that is refined by X into Y1 and Y2 do
-            replace Y in Q by the two sets Y1 and Y2
-
+                add Y2 to W
+        for each set Y in W that is refined by X into Y1 and Y2 do
+            replace Y in W by the two sets Y1 and Y2
 
 -}
 
@@ -161,7 +161,7 @@ minimizeDFA dfa@(DFA starts statemap) = DFA starts (Map.fromList states)
 type EquivalenceClass = IntSet
 
 
--- | Creates the subset of Q that are used to initialize W.
+-- | Creates the subsets of Q that are used to initialize W.
 --
 -- As per the two conditions listed in Note [Hopcroft's Algorithm], we have two
 -- requirements: the union of all resulting sets must be equivalent to Q the set
@@ -176,9 +176,9 @@ initialSubsets dfa = Map.elems $ Map.fromListWith IntSet.union $ do
 
 -- | Creates a cache of all reverse transitions for a given DFA.
 --
--- To each token c in Σ, the resulting map contains a reverse map of
--- transitions. That is, for each c, we have a map that, to a state
--- s, associate the set of states that can reach s via c.
+-- To each token c in Σ, the resulting map associates a reverse map of
+-- transitions. That is: for each c, we have a map that, to a state s,
+-- associates the set of states that can reach s via c.
 --
 -- Given that the actual value of c is never actually required, we flatten the
 -- result into a list.
@@ -193,8 +193,8 @@ generateReverseTransitionCache dfa = IntMap.elems $
 -- | Given an IntMap and an IntSet, restrict the IntMap to the keys that are
 -- within the IntSet.
 --
--- This function is a simple wrapper around 'IntMap.restrictKeys',
--- provided for compatibility with older versions of containers.
+-- This function is a simple wrapper around 'IntMap.restrictKeys', provided for
+-- compatibility with older versions of @containers@.
 restrictKeys :: forall a. IntMap a -> IntSet -> IntMap a
 restrictKeys m s =
 #if MIN_VERSION_containers(0,6,0)
@@ -240,9 +240,9 @@ groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
 
     -- Given X, refine values in R, refine values in W, and finally combine the
     -- results to obtain the new values of R an W.
-    -- We can do both steps in parallel, since the new values to add in W while
-    -- we process R are already defined and don't need to be processed when
-    -- iterating over the original value of W.
+    -- We can do both steps in parallel, since the new sets to add to W we find
+    -- while processing R have already been refined by X; it is therefore fine
+    -- to only refine the original states in W.
     refineWithX (r, w) x =
       let (r', w') = unzip $ map (processR x) r
           w''      = concatMap (processW x) w
