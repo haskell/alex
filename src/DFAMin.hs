@@ -169,17 +169,18 @@ minimizeDFA dfa@(DFA starts statemap) = DFA starts $ Map.fromList new_states
       pure (s,n)
 
 
+-- | An equivalence class is a /non-empty/ set of states.
 type EquivalenceClass = IntSet
 
 
 -- | Creates the subsets of Q that are used to initialize W.
 --
 -- As per the two conditions listed in Note [Hopcroft's Algorithm], we have two
--- requirements: the union of all resulting sets must be equivalent to Q the set
--- of all states, and all equivalent states must be in the same subsets.
+-- requirements: the union of all resulting sets must be equivalent to Q (the set
+-- of all states), and all equivalent states must be in the same subsets.
 --
 -- We group states by their list of 'Accept'.
-initialSubsets :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
+initialSubsets :: forall a. Ord a => DFA OldSNum a -> [EquivalenceClass]
 initialSubsets dfa = Map.elems $ Map.fromListWith IntSet.union $ do
   (stateIndex, State accepts _transitions) <- Map.toList $ dfa_states dfa
   pure (accepts, IntSet.singleton stateIndex)
@@ -193,12 +194,12 @@ initialSubsets dfa = Map.elems $ Map.fromListWith IntSet.union $ do
 --
 -- Given that the actual value of c is never actually required, we flatten the
 -- result into a list.
-generateReverseTransitionCache :: forall a. Ord a => DFA Int a -> [IntMap EquivalenceClass]
+generateReverseTransitionCache :: forall a. Ord a => DFA OldSNum a -> [IntMap EquivalenceClass]
 generateReverseTransitionCache dfa = IntMap.elems $
   IntMap.fromListWith (IntMap.unionWith IntSet.union) $ do
-    (startingState, stateInfo) <- Map.toList $ dfa_states dfa
-    (token, targetState) <- IntMap.toList $ state_out stateInfo
-    pure (token, IntMap.singleton targetState (IntSet.singleton startingState))
+    (sourceState, State _accepts transitions) <- Map.toList $ dfa_states dfa
+    (token, targetState) <- IntMap.toList transitions
+    pure (token, IntMap.singleton targetState (IntSet.singleton sourceState))
 
 
 -- | Given an IntMap and an IntSet, restrict the IntMap to the keys that are
@@ -233,7 +234,7 @@ refine x y =
 -- | Given a DFA, compute all sets of equivalent states.
 --
 -- See Note [Hopcroft's Algorithm] for details.
-groupEquivalentStates :: forall a. Ord a => DFA Int a -> [EquivalenceClass]
+groupEquivalentStates :: forall a. Ord a => DFA OldSNum a -> [EquivalenceClass]
 groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
   where
     reverseTransitionCache :: [IntMap EquivalenceClass]
