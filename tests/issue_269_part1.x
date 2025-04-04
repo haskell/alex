@@ -1,13 +1,13 @@
 {
 
 -- Issue #269
--- reported 2025-04-02 by https://github.com/nicuveo
+-- reported 2025-04-02 by Antoine Leblanc (https://github.com/nicuveo)
 -- fixed 2025-04-03 by Antoine Leblanc
 --
 -- Problem was:
 --   The minimizer was not initialized with the proper subsets of
---   states, and could result in different states being erroneously
---   considered equivalent, which in turn could resulting in the wrong
+--   states, which could result in different states being erroneously
+--   considered equivalent, which in turn could result in the wrong
 --   rule being selected at runtime.
 --
 -- This version of the test fails with the minimizer as implemented
