@@ -236,22 +236,18 @@ groupEquivalentStates dfa = outerLoop ([], initialSubsets dfa)
       guard $ not $ IntSet.null x
       pure x
 
-    -- Given X, refine values in R, refine values in W, and finally combine the
-    -- results to obtain the new values of R an W.
-    -- We can do both steps in parallel, since the new sets to add to W we find
-    -- while processing R have already been refined by X; it is therefore fine
-    -- to only refine the original states in W.
+    -- Given X, refine values in R, then refine values in W, building
+    -- the new values of R and W along the way.
     refineWithX (r, w) x =
-      let (r', w') = unzip $ map (processR x) r
-          w''      = concatMap (processW x) w
-      in (concat r', concat w' ++ w'')
+      let (r', w') = List.foldl' (processR x) ([], []) r
+      in  (r', List.foldl' (processW x) w' w)
 
-    processR x y = case refine x y of
-      Nothing -> ([y], [])
+    processR x (r', w') y = case refine x y of
+      Nothing -> (y:r', w')
       Just (y1, y2)
-        | IntSet.size y1 <= IntSet.size y2 -> ([y2], [y1])
-        | otherwise                        -> ([y1], [y2])
+        | IntSet.size y1 <= IntSet.size y2 -> (y2:r', y1:w')
+        | otherwise                        -> (y1:r', y2:w')
 
-    processW x y = case refine x y of
-      Nothing       -> [y]
-      Just (y1, y2) -> [y1, y2]
+    processW x w' y = case refine x y of
+      Nothing       -> y:w'
+      Just (y1, y2) -> y1:y2:w'
