@@ -1,3 +1,12 @@
+## Changes in 3.5.3.0
+
+* Fix critical bug in automaton minimizer
+  ([PR #270](https://github.com/haskell/alex/pull/270)),
+  thanks Antoine Leblanc!
+* Tested with GHC 8.0 - 9.12.2.
+
+_Andreas Abel, 2025-04-06_
+
 ## Changes in 3.5.2.0
 
 * Use `byteSwap16#` and `byteSwap32#` on big-endian architectures instead of
