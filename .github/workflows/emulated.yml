@@ -44,7 +44,7 @@ jobs:
           # interpret the forward slashes. You're welcome.
           sed -i "s/getDataDir/\(return \"$(pwd | sed 's/\//\\\//g')\\/data\"\)/g" src/Main.hs
           sed -i "s/version/undefined/g" src/Main.hs
-          ghc -XHaskell2010 -XPatternSynonyms -XFlexibleContexts -XMagicHash -XCPP -XNondecreasingIndentation -XScopedTypeVariables -XTupleSections \
+          ghc -XHaskell2010 -XPatternSynonyms -XFlexibleContexts -XMagicHash -XCPP -XNondecreasingIndentation -XScopedTypeVariables -XTupleSections -XDeriveFunctor \
               -package array -package containers -package directory \
               -isrc src/Main.hs \
               -o alex
