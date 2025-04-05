@@ -91,6 +91,8 @@ extra-source-files:
         tests/issue_141.x
         tests/issue_197.x
         tests/issue_262.x
+        tests/issue_269_part1.x
+        tests/issue_269_part2.x
         tests/strict_text_typeclass.x
         tests/posn_typeclass_strict_text.x
         tests/tokens_monadUserState_strict_text.x
@@ -113,6 +115,7 @@ executable alex
   default-language:
     Haskell2010
   default-extensions:
+    DeriveFunctor
     PatternSynonyms
     ScopedTypeVariables
     TupleSections
