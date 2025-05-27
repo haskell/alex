@@ -1,4 +1,6 @@
--- Performance test; run with input /usr/dict/words, for example
+-- run with:
+-- alexScanTokens " 123   abc "
+-- for example
 {
 module Main (main) where
 }
@@ -8,7 +10,7 @@ module Main (main) where
 words :-
 
 $white+			;
-[A-Za-z0-9\'\-]+	{ \s -> () }
+[A-Za-z0-9\'\-]+	{ \s -> "word: " <> s }
 
 {
 main = do
