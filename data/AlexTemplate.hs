@@ -13,12 +13,16 @@
 #  define FAST_INT Int#
 -- Do not remove this comment. Required to fix CPP parsing when using GCC and a clang-compiled alex.
 #  if __GLASGOW_HASKELL__ > 706
-#    define GTE(n,m) (GHC.Exts.tagToEnum# (n >=# m))
-#    define EQ(n,m) (GHC.Exts.tagToEnum# (n ==# m))
+#    define CMP_GEQ(n,m) (((n) >=# (m)) :: Int#)
+#    define CMP_EQ(n,m) (((n) ==# (m)) :: Int#)
+#    define CMP_MKBOOL(x) ((GHC.Exts.tagToEnum# (x)) :: Bool)
 #  else
-#    define GTE(n,m) (n >=# m)
-#    define EQ(n,m) (n ==# m)
+#    define CMP_GEQ(n,m) (((n) >= (m)) :: Bool)
+#    define CMP_EQ(n,m) (((n) == (m)) :: Bool)
+#    define CMP_MKBOOL(x) ((x) :: Bool)
 #  endif
+#  define GTE(n,m) CMP_MKBOOL(CMP_GEQ(n,m))
+#  define EQ(n,m) CMP_MKBOOL(CMP_EQ(n,m))
 #  define PLUS(n,m) (n +# m)
 #  define MINUS(n,m) (n -# m)
 #  define TIMES(n,m) (n *# m)
