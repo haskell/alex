@@ -1,3 +1,15 @@
+## Changes in 3.5.4.0
+
+* Fix [issue #277](https://github.com/haskell/alex/issues/277):
+  compatibility of generated code with `{-# LANGUAGE ImpredicativeTypes #-}`,
+  thanks Nadia Yvette Chambers!
+* Simplify `cabal install` ([PR #272](https://github.com/haskell/alex/pull/272)),
+  thanks Antoine Leblanc!
+* Document `examples/words.x`, thanks Piotr Justyna!
+* Tested with GHC 8.0 - 9.12.2.
+
+_Andreas Abel, 2025-08-03_
+
 ## Changes in 3.5.3.0
 
 * Fix critical bug in automaton minimizer
