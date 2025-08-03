@@ -86,6 +86,7 @@ ifeq "$(GHC_SHIPS_WITH_TEXT)" "yes"
 TEXT_DEP = -package text
 
 TEXT_TESTS = \
+		monadic_expr.x \
 		strict_text_typeclass.x \
 		posn_typeclass_strict_text.x \
 		tokens_monadUserState_strict_text.x
@@ -105,12 +106,15 @@ TEST_ALEX_OPTS=
 %.g.hs : %.x
 	$(ALEX) $(TEST_ALEX_OPTS) -g $< -o $@
 
+%.i.hs : %.x
+	$(ALEX) $(TEST_ALEX_OPTS) -g $< -o $@
+
 %.d.hs : %.x
 	$(ALEX) $(TEST_ALEX_OPTS) --debug $< -o $@
 
-CLEAN_FILES += *.n.hs *.g.hs *.d.hs *.info *.hi *.o *.bin *.exe
+CLEAN_FILES += *.n.hs *.g.hs *.i.hs *.d.hs *.info *.hi *.o *.bin *.exe
 
-TESTS_HS       = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs/g')
+TESTS_HS       = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.n.hs \1.g.hs \1.i.hs/g')
 TESTS_HS_DEBUG = $(shell echo $(TESTS) $(TEXT_TESTS) | sed -e 's/\([^\. ]*\)\.\(l\)\{0,1\}x/\1.d.hs/g')
 TESTS_HS_ALL   = $(TESTS_HS) $(TESTS_HS_DEBUG)
 
@@ -122,7 +126,7 @@ ALL_TESTS   = $(BASIC_TESTS) $(DEBUG_TESTS)
 	./$<
 
 %$(HS_PROG_EXT) : %.hs
-	$(HC) $(HC_OPTS) -package array -package bytestring $(TEXT_DEP) $($*_LD_OPTS) $< -o $@
+	$(HC) $(if $(findstring .i.,$@),-XImpredicativeTypes,) $(HC_OPTS) -package array -package bytestring $(TEXT_DEP) $($*_LD_OPTS) $< -o $@
 
 all :: $(ALL_TESTS)
 
