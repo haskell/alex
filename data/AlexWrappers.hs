@@ -17,20 +17,17 @@ import Data.Word (Word8)
 #if defined(ALEX_BASIC_BYTESTRING) || defined(ALEX_POSN_BYTESTRING) || defined(ALEX_MONAD_BYTESTRING)
 
 import Data.Int (Int64)
-import qualified Data.Char
 import qualified Data.ByteString.Lazy     as ByteString
 import qualified Data.ByteString.Internal as ByteString (w2c)
 
 #elif defined(ALEX_STRICT_BYTESTRING)
 
-import qualified Data.Char
 import qualified Data.ByteString          as ByteString
 import qualified Data.ByteString.Internal as ByteString hiding (ByteString)
 import qualified Data.ByteString.Unsafe   as ByteString
 
 #else
 
-import Data.Char (ord)
 import qualified Data.Bits
 
 -- | Encode a Haskell String to a list of Word8 values, in UTF8 format.
@@ -38,7 +35,7 @@ utf8Encode :: Char -> [Word8]
 utf8Encode = uncurry (:) . utf8Encode'
 
 utf8Encode' :: Char -> (Word8, [Word8])
-utf8Encode' c = case go (ord c) of
+utf8Encode' c = case go (Data.Char.ord c) of
                   (x, xs) -> (fromIntegral x, map fromIntegral xs)
  where
   go oc

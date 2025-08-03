@@ -401,6 +401,7 @@ always_imports :: [String]
 always_imports =
   [ "#include \"ghcconfig.h\""
   , "import qualified Data.Array"
+  , "import qualified Data.Char"
   ]
 
 import_glaexts :: [String]
@@ -437,8 +438,7 @@ import_glaexts =
 
 import_debug :: [String]
 import_debug =
-  [ "import Data.Char (chr)"
-  , "import qualified Debug.Trace"
+  [ "import qualified Debug.Trace"
   ]
 
 templateDir :: IO FilePath -> [CLIFlags] -> IO FilePath

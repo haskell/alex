@@ -6,7 +6,6 @@
 *.dyn_o
 *.info
 /.ghc.environment.*
-/data/
 /dist
 /dist-newstyle
 /examples/*.alex.hs
