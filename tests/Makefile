@@ -41,7 +41,7 @@ WARNS_DEP_GHC_GTEQ_9_8:=$(shell if [ $(GHC_MAJOR_VERSION) -gt 9 -o $(GHC_MAJOR_V
 
 HC_OPTS=-Wall $(WARNS_DEP_GHC_GTEQ_9_8) -fwarn-incomplete-uni-patterns -Werror
 
-.PRECIOUS: %.n.hs %.g.hs %.o %.exe %.bin
+.PRECIOUS: %.d.hs %.i.hs %.g.hs %.n.hs %.o %.exe %.bin
 
 ifeq "$(TARGETPLATFORM)" "i386-unknown-mingw32"
 HS_PROG_EXT = .exe
