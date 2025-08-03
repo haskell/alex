@@ -80,6 +80,7 @@ extra-source-files:
         tests/gscan_typeclass.x
         tests/posn_typeclass.x
         tests/monad_typeclass.x
+        tests/monadic_expr.x
         tests/monad_typeclass_bytestring.x
         tests/monadUserState_typeclass.x
         tests/monadUserState_typeclass_bytestring.x
