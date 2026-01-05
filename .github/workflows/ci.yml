@@ -31,16 +31,17 @@ jobs:
           - "9.4.8"
           - "9.6.7"
           - "9.8.4"
-          - "9.10.2"
-          - "9.12.2"
+          - "9.10"
+          - "9.12"
+          - "9.14"
         include:
-          - ghc: "9.12.2"
+          - ghc: "9.14"
             os:  macos-latest
-          - ghc: "9.12.2"
+          - ghc: "9.14"
             os:  windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - uses: haskell-actions/setup@v2
       id: setup
@@ -49,7 +50,7 @@ jobs:
         cabal-version: "latest"
         cabal-update: true
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@v5
       name: Cache cabal stuff
       with:
         path: |
