@@ -21,7 +21,7 @@ import System.Directory ( doesFileExist )
 import Control.Monad
 import Data.Maybe
 import Numeric ( readDec )
-import Data.Char ( chr )
+import Data.Char ( chr, ord )
 import Data.Map ( Map )
 import qualified Data.Map as Map ( empty )
 }

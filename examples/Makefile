@@ -1,4 +1,4 @@
-ALEX=../dist/build/alex/alex
+ALEX=../dist-newstyle/build/x86_64-linux/ghc-9.8.4/alex-3.5.4.0/x/alex/build/alex/alex
 HC=ghc -Wall -fno-warn-unused-binds -fno-warn-missing-signatures -fno-warn-unused-matches -fno-warn-name-shadowing -fno-warn-unused-imports -fno-warn-tabs
 
 HAPPY=happy
