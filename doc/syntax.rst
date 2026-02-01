@@ -25,8 +25,14 @@ These macros are used in the BNF specification of the syntax later on.
    $special    = [\.\;\,\$\|\*\+\?\#\~\-\{\}\(\)\[\]\^\/]
    $graphic    = $printable # $white
 
+   $lower      = a-z
+   $upper      = A-Z
+   $alpha      = [$upper $lower]
+   $alphanum   = [$alpha $digit]
+   $idchar     = [$alphanum \_ \']
+
    @string     = \" ($graphic # \")* \"
-   @id         = [A-Za-z][A-Za-z'_]*
+   @id         = $alpha $idchar*
    @smac       = '$' id
    @rmac       = '@' id
    @char       = ($graphic # $special) | @escape
