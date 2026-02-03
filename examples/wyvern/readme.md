@@ -82,7 +82,7 @@ CallStack (from HasCallStack):
 
 ### features
 
-* only slightly more difficult to implement compared to the basic wrapper 
+* only slightly more difficult to implement compared to the basic wrapper
 * extracts tokens as advertised but also reveals more information about:
   * token positions
   * error positions
