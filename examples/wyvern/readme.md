@@ -46,7 +46,7 @@ All lexers return a list of tokens (plus some additional information like token 
 
 ## `basic` - lexer v1
 
-[source](./LexerV1.x)
+[source](./WyvernLexerV1.x)
 
 ### features
 
@@ -58,31 +58,27 @@ All lexers return a list of tokens (plus some additional information like token 
 
 ### usage
 
-```haskell
--- ...
-let tokens = alexScanTokens fileContent
--- ...
+While in the `examples` directory:
+
+```bash
+make
+./WyvernLexerV1.[bin/exe]
 ```
 
 ### output
 
-* tokens extracted correctly:
-
-  ```
-  [TokenAction "# \"action\"",TokenAction "# \"question\"",TokenOCB,TokenAction "# \"action\"",TokenCCB,TokenOCB,TokenAction "# \"action\"",TokenCCB,TokenAction "# \"action\""]
-  ```
-
-* errors:
-
-  ```
-  wyvern-diagrams: lexical error
-  CallStack (from HasCallStack):
-    error, called at src/lib/Lexer.hs:493:32 in wyvern-diagrams-0.3.1.3-inplace:Lexer
-  ```
+```bash
+Wyvern lexer v1 correct example:
+[TokenAction "# \"action\"",TokenAction "# \"question\"",TokenOCB,TokenAction "# \"action\"",TokenCCB,TokenOCB,TokenAction "# \"action\"",TokenCCB,TokenAction "# \"action\""]
+Wyvern lexer v1 incorrect example:
+WyvernLexerV1.bin: lexical error
+CallStack (from HasCallStack):
+  error, called at wyvern/WyvernLexerV1.alex.hs:494:32 in main:WyvernLexerV1
+```
 
 ## `posn` - lexer v2
 
-[source](./LexerV2.x)
+[source](./WyvernLexerV2.x)
 
 ### features
 
@@ -94,31 +90,27 @@ let tokens = alexScanTokens fileContent
 
 ### usage
 
-```haskell
--- ...
-let tokens = alexScanTokens fileContent
--- ...
+While in the `examples` directory:
+
+```bash
+make
+./WyvernLexerV2.[bin/exe]
 ```
 
 ### output
 
-* tokens extracted correctly:
-
-  ```
-  [TokenAction (AlexPn 0 1 1) "# \"action\"",TokenAction (AlexPn 9 2 1) "# \"question\"",TokenOCB (AlexPn 20 3 1),TokenAction (AlexPn 26 4 5) "# \"action\"",TokenCCB (AlexPn 35 5 1),TokenOCB (AlexPn 37 6 1),TokenAction (AlexPn 43 7 5) "# \"action\"",TokenCCB (AlexPn 52 8 1),TokenAction (AlexPn 54 9 1) "# \"action\""]
-  ```
-
-* errors:
-
-  ```
-  wyvern-diagrams: lexical error at line 4, column 13
-  CallStack (from HasCallStack):
-    error, called at src/lib/LexerV2.hs:573:61 in wyvern-diagrams-0.3.1.3-inplace:LexerV2
-  ```
+```bash
+Wyvern lexer v2 correct example:
+[TokenAction (AlexPn 0 1 1) "# \"action\"",TokenAction (AlexPn 9 2 1) "# \"question\"",TokenOCB (AlexPn 20 3 1),TokenAction (AlexPn 26 4 5) "# \"action\"",TokenCCB (AlexPn 35 5 1),TokenOCB (AlexPn 37 6 1),TokenAction (AlexPn 43 7 5) "# \"action\"",TokenCCB (AlexPn 52 8 1),TokenAction (AlexPn 54 9 1) "# \"action\""]
+Wyvern lexer v2 incorrect example:
+WyvernLexerV2.bin: lexical error at line 4, column 13
+CallStack (from HasCallStack):
+  error, called at wyvern/WyvernLexerV2.alex.hs:574:61 in main:WyvernLexerV2
+```
 
 ## `monad` - lexer v3
 
-[source](./LexerV3.x)
+[source](./WyvernLexerV3.x)
 
 ### features
 
@@ -132,22 +124,18 @@ let tokens = alexScanTokens fileContent
 
 ### usage
 
-```haskell
--- ...
-let lexingResult = runAlex fileContent lexAll
--- ...
+While in the `examples` directory:
+
+```bash
+make
+./WyvernLexerV3.[bin/exe]
 ```
 
 ### output
 
-* tokens extracted correctly:
-
-  ```
-  Right [TokenAction (AlexPn 0 1 1) "# \"action\"",TokenAction (AlexPn 9 2 1) "# \"question\"",TokenOCB (AlexPn 20 3 1),TokenAction (AlexPn 26 4 5) "# \"action\"",TokenCCB (AlexPn 35 5 1),TokenOCB (AlexPn 37 6 1),TokenAction (AlexPn 43 7 5) "# \"action\"",TokenCCB (AlexPn 52 8 1),TokenAction (AlexPn 54 9 1) "# \"action\""]
-  ```
-
-* errors:
-
-  ```
-  Left "lexical error at line 4, column 13"
-  ```
+```bash
+Wyvern lexer v3 correct example:
+Right [TokenAction (AlexPn 0 1 1) "# \"action\"",TokenAction (AlexPn 9 2 1) "# \"question\"",TokenOCB (AlexPn 20 3 1),TokenAction (AlexPn 26 4 5) "# \"action\"",TokenCCB (AlexPn 35 5 1),TokenOCB (AlexPn 37 6 1),TokenAction (AlexPn 43 7 5) "# \"action\"",TokenCCB (AlexPn 52 8 1),TokenAction (AlexPn 54 9 1) "# \"action\""]
+Wyvern lexer v3 incorrect example:
+Left "lexical error at line 4, column 13"
+```

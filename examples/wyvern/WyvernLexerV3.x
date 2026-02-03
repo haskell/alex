@@ -1,6 +1,7 @@
 {
-module LexerV3
-  (lexAll,
+module WyvernLexerV3
+  (main,
+  lexAll,
   runAlex,
   Token(TokenAction,
   TokenSoloIdentifier,
@@ -51,4 +52,15 @@ lexAll = go
             case t of
                 TokenEOF -> return []
                 _ -> (t:) <$> go
+
+main = do
+    putStrLn "Wyvern lexer v3 correct example: "
+    correctFileContent <- readFile "./wyvern/correct-input.txt"
+    let correctTokens = runAlex correctFileContent lexAll
+    print correctTokens
+
+    putStrLn "Wyvern lexer v3 incorrect example: "
+    incorrectFileContent <- readFile "./wyvern/incorrect-input.txt"
+    let incorrectTokens = runAlex incorrectFileContent lexAll
+    print incorrectTokens
 }

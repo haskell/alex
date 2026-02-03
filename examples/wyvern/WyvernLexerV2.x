@@ -1,6 +1,7 @@
 {
-module LexerV2
-  (alexScanTokens,
+module WyvernLexerV2
+  (main,
+  alexScanTokens,
   Token(TokenAction,
   TokenSoloIdentifier,
   TokenOCB,
@@ -37,4 +38,15 @@ data Token
   | TokenOCB AlexPosn
   | TokenCCB AlexPosn
   deriving (Eq, Show)
+
+main = do
+    putStrLn "Wyvern lexer v2 correct example: "
+    correctFileContent <- readFile "./wyvern/correct-input.txt"
+    let correctTokens = alexScanTokens correctFileContent
+    print correctTokens
+
+    putStrLn "Wyvern lexer v2 incorrect example: "
+    incorrectFileContent <- readFile "./wyvern/incorrect-input.txt"
+    let incorrectTokens = alexScanTokens incorrectFileContent
+    print incorrectTokens
 }
