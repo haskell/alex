@@ -11,7 +11,7 @@
 
 {
 module Main (main) where
-import Data.Char (chr)
+import Data.Char (chr, ord)
 }
 
 %wrapper "monad"
@@ -39,7 +39,7 @@ $idchar    = [$alpha $digit \']
 $symchar   = [$symbol \:]
 $nl        = [\n\r]
 
-@reservedid = 
+@reservedid =
 	as|case|class|data|default|deriving|do|else|hiding|if|
 	import|in|infix|infixl|infixr|instance|let|module|newtype|
 	of|qualified|then|type|where
@@ -88,7 +88,7 @@ haskell :-
 <0> @varsym			{ mkL LVarSym }
 <0> @consym			{ mkL LConSym }
 
-<0> @decimal 
+<0> @decimal
   | 0[oO] @octal
   | 0[xX] @hexadecimal		{ mkL LInteger }
 
@@ -121,7 +121,7 @@ data LexemeClass
   | LQConSym
   | LEOF
   deriving Eq
-  
+
 mkL :: LexemeClass -> AlexInput -> Int -> Alex Lexeme
 mkL c (p,_,_,str) len = return (L p c (take len str))
 
@@ -149,17 +149,17 @@ nested_comment _ _ = do
 		    Just (c,input)   -> go n input
 	    	c -> go n input
 
-        err input = do alexSetInput input; lexError "error in nested comment"  
+        err input = do alexSetInput input; lexError "error in nested comment"
 
 lexError s = do
   (p,c,_,input) <- alexGetInput
-  alexError (showPosn p ++ ": " ++ s ++ 
+  alexError (showPosn p ++ ": " ++ s ++
 		   (if (not (null input))
 		     then " before " ++ show (head input)
 		     else " at end of file"))
 
 scanner str = runAlex str $ do
-  let loop i = do tok@(L _ cl _) <- alexMonadScan; 
+  let loop i = do tok@(L _ cl _) <- alexMonadScan;
 		  if cl == LEOF
 			then return i
 			else do loop $! (i+1)
