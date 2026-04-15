@@ -10,11 +10,7 @@ Share and enjoy!
 
 ## Documentation
 
-Documentation is hosted on [Read the Docs](https://haskell-alex.readthedocs.io):
-
-- [Online (HTML)](https://haskell-alex.readthedocs.io)
-- [PDF](https://haskell-alex.readthedocs.io/_/downloads/en/latest/pdf/)
-- [Downloadable HTML](https://haskell-alex.readthedocs.io/_/downloads/en/latest/htmlzip/)
+Documentation is hosted on [Read the Docs](https://haskell-alex.readthedocs.io).
 
 For basic information of the sort typically found in a read-me, see the following sections of the docs:
 
