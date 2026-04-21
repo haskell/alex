@@ -33,7 +33,8 @@ jobs:
         githubToken: ${{ github.token }}
         install: |
           apt-get update -y
-          apt-get install -y ghc alex happy
+          apt-get install -y ghc alex happy cabal
+          cabal install Ranged-sets
         run: |
           (cd src/; alex -g Scan.x; happy -ag Parser.y)
           # Need to remove mention of the Cabal path module, and then substitutes
@@ -45,7 +46,7 @@ jobs:
           sed -i "s/getDataDir/\(return \"$(pwd | sed 's/\//\\\//g')\\/data\"\)/g" src/Main.hs
           sed -i "s/version/undefined/g" src/Main.hs
           ghc -XHaskell2010 -XPatternSynonyms -XFlexibleContexts -XMagicHash -XCPP -XNondecreasingIndentation -XScopedTypeVariables -XTupleSections -XDeriveFunctor \
-              -package array -package containers -package directory \
+              -package array -package containers -package directory -package Ranged-sets \
               -isrc src/Main.hs \
               -o alex
           ./alex -g tests/simple.x

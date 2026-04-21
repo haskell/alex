@@ -1,9 +1,0 @@
-Note:
-
-The contents of package Ranged-sets-0.3.0 has been copied into this
-package, in order to allow it to be part of the Haskell Platform,
-without introducing additional dependencies.
-
-The original license agreement has been included in the src/Data
-subdirectory, as required by the package source.
-
